@@ -2,7 +2,13 @@
   "permissions": {
     "allow": [
       "Bash(find:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "mcp__context7-mcp__resolve-library-id",
+      "mcp__context7-mcp__get-library-docs",
+      "mcp__exa__web_search_exa",
+      "Bash(mkdir:*)",
+      "Bash(npm install)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }
