@@ -61,6 +61,9 @@ npm run build
 2. Add Marketing API product
 3. Generate an access token with `ads_read` and `ads_management` permissions
 
+![CleanShot 2025-06-17 at 15 52 35@2x](https://github.com/user-attachments/assets/160a260f-8f1b-44de-9041-f684a47e4a9d)
+
+
 ### 2. Configure Claude Desktop
 Add to your `claude_desktop_config.json`:
 
