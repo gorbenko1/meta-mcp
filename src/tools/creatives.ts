@@ -4,9 +4,6 @@ import {
   ListCreativesSchema,
   CreateAdCreativeSchema,
   PreviewAdSchema,
-  type ListCreativesParams,
-  type CreateAdCreativeParams,
-  type PreviewAdParams,
 } from "../types/mcp-tools.js";
 
 export function registerCreativeTools(
@@ -16,7 +13,7 @@ export function registerCreativeTools(
   // List Creatives Tool
   server.tool(
     "list_creatives",
-    ListCreativesSchema,
+    ListCreativesSchema.shape,
     async ({ account_id, limit, after }) => {
       try {
         const result = await metaClient.getAdCreatives(account_id, {
@@ -75,7 +72,7 @@ export function registerCreativeTools(
   // Create Ad Creative Tool
   server.tool(
     "create_ad_creative",
-    CreateAdCreativeSchema,
+    CreateAdCreativeSchema.shape,
     async ({
       account_id,
       name,
@@ -167,7 +164,7 @@ export function registerCreativeTools(
   // Preview Ad Tool
   server.tool(
     "preview_ad",
-    PreviewAdSchema,
+    PreviewAdSchema.shape,
     async ({ creative_id, ad_format, product_item_ids }) => {
       try {
         const result = await metaClient.generateAdPreview(
@@ -216,7 +213,7 @@ export function registerCreativeTools(
   // Upload Creative Asset Tool (simplified - would need actual file upload)
   server.tool(
     "upload_creative_asset",
-    CreateAdCreativeSchema,
+    CreateAdCreativeSchema.shape,
     async ({ account_id, name }) => {
       try {
         const response = {
@@ -272,7 +269,7 @@ export function registerCreativeTools(
   // Setup A/B Test Tool
   server.tool(
     "setup_ab_test",
-    CreateAdCreativeSchema,
+    CreateAdCreativeSchema.shape,
     async ({ account_id, name }) => {
       try {
         const response = {
@@ -335,7 +332,7 @@ export function registerCreativeTools(
   // Get Creative Performance Tool
   server.tool(
     "get_creative_performance",
-    PreviewAdSchema,
+    PreviewAdSchema.shape,
     async ({ creative_id }) => {
       try {
         // This would typically fetch insights for ads using this creative
@@ -392,8 +389,9 @@ export function registerCreativeTools(
   );
 
   // Update Creative Tool
-  server.tool("update_creative", CreateAdCreativeSchema, async (params) => {
-    const { name, title, body } = params;
+  server.tool("update_creative", CreateAdCreativeSchema.shape, async (_params) => {
+    // Note: These variables would be used in actual implementation
+    // const { name, title, body } = _params;
     try {
       const response = {
         message: "Creative update limitations",
@@ -447,7 +445,7 @@ export function registerCreativeTools(
   });
 
   // Delete Creative Tool
-  server.tool("delete_creative", PreviewAdSchema, async (params) => {
+  server.tool("delete_creative", PreviewAdSchema.shape, async (params) => {
     const { creative_id } = params;
     try {
       // Note: This would require actual deletion logic

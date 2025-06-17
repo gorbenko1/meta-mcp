@@ -4,9 +4,6 @@ import {
   GetInsightsSchema,
   ComparePerformanceSchema,
   ExportInsightsSchema,
-  type GetInsightsParams,
-  type ComparePerformanceParams,
-  type ExportInsightsParams,
 } from "../types/mcp-tools.js";
 import type { AdInsights } from "../types/meta-api.js";
 
@@ -17,7 +14,7 @@ export function registerAnalyticsTools(
   // Get Insights Tool
   server.tool(
     "get_insights",
-    GetInsightsSchema,
+    GetInsightsSchema.shape,
     async ({
       object_id,
       level,
@@ -123,7 +120,7 @@ export function registerAnalyticsTools(
   // Compare Performance Tool
   server.tool(
     "compare_performance",
-    ComparePerformanceSchema,
+    ComparePerformanceSchema.shape,
     async ({ object_ids, level, date_preset, time_range, metrics }) => {
       try {
         const params: any = {
@@ -220,7 +217,7 @@ export function registerAnalyticsTools(
   // Export Insights Tool
   server.tool(
     "export_insights",
-    ExportInsightsSchema,
+    ExportInsightsSchema.shape,
     async ({
       object_id,
       level,
@@ -308,7 +305,7 @@ export function registerAnalyticsTools(
   );
 
   // Get Campaign Performance Tool (simplified version of get_insights)
-  server.tool("get_campaign_performance", GetInsightsSchema, async (params) => {
+  server.tool("get_campaign_performance", GetInsightsSchema.shape, async (params) => {
     try {
       // Set level to campaign and add campaign-specific fields
       const campaignParams = {
@@ -376,7 +373,7 @@ export function registerAnalyticsTools(
   });
 
   // Get Attribution Data Tool
-  server.tool("get_attribution_data", GetInsightsSchema, async (params) => {
+  server.tool("get_attribution_data", GetInsightsSchema.shape, async (params) => {
     try {
       // Add attribution-specific breakdowns and fields
       const attributionParams = {
@@ -502,7 +499,7 @@ function calculatePerformanceRankings(
           metric.includes("cpc") ||
           metric.includes("cpm") ||
           metric.includes("spend");
-        return isCostMetric ? a.value - b.value : b.value - a.value;
+        return isCostMetric ? (a.value || 0) - (b.value || 0) : (b.value || 0) - (a.value || 0);
       });
 
     rankings[metric] = sorted.map((item, index) => ({

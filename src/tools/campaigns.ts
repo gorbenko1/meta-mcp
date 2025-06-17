@@ -7,12 +7,6 @@ import {
   DeleteCampaignSchema,
   ListAdSetsSchema,
   CreateAdSetSchema,
-  type ListCampaignsParams,
-  type CreateCampaignParams,
-  type UpdateCampaignParams,
-  type DeleteCampaignParams,
-  type ListAdSetsParams,
-  type CreateAdSetParams,
 } from "../types/mcp-tools.js";
 
 export function registerCampaignTools(
@@ -84,7 +78,7 @@ export function registerCampaignTools(
   // Create Campaign Tool
   server.tool(
     "create_campaign",
-    CreateCampaignSchema,
+    CreateCampaignSchema.shape,
     async ({
       account_id,
       name,
@@ -164,7 +158,7 @@ export function registerCampaignTools(
   // Update Campaign Tool
   server.tool(
     "update_campaign",
-    UpdateCampaignSchema,
+    UpdateCampaignSchema.shape,
     async ({
       campaign_id,
       name,
@@ -232,7 +226,7 @@ export function registerCampaignTools(
   // Pause Campaign Tool
   server.tool(
     "pause_campaign",
-    DeleteCampaignSchema,
+    DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
         await metaClient.updateCampaign(campaign_id, { status: "PAUSED" });
@@ -271,7 +265,7 @@ export function registerCampaignTools(
   // Resume Campaign Tool
   server.tool(
     "resume_campaign",
-    DeleteCampaignSchema,
+    DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
         await metaClient.updateCampaign(campaign_id, { status: "ACTIVE" });
@@ -310,7 +304,7 @@ export function registerCampaignTools(
   // Delete Campaign Tool
   server.tool(
     "delete_campaign",
-    DeleteCampaignSchema,
+    DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
         await metaClient.deleteCampaign(campaign_id);
@@ -348,7 +342,7 @@ export function registerCampaignTools(
   // List Ad Sets Tool
   server.tool(
     "list_ad_sets",
-    ListAdSetsSchema,
+    ListAdSetsSchema.shape,
     async ({ campaign_id, account_id, status, limit, after }) => {
       try {
         if (!campaign_id && !account_id) {
@@ -426,7 +420,7 @@ export function registerCampaignTools(
   // Create Ad Set Tool
   server.tool(
     "create_ad_set",
-    CreateAdSetSchema,
+    CreateAdSetSchema.shape,
     async ({
       campaign_id,
       name,
@@ -522,7 +516,7 @@ export function registerCampaignTools(
   // List Ads Tool
   server.tool(
     "list_ads",
-    ListAdSetsSchema,
+    ListAdSetsSchema.shape,
     async ({ campaign_id, account_id, status, limit, after }) => {
       try {
         if (!campaign_id && !account_id) {
@@ -593,7 +587,7 @@ export function registerCampaignTools(
   );
 
   // Get Campaign Details Tool
-  server.tool("get_campaign", DeleteCampaignSchema, async ({ campaign_id }) => {
+  server.tool("get_campaign", DeleteCampaignSchema.shape, async ({ campaign_id }) => {
     try {
       const campaign = await metaClient.getCampaign(campaign_id);
 

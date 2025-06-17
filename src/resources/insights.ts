@@ -506,7 +506,7 @@ export function registerInsightsResources(
             cpm: parseFloat(insight.cpm || "0"),
           }))
           .sort(
-            (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+            (a, b) => new Date(a.date || '').getTime() - new Date(b.date || '').getTime()
           );
 
         // Calculate trends

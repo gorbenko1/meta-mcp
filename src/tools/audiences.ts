@@ -5,10 +5,6 @@ import {
   CreateCustomAudienceSchema,
   CreateLookalikeAudienceSchema,
   EstimateAudienceSizeSchema,
-  type ListAudiencesParams,
-  type CreateCustomAudienceParams,
-  type CreateLookalikeAudienceParams,
-  type EstimateAudienceSizeParams,
 } from "../types/mcp-tools.js";
 
 export function registerAudienceTools(
@@ -18,7 +14,7 @@ export function registerAudienceTools(
   // List Audiences Tool
   server.tool(
     "list_audiences",
-    ListAudiencesSchema,
+    ListAudiencesSchema.shape,
     async ({ account_id, type, limit, after }) => {
       try {
         const result = await metaClient.getCustomAudiences(account_id, {
@@ -88,7 +84,7 @@ export function registerAudienceTools(
   // Create Custom Audience Tool
   server.tool(
     "create_custom_audience",
-    CreateCustomAudienceSchema,
+    CreateCustomAudienceSchema.shape,
     async ({
       account_id,
       name,
@@ -161,7 +157,7 @@ export function registerAudienceTools(
   // Create Lookalike Audience Tool
   server.tool(
     "create_lookalike_audience",
-    CreateLookalikeAudienceSchema,
+    CreateLookalikeAudienceSchema.shape,
     async ({
       account_id,
       name,
@@ -245,7 +241,7 @@ export function registerAudienceTools(
   // Estimate Audience Size Tool
   server.tool(
     "estimate_audience_size",
-    EstimateAudienceSizeSchema,
+    EstimateAudienceSizeSchema.shape,
     async ({ account_id, targeting, optimization_goal }) => {
       try {
         const estimate = await metaClient.estimateAudienceSize(
@@ -310,8 +306,8 @@ export function registerAudienceTools(
   // Update Audience Tool (for custom audiences)
   server.tool(
     "update_custom_audience",
-    CreateCustomAudienceSchema,
-    async ({ account_id, name, description, retention_days }) => {
+    CreateCustomAudienceSchema.shape,
+    async ({ name, description, retention_days }) => {
       try {
         // Note: This is a simplified version. The actual Meta API endpoint would be different
         // For now, we'll return a structure showing what could be updated
@@ -359,8 +355,8 @@ export function registerAudienceTools(
   // Delete Audience Tool
   server.tool(
     "delete_audience",
-    ListAudiencesSchema,
-    async ({ account_id }) => {
+    ListAudiencesSchema.shape,
+    async ({ }) => {
       try {
         // Note: This would require an audience_id parameter in a real implementation
         const response = {
@@ -399,8 +395,8 @@ export function registerAudienceTools(
   // Get Audience Insights Tool
   server.tool(
     "get_audience_insights",
-    EstimateAudienceSizeSchema,
-    async ({ account_id, targeting }) => {
+    EstimateAudienceSizeSchema.shape,
+    async ({ targeting }) => {
       try {
         // This would typically call a different endpoint for audience insights
         // For now, we'll provide a structured response showing what insights are available
