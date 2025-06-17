@@ -1,17 +1,17 @@
-import type { MetaApiError } from '../types/meta-api.js';
-import { RateLimitError } from './rate-limiter.js';
+import type { MetaApiError } from "../types/meta-api.js";
+import { RateLimitError } from "./rate-limiter.js";
 
 export class MetaApiErrorHandler {
   static isMetaApiError(error: any): error is MetaApiError {
-    return error && error.error && typeof error.error.code === 'number';
+    return error && error.error && typeof error.error.code === "number";
   }
 
   static async handleResponse(response: any): Promise<any> {
     const responseText = await response.text();
-    
+
     if (!response.ok) {
       let errorData: any;
-      
+
       try {
         errorData = JSON.parse(responseText);
       } catch {
@@ -38,7 +38,10 @@ export class MetaApiErrorHandler {
     }
   }
 
-  private static createSpecificError(errorData: MetaApiError, _httpStatus: number): Error {
+  private static createSpecificError(
+    errorData: MetaApiError,
+    _httpStatus: number
+  ): Error {
     const { error } = errorData;
     const { code, error_subcode, message, type } = error;
 
@@ -49,7 +52,10 @@ export class MetaApiErrorHandler {
     if (code === 613 && error_subcode === 1487742) {
       return new RateLimitError(message, 60000); // 1 minute
     }
-    if (code === 4 && (error_subcode === 1504022 || error_subcode === 1504039)) {
+    if (
+      code === 4 &&
+      (error_subcode === 1504022 || error_subcode === 1504039)
+    ) {
       return new RateLimitError(message, 300000); // 5 minutes
     }
 
@@ -108,7 +114,11 @@ export class MetaApiErrorHandler {
     if (error instanceof RateLimitError) return 3;
     if (error instanceof MetaApplicationLimitError) return 2;
     if (error instanceof MetaUserLimitError) return 2;
-    if (error instanceof MetaApiProcessingError && (error.httpStatus || 0) >= 500) return 3;
+    if (
+      error instanceof MetaApiProcessingError &&
+      (error.httpStatus || 0) >= 500
+    )
+      return 3;
     return 0; // No retry for other errors
   }
 }
@@ -122,7 +132,7 @@ export class MetaApiProcessingError extends Error {
     public readonly errorType?: string
   ) {
     super(message);
-    this.name = 'MetaApiError';
+    this.name = "MetaApiError";
   }
 
   toJSON() {
@@ -132,49 +142,55 @@ export class MetaApiProcessingError extends Error {
       httpStatus: this.httpStatus,
       errorCode: this.errorCode,
       errorSubcode: this.errorSubcode,
-      errorType: this.errorType
+      errorType: this.errorType,
     };
   }
 }
 
 export class MetaAuthError extends MetaApiProcessingError {
   constructor(message: string, errorCode?: number, errorSubcode?: number) {
-    super(message, 401, errorCode, errorSubcode, 'OAuthException');
-    this.name = 'MetaAuthError';
+    super(message, 401, errorCode, errorSubcode, "OAuthException");
+    this.name = "MetaAuthError";
   }
 }
 
 export class MetaPermissionError extends MetaApiProcessingError {
   constructor(message: string, errorCode?: number, errorSubcode?: number) {
-    super(message, 403, errorCode, errorSubcode, 'FacebookApiException');
-    this.name = 'MetaPermissionError';
+    super(message, 403, errorCode, errorSubcode, "FacebookApiException");
+    this.name = "MetaPermissionError";
   }
 }
 
 export class MetaValidationError extends MetaApiProcessingError {
   constructor(message: string, errorCode?: number, errorSubcode?: number) {
-    super(message, 400, errorCode, errorSubcode, 'FacebookApiException');
-    this.name = 'MetaValidationError';
+    super(message, 400, errorCode, errorSubcode, "FacebookApiException");
+    this.name = "MetaValidationError";
   }
 }
 
 export class MetaApplicationLimitError extends MetaApiProcessingError {
   constructor(message: string, errorCode?: number, errorSubcode?: number) {
-    super(message, 429, errorCode, errorSubcode, 'ApplicationRequestLimitReached');
-    this.name = 'MetaApplicationLimitError';
+    super(
+      message,
+      429,
+      errorCode,
+      errorSubcode,
+      "ApplicationRequestLimitReached"
+    );
+    this.name = "MetaApplicationLimitError";
   }
 }
 
 export class MetaUserLimitError extends MetaApiProcessingError {
   constructor(message: string, errorCode?: number, errorSubcode?: number) {
-    super(message, 429, errorCode, errorSubcode, 'UserRequestLimitReached');
-    this.name = 'MetaUserLimitError';
+    super(message, 429, errorCode, errorSubcode, "UserRequestLimitReached");
+    this.name = "MetaUserLimitError";
   }
 }
 
 export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
-  context: string = 'operation'
+  context: string = "operation"
 ): Promise<T> {
   let lastError: Error;
   let attempt = 0;
@@ -192,13 +208,17 @@ export async function retryWithBackoff<T>(
 
       const maxRetries = MetaApiErrorHandler.getMaxRetries(lastError);
       if (attempt > maxRetries) {
-        throw new Error(`${context} failed after ${maxRetries} retries. Last error: ${lastError.message}`);
+        throw new Error(
+          `${context} failed after ${maxRetries} retries. Last error: ${lastError.message}`
+        );
       }
 
       const delay = MetaApiErrorHandler.getRetryDelay(lastError, attempt);
-      console.warn(`${context} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms: ${lastError.message}`);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
+      console.warn(
+        `${context} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms: ${lastError.message}`
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }

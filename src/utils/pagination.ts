@@ -1,4 +1,4 @@
-import type { MetaApiResponse } from '../types/meta-api.js';
+import type { MetaApiResponse } from "../types/meta-api.js";
 
 export interface PaginationParams {
   limit?: number;
@@ -24,53 +24,65 @@ export interface PaginatedResult<T> {
 export class PaginationHelper {
   static buildPaginationParams(params: PaginationParams): URLSearchParams {
     const urlParams = new URLSearchParams();
-    
+
     if (params.limit !== undefined && params.limit > 0) {
-      urlParams.set('limit', params.limit.toString());
+      urlParams.set("limit", params.limit.toString());
     }
-    
+
     if (params.after) {
-      urlParams.set('after', params.after);
+      urlParams.set("after", params.after);
     }
-    
+
     if (params.before) {
-      urlParams.set('before', params.before);
+      urlParams.set("before", params.before);
     }
-    
+
     return urlParams;
   }
 
-  static parsePaginatedResponse<T>(response: MetaApiResponse<T>): PaginatedResult<T> {
-    const hasNextPage = Boolean(response.paging?.next || response.paging?.cursors?.after);
-    const hasPreviousPage = Boolean(response.paging?.previous || response.paging?.cursors?.before);
+  static parsePaginatedResponse<T>(
+    response: MetaApiResponse<T>
+  ): PaginatedResult<T> {
+    const hasNextPage = Boolean(
+      response.paging?.next || response.paging?.cursors?.after
+    );
+    const hasPreviousPage = Boolean(
+      response.paging?.previous || response.paging?.cursors?.before
+    );
 
     return {
       data: response.data || [],
       paging: response.paging,
       hasNextPage,
-      hasPreviousPage
+      hasPreviousPage,
     };
   }
 
-  static getNextPageParams(result: PaginatedResult<any>, currentLimit?: number): PaginationParams | null {
+  static getNextPageParams(
+    result: PaginatedResult<any>,
+    currentLimit?: number
+  ): PaginationParams | null {
     if (!result.hasNextPage || !result.paging?.cursors?.after) {
       return null;
     }
 
     return {
       after: result.paging.cursors.after,
-      limit: currentLimit
+      limit: currentLimit,
     };
   }
 
-  static getPreviousPageParams(result: PaginatedResult<any>, currentLimit?: number): PaginationParams | null {
+  static getPreviousPageParams(
+    result: PaginatedResult<any>,
+    currentLimit?: number
+  ): PaginationParams | null {
     if (!result.hasPreviousPage || !result.paging?.cursors?.before) {
       return null;
     }
 
     return {
       before: result.paging.cursors.before,
-      limit: currentLimit
+      limit: currentLimit,
     };
   }
 
@@ -108,29 +120,30 @@ export class PaginationHelper {
     maxItems: number = 5000
   ): Promise<T[]> {
     const allItems: T[] = [];
-    
-    for await (const pageData of this.fetchAllPages(fetchPage, initialParams, maxPages)) {
+
+    for await (const pageData of this.fetchAllPages(
+      fetchPage,
+      initialParams,
+      maxPages
+    )) {
       allItems.push(...pageData);
-      
+
       if (allItems.length >= maxItems) {
         allItems.splice(maxItems); // Trim to max items
         break;
       }
     }
-    
+
     return allItems;
   }
 
-  static createBatchedRequests<T>(
-    items: T[],
-    batchSize: number = 50
-  ): T[][] {
+  static createBatchedRequests<T>(items: T[], batchSize: number = 50): T[][] {
     const batches: T[][] = [];
-    
+
     for (let i = 0; i < items.length; i += batchSize) {
       batches.push(items.slice(i, i + batchSize));
     }
-    
+
     return batches;
   }
 
@@ -145,7 +158,7 @@ export class PaginationHelper {
 
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i];
-      
+
       try {
         const batchResults = await processor(batch);
         results.push(...batchResults);
@@ -156,7 +169,7 @@ export class PaginationHelper {
 
       // Add delay between batches to respect rate limits
       if (i < batches.length - 1 && delayMs > 0) {
-        await new Promise(resolve => setTimeout(resolve, delayMs));
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
     }
 
@@ -168,7 +181,11 @@ export class PaginationHelper {
 
     try {
       const urlObj = new URL(url);
-      return urlObj.searchParams.get('after') || urlObj.searchParams.get('before') || undefined;
+      return (
+        urlObj.searchParams.get("after") ||
+        urlObj.searchParams.get("before") ||
+        undefined
+      );
     } catch {
       return undefined;
     }
@@ -180,7 +197,7 @@ export class PaginationHelper {
       hasPreviousPage: result.hasPreviousPage,
       startCursor: result.paging?.cursors?.before,
       endCursor: result.paging?.cursors?.after,
-      totalCount: result.totalCount
+      totalCount: result.totalCount,
     };
   }
 }

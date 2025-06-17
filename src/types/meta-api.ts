@@ -24,7 +24,7 @@ export interface Campaign {
   id: string;
   name: string;
   objective: string;
-  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED';
+  status: "ACTIVE" | "PAUSED" | "DELETED" | "ARCHIVED";
   effective_status: string;
   created_time: string;
   updated_time: string;
@@ -41,7 +41,7 @@ export interface AdSet {
   id: string;
   name: string;
   campaign_id: string;
-  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED';
+  status: "ACTIVE" | "PAUSED" | "DELETED" | "ARCHIVED";
   effective_status: string;
   created_time: string;
   updated_time: string;
@@ -60,7 +60,7 @@ export interface Ad {
   name: string;
   adset_id: string;
   campaign_id: string;
-  status: 'ACTIVE' | 'PAUSED' | 'DELETED' | 'ARCHIVED';
+  status: "ACTIVE" | "PAUSED" | "DELETED" | "ARCHIVED";
   effective_status: string;
   created_time: string;
   updated_time: string;
@@ -192,7 +192,7 @@ export interface MetaApiResponse<T> {
 }
 
 export interface BatchRequest {
-  method: 'GET' | 'POST' | 'DELETE';
+  method: "GET" | "POST" | "DELETE";
   relative_url: string;
   body?: string;
 }
@@ -203,46 +203,46 @@ export interface BatchResponse {
   body: string;
 }
 
-export type CampaignObjective = 
-  | 'OUTCOME_APP_PROMOTION'
-  | 'OUTCOME_AWARENESS'
-  | 'OUTCOME_ENGAGEMENT'
-  | 'OUTCOME_LEADS'
-  | 'OUTCOME_SALES'
-  | 'OUTCOME_TRAFFIC';
+export type CampaignObjective =
+  | "OUTCOME_APP_PROMOTION"
+  | "OUTCOME_AWARENESS"
+  | "OUTCOME_ENGAGEMENT"
+  | "OUTCOME_LEADS"
+  | "OUTCOME_SALES"
+  | "OUTCOME_TRAFFIC";
 
 export type OptimizationGoal =
-  | 'AD_RECALL_LIFT'
-  | 'APP_INSTALLS'
-  | 'BRAND_AWARENESS'
-  | 'CLICKS'
-  | 'CONVERSIONS'
-  | 'IMPRESSIONS'
-  | 'LANDING_PAGE_VIEWS'
-  | 'LEAD_GENERATION'
-  | 'LINK_CLICKS'
-  | 'NONE'
-  | 'OFFSITE_CONVERSIONS'
-  | 'PAGE_LIKES'
-  | 'POST_ENGAGEMENT'
-  | 'REACH'
-  | 'REPLIES'
-  | 'RETURN_ON_AD_SPEND'
-  | 'SOCIAL_IMPRESSIONS'
-  | 'THRUPLAY'
-  | 'TWO_SECOND_CONTINUOUS_VIDEO_VIEWS'
-  | 'VALUE'
-  | 'VIDEO_VIEWS';
+  | "AD_RECALL_LIFT"
+  | "APP_INSTALLS"
+  | "BRAND_AWARENESS"
+  | "CLICKS"
+  | "CONVERSIONS"
+  | "IMPRESSIONS"
+  | "LANDING_PAGE_VIEWS"
+  | "LEAD_GENERATION"
+  | "LINK_CLICKS"
+  | "NONE"
+  | "OFFSITE_CONVERSIONS"
+  | "PAGE_LIKES"
+  | "POST_ENGAGEMENT"
+  | "REACH"
+  | "REPLIES"
+  | "RETURN_ON_AD_SPEND"
+  | "SOCIAL_IMPRESSIONS"
+  | "THRUPLAY"
+  | "TWO_SECOND_CONTINUOUS_VIDEO_VIEWS"
+  | "VALUE"
+  | "VIDEO_VIEWS";
 
 export type BillingEvent =
-  | 'APP_INSTALLS'
-  | 'CLICKS'
-  | 'IMPRESSIONS'
-  | 'LINK_CLICKS'
-  | 'NONE'
-  | 'OFFER_CLAIMS'
-  | 'PAGE_LIKES'
-  | 'POST_ENGAGEMENT'
-  | 'THRUPLAY'
-  | 'PURCHASE'
-  | 'LISTING_INTERACTION';
+  | "APP_INSTALLS"
+  | "CLICKS"
+  | "IMPRESSIONS"
+  | "LINK_CLICKS"
+  | "NONE"
+  | "OFFER_CLAIMS"
+  | "PAGE_LIKES"
+  | "POST_ENGAGEMENT"
+  | "THRUPLAY"
+  | "PURCHASE"
+  | "LISTING_INTERACTION";
