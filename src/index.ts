@@ -392,10 +392,8 @@ process.on("unhandledRejection", (reason, promise) => {
   process.exit(1);
 });
 
-// Start the server
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((error) => {
-    console.error("Failed to start server:", error);
-    process.exit(1);
-  });
-}
+// Start the server automatically (this is a CLI tool)
+main().catch((error) => {
+  console.error("Failed to start server:", error);
+  process.exit(1);
+});
