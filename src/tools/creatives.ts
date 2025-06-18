@@ -389,60 +389,64 @@ export function registerCreativeTools(
   );
 
   // Update Creative Tool
-  server.tool("update_creative", CreateAdCreativeSchema.shape, async (_params) => {
-    // Note: These variables would be used in actual implementation
-    // const { name, title, body } = _params;
-    try {
-      const response = {
-        message: "Creative update limitations",
-        important_note:
-          "Ad creatives cannot be modified once created in Meta's system",
-        explanation:
-          "This is by design to maintain ad performance data integrity",
-        recommended_approach: [
-          "1. Create a new creative with the desired changes",
-          "2. Update existing ads to use the new creative",
-          "3. Archive the old creative if no longer needed",
-          "4. Compare performance between old and new creatives",
-        ],
-        updatable_elements: {
-          ad_level: [
-            "Link URL (in ad, not creative)",
-            "Headline (in ad copy, not creative)",
-            "Description (in ad copy, not creative)",
+  server.tool(
+    "update_creative",
+    CreateAdCreativeSchema.shape,
+    async (_params) => {
+      // Note: These variables would be used in actual implementation
+      // const { name, title, body } = _params;
+      try {
+        const response = {
+          message: "Creative update limitations",
+          important_note:
+            "Ad creatives cannot be modified once created in Meta's system",
+          explanation:
+            "This is by design to maintain ad performance data integrity",
+          recommended_approach: [
+            "1. Create a new creative with the desired changes",
+            "2. Update existing ads to use the new creative",
+            "3. Archive the old creative if no longer needed",
+            "4. Compare performance between old and new creatives",
           ],
-          campaign_level: [
-            "Budget and schedule",
-            "Targeting parameters",
-            "Optimization goals",
-          ],
-        },
-        creative_versioning_tip:
-          "Use descriptive naming conventions to track creative versions",
-      };
+          updatable_elements: {
+            ad_level: [
+              "Link URL (in ad, not creative)",
+              "Headline (in ad copy, not creative)",
+              "Description (in ad copy, not creative)",
+            ],
+            campaign_level: [
+              "Budget and schedule",
+              "Targeting parameters",
+              "Optimization goals",
+            ],
+          },
+          creative_versioning_tip:
+            "Use descriptive naming conventions to track creative versions",
+        };
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error updating creative: ${errorMessage}`,
-          },
-        ],
-        isError: true,
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error updating creative: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
     }
-  });
+  );
 
   // Delete Creative Tool
   server.tool("delete_creative", PreviewAdSchema.shape, async (params) => {

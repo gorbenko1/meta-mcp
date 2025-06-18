@@ -215,8 +215,12 @@ export const CreateAdSetSchema = z.object({
         .optional()
         .describe("Publisher platform targeting"),
     })
-    .optional()
-    .describe("Targeting parameters"),
+    .default({
+      geo_locations: {
+        countries: ["US"],
+      },
+    })
+    .describe("Targeting parameters - defaults to US if not specified"),
   status: z
     .enum(["ACTIVE", "PAUSED"])
     .default("PAUSED")
