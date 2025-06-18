@@ -88,6 +88,7 @@ export function registerCampaignTools(
       lifetime_budget,
       start_time,
       stop_time,
+      special_ad_categories,
     }) => {
       try {
         if (daily_budget && lifetime_budget) {
@@ -112,6 +113,8 @@ export function registerCampaignTools(
         if (lifetime_budget) campaignData.lifetime_budget = lifetime_budget;
         if (start_time) campaignData.start_time = start_time;
         if (stop_time) campaignData.stop_time = stop_time;
+        if (special_ad_categories)
+          campaignData.special_ad_categories = special_ad_categories;
 
         const result = await metaClient.createCampaign(
           account_id,
@@ -587,48 +590,52 @@ export function registerCampaignTools(
   );
 
   // Get Campaign Details Tool
-  server.tool("get_campaign", DeleteCampaignSchema.shape, async ({ campaign_id }) => {
-    try {
-      const campaign = await metaClient.getCampaign(campaign_id);
+  server.tool(
+    "get_campaign",
+    DeleteCampaignSchema.shape,
+    async ({ campaign_id }) => {
+      try {
+        const campaign = await metaClient.getCampaign(campaign_id);
 
-      const response = {
-        campaign: {
-          id: campaign.id,
-          name: campaign.name,
-          objective: campaign.objective,
-          status: campaign.status,
-          effective_status: campaign.effective_status,
-          created_time: campaign.created_time,
-          updated_time: campaign.updated_time,
-          start_time: campaign.start_time,
-          stop_time: campaign.stop_time,
-          daily_budget: campaign.daily_budget,
-          lifetime_budget: campaign.lifetime_budget,
-          budget_remaining: campaign.budget_remaining,
-          account_id: campaign.account_id,
-        },
-      };
+        const response = {
+          campaign: {
+            id: campaign.id,
+            name: campaign.name,
+            objective: campaign.objective,
+            status: campaign.status,
+            effective_status: campaign.effective_status,
+            created_time: campaign.created_time,
+            updated_time: campaign.updated_time,
+            start_time: campaign.start_time,
+            stop_time: campaign.stop_time,
+            daily_budget: campaign.daily_budget,
+            lifetime_budget: campaign.lifetime_budget,
+            budget_remaining: campaign.budget_remaining,
+            account_id: campaign.account_id,
+          },
+        };
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error getting campaign details: ${errorMessage}`,
-          },
-        ],
-        isError: true,
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error getting campaign details: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
     }
-  });
+  );
 }

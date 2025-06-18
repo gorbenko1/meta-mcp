@@ -46,6 +46,20 @@ export const CreateCampaignSchema = z.object({
     .string()
     .optional()
     .describe("Campaign stop time (ISO 8601 format)"),
+  special_ad_categories: z
+    .array(
+      z.enum([
+        "NONE",
+        "EMPLOYMENT",
+        "HOUSING",
+        "CREDIT",
+        "SOCIAL_ISSUES_ELECTIONS_POLITICS",
+      ])
+    )
+    .optional()
+    .describe(
+      "Special ad categories for regulated industries (required for legal, financial services, etc.)"
+    ),
 });
 
 export const UpdateCampaignSchema = z.object({
