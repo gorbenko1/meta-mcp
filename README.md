@@ -71,7 +71,8 @@ Add to your `claude_desktop_config.json`:
 {
   "mcpServers": {
     "meta-ads": {
-      "command": "meta-ads-mcp",
+      "command": "npx",
+      "args": ["-y", "meta-ads-mcp"],
       "env": {
         "META_ACCESS_TOKEN": "your_access_token_here"
       }
@@ -138,7 +139,7 @@ Set up an A/B test comparing different headlines for my campaign
 The server provides rich contextual data through MCP resources:
 
 - `meta://campaigns/{account_id}` - Campaign overview
-- `meta://insights/account/{account_id}` - Performance dashboard  
+- `meta://insights/account/{account_id}` - Performance dashboard
 - `meta://audiences/{account_id}` - Audience insights
 - `meta://audience-health/{account_id}` - Audience health report
 
@@ -151,7 +152,7 @@ META_ACCESS_TOKEN=your_access_token_here
 
 # Optional
 META_APP_ID=your_app_id
-META_APP_SECRET=your_app_secret  
+META_APP_SECRET=your_app_secret
 META_BUSINESS_ID=your_business_id
 META_API_VERSION=v23.0
 META_API_TIER=standard  # or 'development'
