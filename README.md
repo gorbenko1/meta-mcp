@@ -269,6 +269,15 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🏷️ Version History
 
+### v1.0.2 (Latest)
+- ✅ Fixed entry point issue for npx compatibility
+- ✅ Added detailed startup debugging logs
+- ✅ Improved error handling and diagnostics
+
+### v1.0.1
+- ✅ Enhanced debugging capabilities
+- ✅ Better error reporting
+
 ### v1.0.0
 - ✅ Complete Meta Marketing API integration
 - ✅ 40+ tools and resources
