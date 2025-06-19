@@ -179,7 +179,7 @@ export function registerCampaignTools(
       stop_time,
     }) => {
       try {
-        const updates: any = {};
+        const updates: Record<string, string | number> = {};
 
         if (name) updates.name = name;
         if (status) updates.status = status;
@@ -469,19 +469,101 @@ export function registerCampaignTools(
           };
         }
 
-        const adSetData: any = {
+        // Validate optimization_goal and billing_event combination
+        const validCombinations = [
+          { optimization_goal: "LINK_CLICKS", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "LINK_CLICKS", billing_event: "LINK_CLICKS" },
+          { optimization_goal: "LANDING_PAGE_VIEWS", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "IMPRESSIONS", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "REACH", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "POST_ENGAGEMENT", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "PAGE_LIKES", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "PAGE_LIKES", billing_event: "PAGE_LIKES" },
+          { optimization_goal: "VIDEO_VIEWS", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "VIDEO_VIEWS", billing_event: "VIDEO_VIEWS" },
+          { optimization_goal: "CONVERSIONS", billing_event: "IMPRESSIONS" },
+          { optimization_goal: "APP_INSTALLS", billing_event: "IMPRESSIONS" },
+        ];
+
+        const isValidCombination = validCombinations.some(
+          combo => combo.optimization_goal === optimization_goal && 
+                   combo.billing_event === billing_event
+        );
+
+        if (!isValidCombination) {
+          console.error(`Invalid combination: optimization_goal=${optimization_goal}, billing_event=${billing_event}`);
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: Invalid optimization_goal (${optimization_goal}) and billing_event (${billing_event}) combination. Common valid combinations include:\n` +
+                      `- LINK_CLICKS + IMPRESSIONS\n` +
+                      `- LANDING_PAGE_VIEWS + IMPRESSIONS\n` +
+                      `- REACH + IMPRESSIONS\n` +
+                      `- CONVERSIONS + IMPRESSIONS`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Ensure budget is an integer (Meta API expects cents)
+        const formatBudget = (budget: number) => Math.round(budget);
+
+        interface AdSetData {
+          name: string;
+          optimization_goal: string;
+          billing_event: string;
+          status: string;
+          daily_budget?: number;
+          lifetime_budget?: number;
+          bid_amount?: number;
+          start_time?: string;
+          end_time?: string;
+          targeting?: Record<string, unknown>;
+        }
+
+        const adSetData: AdSetData = {
           name,
           optimization_goal,
           billing_event,
           status: status || "PAUSED",
         };
 
-        if (daily_budget) adSetData.daily_budget = daily_budget;
-        if (lifetime_budget) adSetData.lifetime_budget = lifetime_budget;
+        // Add budgets
+        if (daily_budget) {
+          adSetData.daily_budget = formatBudget(daily_budget);
+        }
+        if (lifetime_budget) {
+          adSetData.lifetime_budget = formatBudget(lifetime_budget);
+          // Lifetime budget requires start_time and end_time
+          if (!start_time || !end_time) {
+            const now = new Date();
+            const endDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
+            adSetData.start_time = start_time || now.toISOString();
+            adSetData.end_time = end_time || endDate.toISOString();
+          }
+        }
+        
         if (bid_amount) adSetData.bid_amount = bid_amount;
         if (start_time) adSetData.start_time = start_time;
         if (end_time) adSetData.end_time = end_time;
-        if (targeting) adSetData.targeting = targeting;
+        
+        // Default targeting if not provided
+        if (targeting) {
+          adSetData.targeting = targeting;
+        } else {
+          // Provide minimal default targeting
+          adSetData.targeting = {
+            geo_locations: {
+              countries: ["US"]
+            }
+          };
+        }
+
+        // Log the request for debugging
+        console.error("Creating ad set with data:", JSON.stringify(adSetData, null, 2));
+        console.error("For campaign ID:", campaign_id);
 
         const result = await metaClient.createAdSet(campaign_id, adSetData);
 

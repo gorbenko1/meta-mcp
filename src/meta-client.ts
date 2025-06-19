@@ -268,10 +268,14 @@ export class MetaApiClient {
     }
 
     const formattedAccountId = this.auth.getAccountId(accountId);
-    const body = this.buildQueryString({
+    
+    // Ensure campaign_id is included in the request body
+    const requestData = {
       ...adSetData,
       campaign_id: campaignId,
-    });
+    };
+    
+    const body = this.buildQueryString(requestData);
 
     return this.makeRequest<{ id: string }>(
       `${formattedAccountId}/adsets`,
