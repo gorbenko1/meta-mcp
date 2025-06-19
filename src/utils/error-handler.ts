@@ -198,10 +198,12 @@ export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
   context: string = "operation"
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error | undefined;
   let attempt = 0;
 
-  while (true) {
+  const maxRetries = 3; // Default max retries
+  
+  while (attempt <= maxRetries) {
     try {
       return await operation();
     } catch (error) {
@@ -212,19 +214,22 @@ export async function retryWithBackoff<T>(
         throw lastError;
       }
 
-      const maxRetries = MetaApiErrorHandler.getMaxRetries(lastError);
-      if (attempt > maxRetries) {
+      const maxRetriesForError = MetaApiErrorHandler.getMaxRetries(lastError);
+      if (attempt > maxRetriesForError) {
         throw new Error(
-          `${context} failed after ${maxRetries} retries. Last error: ${lastError.message}`
+          `${context} failed after ${maxRetriesForError} retries. Last error: ${lastError.message}`
         );
       }
 
       const delay = MetaApiErrorHandler.getRetryDelay(lastError, attempt);
       console.warn(
-        `${context} failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms: ${lastError.message}`
+        `${context} failed (attempt ${attempt}/${maxRetriesForError}), retrying in ${delay}ms: ${lastError.message}`
       );
 
       await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
+  
+  // This should never be reached, but TypeScript requires it
+  throw lastError || new Error(`${context} failed after exhausting all retries`);
 }

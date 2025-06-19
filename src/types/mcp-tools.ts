@@ -511,6 +511,41 @@ export const EstimateAudienceSizeSchema = z.object({
   optimization_goal: z.string().describe("Optimization goal for the estimate"),
 });
 
+// OAuth Tool Schemas
+export const GenerateAuthUrlSchema = z.object({
+  scopes: z
+    .array(z.string())
+    .optional()
+    .default(["ads_management"])
+    .describe("OAuth scopes to request"),
+  state: z.string().optional().describe("State parameter for security"),
+});
+
+export const ExchangeCodeSchema = z.object({
+  code: z.string().describe("Authorization code from OAuth redirect"),
+});
+
+export const RefreshTokenSchema = z.object({
+  short_lived_token: z
+    .string()
+    .optional()
+    .describe("Short-lived token to exchange (optional, uses current if not provided)"),
+});
+
+export const GenerateSystemTokenSchema = z.object({
+  system_user_id: z.string().describe("System user ID"),
+  scopes: z
+    .array(z.string())
+    .optional()
+    .default(["ads_management"])
+    .describe("Scopes for the system user token"),
+  expiring_token: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Whether to generate an expiring token (60 days) or non-expiring"),
+});
+
 // Creative Management Schemas
 export const ListCreativesSchema = z.object({
   account_id: z.string().describe("Meta Ad Account ID"),
@@ -590,3 +625,7 @@ export type EstimateAudienceSizeParams = z.infer<
 export type ListCreativesParams = z.infer<typeof ListCreativesSchema>;
 export type CreateAdCreativeParams = z.infer<typeof CreateAdCreativeSchema>;
 export type PreviewAdParams = z.infer<typeof PreviewAdSchema>;
+export type GenerateAuthUrlParams = z.infer<typeof GenerateAuthUrlSchema>;
+export type ExchangeCodeParams = z.infer<typeof ExchangeCodeSchema>;
+export type RefreshTokenParams = z.infer<typeof RefreshTokenSchema>;
+export type GenerateSystemTokenParams = z.infer<typeof GenerateSystemTokenSchema>;

@@ -473,10 +473,16 @@ export function registerCampaignTools(
         const validCombinations = [
           { optimization_goal: "LINK_CLICKS", billing_event: "IMPRESSIONS" },
           { optimization_goal: "LINK_CLICKS", billing_event: "LINK_CLICKS" },
-          { optimization_goal: "LANDING_PAGE_VIEWS", billing_event: "IMPRESSIONS" },
+          {
+            optimization_goal: "LANDING_PAGE_VIEWS",
+            billing_event: "IMPRESSIONS",
+          },
           { optimization_goal: "IMPRESSIONS", billing_event: "IMPRESSIONS" },
           { optimization_goal: "REACH", billing_event: "IMPRESSIONS" },
-          { optimization_goal: "POST_ENGAGEMENT", billing_event: "IMPRESSIONS" },
+          {
+            optimization_goal: "POST_ENGAGEMENT",
+            billing_event: "IMPRESSIONS",
+          },
           { optimization_goal: "PAGE_LIKES", billing_event: "IMPRESSIONS" },
           { optimization_goal: "PAGE_LIKES", billing_event: "PAGE_LIKES" },
           { optimization_goal: "VIDEO_VIEWS", billing_event: "IMPRESSIONS" },
@@ -486,21 +492,25 @@ export function registerCampaignTools(
         ];
 
         const isValidCombination = validCombinations.some(
-          combo => combo.optimization_goal === optimization_goal && 
-                   combo.billing_event === billing_event
+          (combo) =>
+            combo.optimization_goal === optimization_goal &&
+            combo.billing_event === billing_event
         );
 
         if (!isValidCombination) {
-          console.error(`Invalid combination: optimization_goal=${optimization_goal}, billing_event=${billing_event}`);
+          console.error(
+            `Invalid combination: optimization_goal=${optimization_goal}, billing_event=${billing_event}`
+          );
           return {
             content: [
               {
                 type: "text",
-                text: `Error: Invalid optimization_goal (${optimization_goal}) and billing_event (${billing_event}) combination. Common valid combinations include:\n` +
-                      `- LINK_CLICKS + IMPRESSIONS\n` +
-                      `- LANDING_PAGE_VIEWS + IMPRESSIONS\n` +
-                      `- REACH + IMPRESSIONS\n` +
-                      `- CONVERSIONS + IMPRESSIONS`,
+                text:
+                  `Error: Invalid optimization_goal (${optimization_goal}) and billing_event (${billing_event}) combination. Common valid combinations include:\n` +
+                  `- LINK_CLICKS + IMPRESSIONS\n` +
+                  `- LANDING_PAGE_VIEWS + IMPRESSIONS\n` +
+                  `- REACH + IMPRESSIONS\n` +
+                  `- CONVERSIONS + IMPRESSIONS`,
               },
             ],
             isError: true,
@@ -544,11 +554,11 @@ export function registerCampaignTools(
             adSetData.end_time = end_time || endDate.toISOString();
           }
         }
-        
+
         if (bid_amount) adSetData.bid_amount = bid_amount;
         if (start_time) adSetData.start_time = start_time;
         if (end_time) adSetData.end_time = end_time;
-        
+
         // Default targeting if not provided
         if (targeting) {
           adSetData.targeting = targeting;
@@ -556,13 +566,16 @@ export function registerCampaignTools(
           // Provide minimal default targeting
           adSetData.targeting = {
             geo_locations: {
-              countries: ["US"]
-            }
+              countries: ["US"],
+            },
           };
         }
 
         // Log the request for debugging
-        console.error("Creating ad set with data:", JSON.stringify(adSetData, null, 2));
+        console.error(
+          "Creating ad set with data:",
+          JSON.stringify(adSetData, null, 2)
+        );
         console.error("For campaign ID:", campaign_id);
 
         const result = await metaClient.createAdSet(campaign_id, adSetData);

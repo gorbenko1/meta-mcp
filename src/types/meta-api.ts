@@ -5,6 +5,11 @@ export interface MetaApiConfig {
   businessId?: string;
   apiVersion?: string;
   baseUrl?: string;
+  // OAuth configuration
+  redirectUri?: string;
+  refreshToken?: string;
+  tokenExpiration?: Date;
+  autoRefresh?: boolean;
 }
 
 export interface AdAccount {

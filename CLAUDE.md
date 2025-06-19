@@ -35,7 +35,7 @@ This is a Model Context Protocol (MCP) server that provides comprehensive integr
 3. **Tools** (`src/tools/`)
    - Each file exports multiple related tools
    - Tools follow a consistent pattern with Zod schema validation
-   - Categories: campaigns, analytics, audiences, creatives
+   - Categories: campaigns, analytics, audiences, creatives, oauth
 
 4. **Resources** (`src/resources/`)
    - Provide contextual data for the LLM
@@ -54,12 +54,58 @@ This is a Model Context Protocol (MCP) server that provides comprehensive integr
 - **Rate Limiting**: Built-in rate limiter to respect Meta API limits
 - **Pagination**: Automatic handling of paginated API responses
 
-### Authentication Flow
+### Authentication & OAuth Implementation
 
-The server supports OAuth 2.0 authentication with Meta:
-1. Initial token provided via environment variable or config
-2. Automatic token refresh when needed
-3. Multi-account support with account switching
+The server provides comprehensive OAuth 2.0 support for Meta Marketing API authentication:
+
+#### Environment Variables
+```bash
+# Required
+META_ACCESS_TOKEN=your_access_token
+
+# OAuth Configuration (for token refresh and full OAuth flow)
+META_APP_ID=your_app_id
+META_APP_SECRET=your_app_secret
+META_REDIRECT_URI=your_redirect_uri
+
+# Optional
+META_AUTO_REFRESH=true               # Enable automatic token refresh
+META_REFRESH_TOKEN=your_refresh_token
+META_BUSINESS_ID=your_business_id
+```
+
+#### Authentication Methods Supported
+
+1. **Static Access Token** (Basic)
+   - Provide `META_ACCESS_TOKEN` only
+   - Manual token management required
+
+2. **Long-Lived Token with Auto-Refresh** (Recommended)
+   - Set `META_APP_ID`, `META_APP_SECRET`, `META_AUTO_REFRESH=true`
+   - Automatic refresh ~60 days before expiration
+
+3. **Full OAuth Flow** (Web Applications)
+   - Complete OAuth 2.0 authorization code flow
+   - User consent and token exchange
+
+4. **System User Tokens** (Enterprise)
+   - Non-expiring tokens for server-to-server automation
+   - Business Manager integration required
+
+#### OAuth Tools Available
+
+- `generate_auth_url` - Create authorization URLs for user consent
+- `exchange_code_for_token` - Exchange authorization code for access token
+- `refresh_to_long_lived_token` - Convert short-lived to long-lived tokens
+- `generate_system_user_token` - Create system user tokens
+- `get_token_info` - Get detailed token information and validation
+- `validate_token` - Validate current token status
+
+#### Authentication Flow
+1. Initial token provided via environment variable or OAuth flow
+2. Automatic validation and refresh on startup
+3. Background refresh when tokens near expiration
+4. Multi-account support with account switching
 
 ### API Version
 

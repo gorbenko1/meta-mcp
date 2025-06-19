@@ -8,6 +8,7 @@ import { registerCampaignTools } from "./tools/campaigns.js";
 import { registerAnalyticsTools } from "./tools/analytics.js";
 import { registerAudienceTools } from "./tools/audiences.js";
 import { registerCreativeTools } from "./tools/creatives.js";
+import { registerOAuthTools } from "./tools/oauth.js";
 import { registerCampaignResources } from "./resources/campaigns.js";
 import { registerInsightsResources } from "./resources/insights.js";
 import { registerAudienceResources } from "./resources/audiences.js";
@@ -31,18 +32,22 @@ async function main() {
     const auth = AuthManager.fromEnvironment();
     console.error("✅ Auth manager created successfully");
 
-    // Validate token on startup
+    // Validate and refresh token if needed
     console.error("🔍 Validating Meta access token...");
-    const isValidToken = await auth.validateToken();
-    console.error(`🔑 Token validation result: ${isValidToken}`);
-
-    if (!isValidToken) {
-      console.error(
-        "❌ Invalid Meta access token. Please check your META_ACCESS_TOKEN environment variable."
-      );
+    try {
+      const currentToken = await auth.refreshTokenIfNeeded();
+      console.error("✅ Token validation and refresh successful");
+      console.error(`🔑 Token ready: ${currentToken.substring(0, 20)}...`);
+      
+      // Log OAuth configuration status
+      const hasOAuthConfig = !!(process.env.META_APP_ID && process.env.META_APP_SECRET);
+      console.error(`🔧 OAuth configuration: ${hasOAuthConfig ? "Available" : "Not configured"}`);
+      console.error(`🔄 Auto-refresh: ${process.env.META_AUTO_REFRESH === "true" ? "Enabled" : "Disabled"}`);
+    } catch (error) {
+      console.error("❌ Token validation failed:", error);
+      console.error("💡 Use OAuth tools to obtain a new token or check configuration");
       process.exit(1);
     }
-    console.error("✅ Token validation successful");
 
     // Initialize Meta API client
     console.error("🌐 Initializing Meta API client...");
@@ -67,6 +72,8 @@ async function main() {
     console.error("   ✅ Audience tools registered");
     registerCreativeTools(server, metaClient);
     console.error("   ✅ Creative tools registered");
+    registerOAuthTools(server, auth);
+    console.error("   ✅ OAuth tools registered");
 
     // Register all resources
     console.error("📚 Registering resources...");
@@ -295,6 +302,13 @@ async function main() {
           "create_ad_creative",
           "preview_ad",
           "setup_ab_test",
+          // OAuth tools
+          "generate_auth_url",
+          "exchange_code_for_token",
+          "refresh_to_long_lived_token",
+          "generate_system_user_token",
+          "get_token_info",
+          "validate_token",
           // Utility tools
           "get_ad_accounts",
           "health_check",
@@ -332,8 +346,14 @@ async function main() {
         },
         authentication: {
           required: ["META_ACCESS_TOKEN"],
-          optional: ["META_APP_ID", "META_APP_SECRET", "META_BUSINESS_ID"],
+          optional: ["META_APP_ID", "META_APP_SECRET", "META_BUSINESS_ID", "META_REDIRECT_URI", "META_REFRESH_TOKEN", "META_AUTO_REFRESH"],
           token_validation: "automatic_on_startup",
+          oauth_support: {
+            authorization_flow: "supported",
+            token_refresh: "automatic_with_configuration",
+            system_user_tokens: "supported",
+            long_lived_tokens: "supported",
+          },
         },
       };
 
