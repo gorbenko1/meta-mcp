@@ -435,6 +435,7 @@ export class MetaApiClient {
     const formattedAccountId = this.auth.getAccountId(accountId);
     const body = this.buildQueryString({
       ...audienceData,
+      subtype: "LOOKALIKE",
       lookalike_spec: {
         ratio: audienceData.ratio,
         country: audienceData.country,

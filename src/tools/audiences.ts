@@ -356,7 +356,7 @@ export function registerAudienceTools(
   server.tool(
     "delete_audience",
     ListAudiencesSchema.shape,
-    async ({ }) => {
+    async () => {
       try {
         // Note: This would require an audience_id parameter in a real implementation
         const response = {

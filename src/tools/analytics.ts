@@ -25,7 +25,7 @@ export function registerAnalyticsTools(
       limit,
     }) => {
       try {
-        const params: any = {
+        const params: Record<string, any> = {
           level,
           limit: limit || 25,
         };
@@ -123,7 +123,7 @@ export function registerAnalyticsTools(
     ComparePerformanceSchema.shape,
     async ({ object_ids, level, date_preset, time_range, metrics }) => {
       try {
-        const params: any = {
+        const params: Record<string, any> = {
           level,
           fields: metrics,
         };
@@ -146,7 +146,7 @@ export function registerAnalyticsTools(
 
             // Get object details (name, etc.)
             let objectName = objectId;
-            let objectType = level;
+            const objectType = level;
 
             try {
               if (level === "campaign") {
@@ -228,7 +228,7 @@ export function registerAnalyticsTools(
       breakdowns,
     }) => {
       try {
-        const params: any = {
+        const params: Record<string, any> = {
           level,
           limit: 1000, // Get more data for export
         };
