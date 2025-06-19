@@ -61,6 +61,12 @@ The server supports OAuth 2.0 authentication with Meta:
 2. Automatic token refresh when needed
 3. Multi-account support with account switching
 
+### API Version
+
+- Currently using Meta Graph API v23.0 (latest version, released May 2025)
+- Supports Outcome-Driven Ad Experience (ODAE) objectives
+- Compatible with all latest Meta Marketing API features
+
 ### Testing Strategy
 
 - Unit tests for individual tools and utilities

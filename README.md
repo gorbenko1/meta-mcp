@@ -269,7 +269,27 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🏷️ Version History
 
-### v1.0.2 (Latest)
+### v1.0.6 (Latest)
+- ✅ Using Meta Graph API v23.0 (latest version)
+- ✅ Added support for Outcome-Driven Ad Experience (ODAE) objectives
+- ✅ Added campaign-level budget optimization support
+- ✅ Added bid strategy options (LOWEST_COST_WITHOUT_CAP, LOWEST_COST_WITH_BID_CAP, COST_CAP)
+- ✅ Removed deprecated insights metrics per Meta API v19.0 changes
+- ✅ Enhanced campaign creation with bid cap and budget optimization features
+
+### v1.0.5
+- ✅ Fixed ad set creation to use correct account endpoint
+- ✅ Improved error handling for campaign operations
+
+### v1.0.4
+- ✅ Enhanced campaign management features
+- ✅ Improved API error responses
+
+### v1.0.3
+- ✅ Added docker support
+- ✅ Improved deployment options
+
+### v1.0.2
 - ✅ Fixed entry point issue for npx compatibility
 - ✅ Added detailed startup debugging logs
 - ✅ Improved error handling and diagnostics

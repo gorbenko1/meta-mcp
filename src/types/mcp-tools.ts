@@ -20,9 +20,16 @@ export const CreateCampaignSchema = z.object({
   account_id: z.string().describe("Meta Ad Account ID"),
   name: z.string().min(1).describe("Campaign name"),
   objective: z
-    .string()
+    .enum([
+      "OUTCOME_APP_PROMOTION",
+      "OUTCOME_AWARENESS",
+      "OUTCOME_ENGAGEMENT",
+      "OUTCOME_LEADS",
+      "OUTCOME_SALES",
+      "OUTCOME_TRAFFIC"
+    ])
     .describe(
-      "Campaign objective (e.g., OUTCOME_TRAFFIC, OUTCOME_CONVERSIONS)"
+      "Campaign objective using Outcome-Driven Ad Experience (ODAE) format"
     ),
   status: z
     .enum(["ACTIVE", "PAUSED"])
@@ -60,6 +67,19 @@ export const CreateCampaignSchema = z.object({
     .describe(
       "Special ad categories for regulated industries (required for legal, financial services, etc.)"
     ),
+  bid_strategy: z
+    .enum(["LOWEST_COST_WITHOUT_CAP", "LOWEST_COST_WITH_BID_CAP", "COST_CAP"])
+    .optional()
+    .describe("Bid strategy for the campaign"),
+  bid_cap: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Bid cap amount in account currency cents (required for LOWEST_COST_WITH_BID_CAP)"),
+  budget_optimization: z
+    .boolean()
+    .optional()
+    .describe("Enable campaign budget optimization across ad sets"),
 });
 
 export const UpdateCampaignSchema = z.object({

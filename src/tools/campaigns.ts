@@ -89,6 +89,9 @@ export function registerCampaignTools(
       start_time,
       stop_time,
       special_ad_categories,
+      bid_strategy,
+      bid_cap,
+      budget_optimization,
     }) => {
       try {
         if (daily_budget && lifetime_budget) {
@@ -115,6 +118,10 @@ export function registerCampaignTools(
         if (stop_time) campaignData.stop_time = stop_time;
         if (special_ad_categories)
           campaignData.special_ad_categories = special_ad_categories;
+        if (bid_strategy) campaignData.bid_strategy = bid_strategy;
+        if (bid_cap) campaignData.bid_cap = bid_cap;
+        if (budget_optimization !== undefined)
+          campaignData.is_budget_optimization_enabled = budget_optimization;
 
         const result = await metaClient.createCampaign(
           account_id,

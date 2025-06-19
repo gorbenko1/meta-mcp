@@ -150,6 +150,10 @@ export class MetaApiClient {
       lifetime_budget?: number;
       start_time?: string;
       stop_time?: string;
+      special_ad_categories?: string[];
+      bid_strategy?: string;
+      bid_cap?: number;
+      is_budget_optimization_enabled?: boolean;
     }
   ): Promise<{ id: string }> {
     const formattedAccountId = this.auth.getAccountId(accountId);
