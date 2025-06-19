@@ -85,7 +85,13 @@ export class MetaApiErrorHandler {
     }
 
     // Generic Meta API error
-    return new MetaApiProcessingError(message, undefined, code, error_subcode, type);
+    return new MetaApiProcessingError(
+      message,
+      undefined,
+      code,
+      error_subcode,
+      type
+    );
   }
 
   static shouldRetry(error: Error): boolean {
