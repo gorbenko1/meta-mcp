@@ -185,6 +185,38 @@ export const CreateAdSetSchema = z.object({
     .describe(
       "Object being promoted - required for certain campaign objectives like OUTCOME_TRAFFIC"
     ),
+  attribution_spec: z
+    .array(
+      z.object({
+        event_type: z
+          .enum(["CLICK_THROUGH", "VIEW_THROUGH"])
+          .default("CLICK_THROUGH"),
+        window_days: z.number().min(1).max(90).default(1),
+      })
+    )
+    .default([{ event_type: "CLICK_THROUGH", window_days: 1 }])
+    .describe(
+      "Attribution specification for tracking conversions - REQUIRED by Meta API"
+    ),
+  destination_type: z
+    .enum([
+      "WEBSITE",
+      "ON_AD",
+      "FACEBOOK",
+      "INSTAGRAM",
+      "MESSENGER",
+      "WHATSAPP",
+    ])
+    .default("ON_AD")
+    .describe("Destination type for traffic campaigns - REQUIRED"),
+  is_dynamic_creative: z
+    .boolean()
+    .default(false)
+    .describe("Whether to use dynamic creative optimization - REQUIRED"),
+  use_new_app_click: z
+    .boolean()
+    .default(false)
+    .describe("Whether to use new app click attribution - REQUIRED"),
   targeting: z
     .object({
       age_min: z
@@ -209,6 +241,10 @@ export const CreateAdSetSchema = z.object({
             .array(z.string())
             .optional()
             .describe("Country codes for targeting"),
+          location_types: z
+            .array(z.enum(["home", "recent"]))
+            .default(["home", "recent"])
+            .describe("Location types for targeting - REQUIRED by Meta API"),
           regions: z
             .array(z.object({ key: z.string() }))
             .optional()
@@ -260,11 +296,22 @@ export const CreateAdSetSchema = z.object({
         .array(z.enum(["facebook", "instagram", "messenger", "whatsapp"]))
         .optional()
         .describe("Publisher platform targeting"),
+      targeting_optimization: z
+        .enum(["none", "expansion_all"])
+        .default("none")
+        .describe("Targeting optimization setting - REQUIRED by Meta API"),
+      brand_safety_content_filter_levels: z
+        .array(z.enum(["FACEBOOK_STANDARD", "AN_STANDARD", "RESTRICTIVE"]))
+        .default(["FACEBOOK_STANDARD"])
+        .describe("Brand safety content filter levels - REQUIRED by Meta API"),
     })
     .default({
       geo_locations: {
         countries: ["US"],
+        location_types: ["home", "recent"],
       },
+      targeting_optimization: "none",
+      brand_safety_content_filter_levels: ["FACEBOOK_STANDARD"],
     })
     .describe("Targeting parameters - defaults to US if not specified"),
   status: z

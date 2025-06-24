@@ -444,6 +444,10 @@ export function registerCampaignTools(
       targeting,
       status,
       promoted_object,
+      attribution_spec,
+      destination_type,
+      is_dynamic_creative,
+      use_new_app_click,
     }) => {
       try {
         if (daily_budget && lifetime_budget) {
@@ -539,6 +543,13 @@ export function registerCampaignTools(
             object_store_url?: string;
             custom_event_type?: string;
           };
+          attribution_spec?: Array<{
+            event_type: string;
+            window_days: number;
+          }>;
+          destination_type?: string;
+          is_dynamic_creative?: boolean;
+          use_new_app_click?: boolean;
         }
 
         const adSetData: AdSetData = {
@@ -567,16 +578,9 @@ export function registerCampaignTools(
         if (start_time) adSetData.start_time = start_time;
         if (end_time) adSetData.end_time = end_time;
 
-        // Default targeting if not provided
+        // Set initial targeting
         if (targeting) {
           adSetData.targeting = targeting;
-        } else {
-          // Provide minimal default targeting
-          adSetData.targeting = {
-            geo_locations: {
-              countries: ["US"],
-            },
-          };
         }
 
         // Handle promoted_object - check if it's required for this campaign
@@ -596,27 +600,118 @@ export function registerCampaignTools(
           };
         }
 
-        // For OUTCOME_TRAFFIC campaigns, promoted_object is typically required
-        if (campaign.objective === "OUTCOME_TRAFFIC" || promoted_object) {
-          if (promoted_object) {
-            adSetData.promoted_object = promoted_object;
-          } else {
-            // Provide helpful error message for OUTCOME_TRAFFIC campaigns
-            console.error("OUTCOME_TRAFFIC campaign requires promoted_object");
-            return {
-              content: [
-                {
-                  type: "text",
-                  text:
-                    `Error: Campaign with objective OUTCOME_TRAFFIC requires a promoted_object parameter. Please provide either:\n` +
-                    `- page_id: Facebook Page ID to drive traffic to\n` +
-                    `- pixel_id: Facebook Pixel ID for tracking website conversions\n` +
-                    `\nExample: {"page_id": "your_page_id"} or {"pixel_id": "your_pixel_id"}`,
-                },
-              ],
-              isError: true,
-            };
+        // Enhanced validation for promoted_object based on campaign objective
+        const requiresPromotedObject = [
+          "OUTCOME_TRAFFIC",
+          "OUTCOME_ENGAGEMENT",
+          "OUTCOME_APP_PROMOTION",
+          "OUTCOME_LEADS",
+          "OUTCOME_SALES",
+        ].includes(campaign.objective);
+
+        if (requiresPromotedObject && !promoted_object) {
+          console.error(
+            `Campaign objective ${campaign.objective} requires promoted_object`
+          );
+
+          let objectiveHelp = "";
+          switch (campaign.objective) {
+            case "OUTCOME_TRAFFIC":
+              objectiveHelp = `For OUTCOME_TRAFFIC campaigns, provide:\n- page_id: Facebook Page ID to drive traffic to\n- pixel_id: Facebook Pixel ID for website tracking`;
+              break;
+            case "OUTCOME_ENGAGEMENT":
+              objectiveHelp = `For OUTCOME_ENGAGEMENT campaigns, provide:\n- page_id: Facebook Page ID to promote`;
+              break;
+            case "OUTCOME_APP_PROMOTION":
+              objectiveHelp = `For OUTCOME_APP_PROMOTION campaigns, provide:\n- application_id: App ID to promote\n- object_store_url: App store URL`;
+              break;
+            case "OUTCOME_LEADS":
+            case "OUTCOME_SALES":
+              objectiveHelp = `For ${campaign.objective} campaigns, provide:\n- pixel_id: Facebook Pixel ID for conversion tracking\n- custom_event_type: Custom conversion event type`;
+              break;
           }
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: Campaign with objective "${campaign.objective}" requires a promoted_object parameter.\n\n${objectiveHelp}\n\nExample: {"promoted_object": {"page_id": "your_page_id"}}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        if (promoted_object) {
+          adSetData.promoted_object = promoted_object;
+        }
+
+        // Add required Meta API fields with defaults and validation
+        adSetData.attribution_spec = attribution_spec || [
+          { event_type: "CLICK_THROUGH", window_days: 1 },
+        ];
+
+        // Set destination_type based on campaign objective if not provided
+        if (!destination_type) {
+          switch (campaign.objective) {
+            case "OUTCOME_TRAFFIC":
+              adSetData.destination_type = "WEBSITE";
+              break;
+            case "OUTCOME_ENGAGEMENT":
+              adSetData.destination_type = "ON_AD";
+              break;
+            default:
+              adSetData.destination_type = "ON_AD";
+          }
+        } else {
+          adSetData.destination_type = destination_type;
+        }
+
+        adSetData.is_dynamic_creative = is_dynamic_creative ?? false;
+        adSetData.use_new_app_click = use_new_app_click ?? false;
+
+        // Validate attribution_spec format
+        if (
+          adSetData.attribution_spec &&
+          Array.isArray(adSetData.attribution_spec)
+        ) {
+          adSetData.attribution_spec = adSetData.attribution_spec.map(
+            (spec) => ({
+              event_type: spec.event_type || "CLICK_THROUGH",
+              window_days: spec.window_days || 1,
+            })
+          );
+        }
+
+        // Ensure targeting has required fields
+        if (adSetData.targeting) {
+          if (!adSetData.targeting.targeting_optimization) {
+            adSetData.targeting.targeting_optimization = "none";
+          }
+          if (!adSetData.targeting.brand_safety_content_filter_levels) {
+            adSetData.targeting.brand_safety_content_filter_levels = [
+              "FACEBOOK_STANDARD",
+            ];
+          }
+          if (
+            adSetData.targeting.geo_locations &&
+            !(adSetData.targeting.geo_locations as any).location_types
+          ) {
+            (adSetData.targeting.geo_locations as any).location_types = [
+              "home",
+              "recent",
+            ];
+          }
+        } else {
+          // Provide complete default targeting with all required fields
+          adSetData.targeting = {
+            geo_locations: {
+              countries: ["US"],
+              location_types: ["home", "recent"],
+            },
+            targeting_optimization: "none",
+            brand_safety_content_filter_levels: ["FACEBOOK_STANDARD"],
+          };
         }
 
         // Log the request for debugging
@@ -653,15 +748,25 @@ export function registerCampaignTools(
         };
       } catch (error) {
         // Enhanced error handling for Meta API errors
+        console.error("=== AD SET CREATION TOOL ERROR ===");
+        console.error("Error object:", error);
+
         let errorMessage = "Unknown error occurred";
         let errorDetails = "";
+        let specificErrorInfo = "";
 
         if (error instanceof Error) {
           errorMessage = error.message;
+          console.error("Error message:", error.message);
 
           // Try to parse Meta API error details if available
           try {
             const errorObj = JSON.parse(error.message);
+            console.error(
+              "Parsed error object:",
+              JSON.stringify(errorObj, null, 2)
+            );
+
             if (errorObj.error) {
               errorMessage = errorObj.error.message || errorMessage;
               errorDetails =
@@ -676,17 +781,38 @@ export function registerCampaignTools(
                 error_subcode: errorObj.error.error_subcode,
                 fbtrace_id: errorObj.error.fbtrace_id,
                 type: errorObj.error.type,
+                error_data: errorObj.error.error_data,
               });
+
+              // Provide specific guidance based on error codes
+              if (errorObj.error.code === 100) {
+                specificErrorInfo =
+                  "\n\nThis is usually caused by missing required fields or invalid field values.";
+
+                if (errorObj.error.error_data) {
+                  specificErrorInfo += `\nError data: ${JSON.stringify(
+                    errorObj.error.error_data
+                  )}`;
+                }
+              } else if (errorObj.error.code === 190) {
+                specificErrorInfo =
+                  "\n\nThis indicates an access token issue. Please check your authentication.";
+              } else if (errorObj.error.code === 200) {
+                specificErrorInfo =
+                  "\n\nThis indicates insufficient permissions for the operation.";
+              }
             }
           } catch (parseError) {
             // Error message is not JSON, use as is
-            console.error("Raw error message:", error.message);
+            console.error("Raw error message (not JSON):", error.message);
           }
         }
 
+        console.error("================================");
+
         const fullErrorMessage = errorDetails
-          ? `${errorMessage}\n\nAdditional details: ${errorDetails}`
-          : errorMessage;
+          ? `${errorMessage}\n\nAdditional details: ${errorDetails}${specificErrorInfo}`
+          : `${errorMessage}${specificErrorInfo}`;
 
         return {
           content: [
