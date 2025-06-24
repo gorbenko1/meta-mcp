@@ -26,7 +26,7 @@ export const CreateCampaignSchema = z.object({
       "OUTCOME_ENGAGEMENT",
       "OUTCOME_LEADS",
       "OUTCOME_SALES",
-      "OUTCOME_TRAFFIC"
+      "OUTCOME_TRAFFIC",
     ])
     .describe(
       "Campaign objective using Outcome-Driven Ad Experience (ODAE) format"
@@ -75,7 +75,9 @@ export const CreateCampaignSchema = z.object({
     .number()
     .positive()
     .optional()
-    .describe("Bid cap amount in account currency cents (required for LOWEST_COST_WITH_BID_CAP)"),
+    .describe(
+      "Bid cap amount in account currency cents (required for LOWEST_COST_WITH_BID_CAP)"
+    ),
   budget_optimization: z
     .boolean()
     .optional()
@@ -159,6 +161,30 @@ export const CreateAdSetSchema = z.object({
     .optional()
     .describe("Ad set start time (ISO 8601 format)"),
   end_time: z.string().optional().describe("Ad set end time (ISO 8601 format)"),
+  promoted_object: z
+    .object({
+      page_id: z.string().optional().describe("Facebook Page ID to promote"),
+      pixel_id: z
+        .string()
+        .optional()
+        .describe("Facebook Pixel ID for tracking"),
+      application_id: z
+        .string()
+        .optional()
+        .describe("Application ID for app promotion"),
+      object_store_url: z
+        .string()
+        .optional()
+        .describe("App store URL for app promotion"),
+      custom_event_type: z
+        .string()
+        .optional()
+        .describe("Custom event type for conversion tracking"),
+    })
+    .optional()
+    .describe(
+      "Object being promoted - required for certain campaign objectives like OUTCOME_TRAFFIC"
+    ),
   targeting: z
     .object({
       age_min: z
@@ -529,7 +555,9 @@ export const RefreshTokenSchema = z.object({
   short_lived_token: z
     .string()
     .optional()
-    .describe("Short-lived token to exchange (optional, uses current if not provided)"),
+    .describe(
+      "Short-lived token to exchange (optional, uses current if not provided)"
+    ),
 });
 
 export const GenerateSystemTokenSchema = z.object({
@@ -543,7 +571,9 @@ export const GenerateSystemTokenSchema = z.object({
     .boolean()
     .optional()
     .default(true)
-    .describe("Whether to generate an expiring token (60 days) or non-expiring"),
+    .describe(
+      "Whether to generate an expiring token (60 days) or non-expiring"
+    ),
 });
 
 // Creative Management Schemas
@@ -628,4 +658,6 @@ export type PreviewAdParams = z.infer<typeof PreviewAdSchema>;
 export type GenerateAuthUrlParams = z.infer<typeof GenerateAuthUrlSchema>;
 export type ExchangeCodeParams = z.infer<typeof ExchangeCodeSchema>;
 export type RefreshTokenParams = z.infer<typeof RefreshTokenSchema>;
-export type GenerateSystemTokenParams = z.infer<typeof GenerateSystemTokenSchema>;
+export type GenerateSystemTokenParams = z.infer<
+  typeof GenerateSystemTokenSchema
+>;

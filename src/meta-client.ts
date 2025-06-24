@@ -257,6 +257,13 @@ export class MetaApiClient {
       end_time?: string;
       targeting?: any;
       status?: string;
+      promoted_object?: {
+        page_id?: string;
+        pixel_id?: string;
+        application_id?: string;
+        object_store_url?: string;
+        custom_event_type?: string;
+      };
     }
   ): Promise<{ id: string }> {
     // First, get the campaign to find its account_id
@@ -268,13 +275,13 @@ export class MetaApiClient {
     }
 
     const formattedAccountId = this.auth.getAccountId(accountId);
-    
+
     // Ensure campaign_id is included in the request body
     const requestData = {
       ...adSetData,
       campaign_id: campaignId,
     };
-    
+
     const body = this.buildQueryString(requestData);
 
     return this.makeRequest<{ id: string }>(

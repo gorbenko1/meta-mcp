@@ -443,6 +443,7 @@ export function registerCampaignTools(
       end_time,
       targeting,
       status,
+      promoted_object,
     }) => {
       try {
         if (daily_budget && lifetime_budget) {
@@ -531,6 +532,13 @@ export function registerCampaignTools(
           start_time?: string;
           end_time?: string;
           targeting?: Record<string, unknown>;
+          promoted_object?: {
+            page_id?: string;
+            pixel_id?: string;
+            application_id?: string;
+            object_store_url?: string;
+            custom_event_type?: string;
+          };
         }
 
         const adSetData: AdSetData = {
@@ -571,12 +579,53 @@ export function registerCampaignTools(
           };
         }
 
+        // Handle promoted_object - check if it's required for this campaign
+        let campaign;
+        try {
+          campaign = await metaClient.getCampaign(campaign_id);
+        } catch (error) {
+          console.error("Failed to fetch campaign details:", error);
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: Unable to fetch campaign details for campaign_id ${campaign_id}. Please verify the campaign exists and you have permission to access it.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // For OUTCOME_TRAFFIC campaigns, promoted_object is typically required
+        if (campaign.objective === "OUTCOME_TRAFFIC" || promoted_object) {
+          if (promoted_object) {
+            adSetData.promoted_object = promoted_object;
+          } else {
+            // Provide helpful error message for OUTCOME_TRAFFIC campaigns
+            console.error("OUTCOME_TRAFFIC campaign requires promoted_object");
+            return {
+              content: [
+                {
+                  type: "text",
+                  text:
+                    `Error: Campaign with objective OUTCOME_TRAFFIC requires a promoted_object parameter. Please provide either:\n` +
+                    `- page_id: Facebook Page ID to drive traffic to\n` +
+                    `- pixel_id: Facebook Pixel ID for tracking website conversions\n` +
+                    `\nExample: {"page_id": "your_page_id"} or {"pixel_id": "your_pixel_id"}`,
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+
         // Log the request for debugging
         console.error(
           "Creating ad set with data:",
           JSON.stringify(adSetData, null, 2)
         );
         console.error("For campaign ID:", campaign_id);
+        console.error("Campaign objective:", campaign.objective);
 
         const result = await metaClient.createAdSet(campaign_id, adSetData);
 
@@ -603,13 +652,47 @@ export function registerCampaignTools(
           ],
         };
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred";
+        // Enhanced error handling for Meta API errors
+        let errorMessage = "Unknown error occurred";
+        let errorDetails = "";
+
+        if (error instanceof Error) {
+          errorMessage = error.message;
+
+          // Try to parse Meta API error details if available
+          try {
+            const errorObj = JSON.parse(error.message);
+            if (errorObj.error) {
+              errorMessage = errorObj.error.message || errorMessage;
+              errorDetails =
+                errorObj.error.error_user_title ||
+                errorObj.error.error_user_msg ||
+                "";
+
+              // Log detailed error information for debugging
+              console.error("Meta API Error Details:", {
+                message: errorObj.error.message,
+                code: errorObj.error.code,
+                error_subcode: errorObj.error.error_subcode,
+                fbtrace_id: errorObj.error.fbtrace_id,
+                type: errorObj.error.type,
+              });
+            }
+          } catch (parseError) {
+            // Error message is not JSON, use as is
+            console.error("Raw error message:", error.message);
+          }
+        }
+
+        const fullErrorMessage = errorDetails
+          ? `${errorMessage}\n\nAdditional details: ${errorDetails}`
+          : errorMessage;
+
         return {
           content: [
             {
               type: "text",
-              text: `Error creating ad set: ${errorMessage}`,
+              text: `Error creating ad set: ${fullErrorMessage}`,
             },
           ],
           isError: true,
