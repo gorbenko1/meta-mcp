@@ -271,6 +271,9 @@ export class MetaApiClient {
       destination_type?: string;
       is_dynamic_creative?: boolean;
       use_new_app_click?: boolean;
+      configured_status?: string;
+      optimization_sub_event?: string;
+      recurring_budget_semantics?: boolean;
     }
   ): Promise<{ id: string }> {
     // First, get the campaign to find its account_id

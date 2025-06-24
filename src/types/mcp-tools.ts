@@ -206,8 +206,9 @@ export const CreateAdSetSchema = z.object({
       "INSTAGRAM",
       "MESSENGER",
       "WHATSAPP",
+      "UNDEFINED",
     ])
-    .default("ON_AD")
+    .default("UNDEFINED")
     .describe("Destination type for traffic campaigns - REQUIRED"),
   is_dynamic_creative: z
     .boolean()
@@ -217,6 +218,25 @@ export const CreateAdSetSchema = z.object({
     .boolean()
     .default(false)
     .describe("Whether to use new app click attribution - REQUIRED"),
+  configured_status: z
+    .enum(["ACTIVE", "PAUSED"])
+    .default("PAUSED")
+    .describe("Configured status field - REQUIRED by Meta API"),
+  optimization_sub_event: z
+    .enum([
+      "NONE",
+      "VIDEO_PLAY",
+      "APP_INSTALL",
+      "LINK_CLICK",
+      "LEAD_GROUPED",
+      "PURCHASE",
+    ])
+    .default("NONE")
+    .describe("Optimization sub-event - REQUIRED by Meta API"),
+  recurring_budget_semantics: z
+    .boolean()
+    .default(false)
+    .describe("Recurring budget semantics - REQUIRED by Meta API"),
   targeting: z
     .object({
       age_min: z

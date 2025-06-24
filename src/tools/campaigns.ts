@@ -448,6 +448,9 @@ export function registerCampaignTools(
       destination_type,
       is_dynamic_creative,
       use_new_app_click,
+      configured_status,
+      optimization_sub_event,
+      recurring_budget_semantics,
     }) => {
       try {
         if (daily_budget && lifetime_budget) {
@@ -550,6 +553,9 @@ export function registerCampaignTools(
           destination_type?: string;
           is_dynamic_creative?: boolean;
           use_new_app_click?: boolean;
+          configured_status?: string;
+          optimization_sub_event?: string;
+          recurring_budget_semantics?: boolean;
         }
 
         const adSetData: AdSetData = {
@@ -651,24 +657,17 @@ export function registerCampaignTools(
           { event_type: "CLICK_THROUGH", window_days: 1 },
         ];
 
-        // Set destination_type based on campaign objective if not provided
-        if (!destination_type) {
-          switch (campaign.objective) {
-            case "OUTCOME_TRAFFIC":
-              adSetData.destination_type = "WEBSITE";
-              break;
-            case "OUTCOME_ENGAGEMENT":
-              adSetData.destination_type = "ON_AD";
-              break;
-            default:
-              adSetData.destination_type = "ON_AD";
-          }
-        } else {
-          adSetData.destination_type = destination_type;
-        }
+        // Set destination_type - use "UNDEFINED" as default per working SDK example
+        adSetData.destination_type = destination_type || "UNDEFINED";
 
         adSetData.is_dynamic_creative = is_dynamic_creative ?? false;
         adSetData.use_new_app_click = use_new_app_click ?? false;
+
+        // Add the critical missing fields from GitHub issue #162
+        adSetData.configured_status = configured_status || status || "PAUSED";
+        adSetData.optimization_sub_event = optimization_sub_event || "NONE";
+        adSetData.recurring_budget_semantics =
+          recurring_budget_semantics ?? false;
 
         // Validate attribution_spec format
         if (
@@ -703,8 +702,10 @@ export function registerCampaignTools(
             ];
           }
         } else {
-          // Provide complete default targeting with all required fields
+          // Provide complete default targeting with all required fields per GitHub issue #162
           adSetData.targeting = {
+            age_min: 18,
+            age_max: 65,
             geo_locations: {
               countries: ["US"],
               location_types: ["home", "recent"],
@@ -712,6 +713,16 @@ export function registerCampaignTools(
             targeting_optimization: "none",
             brand_safety_content_filter_levels: ["FACEBOOK_STANDARD"],
           };
+        }
+
+        // Ensure age fields are set even when targeting is provided
+        if (adSetData.targeting && typeof adSetData.targeting === "object") {
+          if (!(adSetData.targeting as any).age_min) {
+            (adSetData.targeting as any).age_min = 18;
+          }
+          if (!(adSetData.targeting as any).age_max) {
+            (adSetData.targeting as any).age_max = 65;
+          }
         }
 
         // Log the request for debugging
