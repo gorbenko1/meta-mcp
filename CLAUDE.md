@@ -176,12 +176,17 @@ server.resource({
 
 ### Vercel Deployment
 
-The project is configured for easy deployment to Vercel:
+The project is configured for comprehensive deployment to Vercel with full web interface:
 
 1. **Files Added for Vercel**:
    - `api/mcp.ts` - Vercel API route that wraps the MCP server
-   - `vercel.json` - Vercel configuration with runtime settings
-   - `VERCEL_DEPLOYMENT.md` - Complete deployment guide
+   - `api/index.ts` - Main landing page
+   - `api/dashboard.ts` - Web dashboard interface
+   - `api/auth/` - Complete OAuth authentication flow (login, callback, profile, logout, refresh, revoke)
+   - `api/test-auth.ts` - Authentication testing endpoint
+   - `api/debug.ts` - Debug information endpoint
+   - `vercel.json` - Vercel configuration with runtime settings and URL rewrites
+   - `public/index.html` - Static web interface
 
 2. **Environment Variables for Vercel**:
    ```bash
@@ -207,11 +212,20 @@ The project is configured for easy deployment to Vercel:
    }
    ```
 
-### Local CLI Usage
+### Dual Deployment Model
 
-The original CLI functionality remains available:
-- `npm run dev` - Run as CLI MCP server
+This project supports both CLI and web deployment:
+
+**CLI MCP Server** (Original):
+- `npm run dev` - Run as CLI MCP server with stdio transport
 - Built binary available at `build/index.js`
+- Direct integration with Claude Desktop via `npx` command
+
+**Web Application** (Vercel):
+- Complete OAuth authentication flow
+- Web dashboard for campaign management
+- RESTful API endpoints
+- Static web interface with debugging tools
 
 ## Important Considerations
 
