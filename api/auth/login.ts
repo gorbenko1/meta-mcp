@@ -13,8 +13,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('Generated OAuth state:', state);
     
     // Store state in a secure cookie for validation later
-    const isHttps = req.headers.host?.includes('vercel.app') || req.headers.host?.includes('localhost:3000') === false;
-    const cookieOptions = `HttpOnly; ${isHttps ? 'Secure; ' : ''}SameSite=Strict; Max-Age=600; Path=/`;
+    const isProduction = req.headers.host?.includes('vercel.app') || req.headers.host?.includes('netlify.app');
+    
+    // Different cookie settings for different environments
+    const cookieOptions = isProduction 
+      ? `HttpOnly; Secure; SameSite=Lax; Max-Age=600; Path=/`
+      : `HttpOnly; SameSite=Lax; Max-Age=600; Path=/`;
+    
+    console.log('Setting cookie with options:', cookieOptions);
     
     res.setHeader('Set-Cookie', [
       `oauth_state=${state}; ${cookieOptions}`, // 10 minutes
