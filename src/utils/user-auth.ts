@@ -1,7 +1,132 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { kv } from '@vercel/kv';
 import { AuthManager } from './auth.js';
 import type { MetaApiConfig } from '../types/meta-api.js';
+
+// Storage interface
+interface StorageAdapter {
+  set(key: string, value: any, options?: { ex?: number }): Promise<void>;
+  get<T>(key: string): Promise<T | null>;
+  del(key: string): Promise<void>;
+}
+
+// Vercel KV adapter
+class VercelKVAdapter implements StorageAdapter {
+  private kv: any;
+
+  constructor() {
+    // Dynamically import Vercel KV
+    this.kv = null;
+    this.initKV();
+  }
+
+  private async initKV() {
+    try {
+      const { kv } = await import('@vercel/kv');
+      this.kv = kv;
+    } catch (error) {
+      console.warn('Vercel KV not available:', error);
+    }
+  }
+
+  async set(key: string, value: any, options?: { ex?: number }): Promise<void> {
+    if (!this.kv) await this.initKV();
+    if (!this.kv) throw new Error('Vercel KV not available');
+    await this.kv.set(key, value, options);
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    if (!this.kv) await this.initKV();
+    if (!this.kv) throw new Error('Vercel KV not available');
+    return await this.kv.get(key) as T | null;
+  }
+
+  async del(key: string): Promise<void> {
+    if (!this.kv) await this.initKV();
+    if (!this.kv) throw new Error('Vercel KV not available');
+    await this.kv.del(key);
+  }
+}
+
+// Redis adapter
+class RedisAdapter implements StorageAdapter {
+  private client: any;
+  private isConnected = false;
+
+  constructor() {
+    this.client = null;
+    this.initRedis();
+  }
+
+  private async initRedis() {
+    try {
+      const { createClient } = await import('redis');
+      this.client = createClient({
+        url: process.env.REDIS_URL
+      });
+
+      this.client.on('error', (err: any) => {
+        console.error('Redis error:', err);
+        this.isConnected = false;
+      });
+
+      this.client.on('connect', () => {
+        console.log('Redis connected');
+        this.isConnected = true;
+      });
+
+      await this.client.connect();
+    } catch (error) {
+      console.warn('Redis not available:', error);
+    }
+  }
+
+  private async ensureConnected() {
+    if (!this.client) await this.initRedis();
+    if (!this.client) throw new Error('Redis not available');
+    if (!this.isConnected) {
+      try {
+        await this.client.connect();
+      } catch (error) {
+        // Client might already be connected
+        console.warn('Redis connection warning:', error);
+      }
+    }
+  }
+
+  async set(key: string, value: any, options?: { ex?: number }): Promise<void> {
+    await this.ensureConnected();
+    const serialized = JSON.stringify(value);
+    if (options?.ex) {
+      await this.client.setEx(key, options.ex, serialized);
+    } else {
+      await this.client.set(key, serialized);
+    }
+  }
+
+  async get<T>(key: string): Promise<T | null> {
+    await this.ensureConnected();
+    const value = await this.client.get(key);
+    return value ? JSON.parse(value) : null;
+  }
+
+  async del(key: string): Promise<void> {
+    await this.ensureConnected();
+    await this.client.del(key);
+  }
+}
+
+// Storage factory
+function createStorageAdapter(): StorageAdapter {
+  if (process.env.REDIS_URL) {
+    console.log('Using Redis storage adapter');
+    return new RedisAdapter();
+  } else if (process.env.KV_REST_API_URL) {
+    console.log('Using Vercel KV storage adapter');
+    return new VercelKVAdapter();
+  } else {
+    throw new Error('No storage configuration found. Set either REDIS_URL or KV_REST_API_URL');
+  }
+}
 
 export interface UserSession {
   userId: string;
@@ -28,6 +153,17 @@ export class UserAuthManager {
   private static JWT_EXPIRY = '7d'; // 7 days
   private static SESSION_PREFIX = 'user_session:';
   private static TOKEN_PREFIX = 'user_tokens:';
+  private static storage: StorageAdapter | null = null;
+
+  /**
+   * Get storage adapter instance
+   */
+  private static getStorage(): StorageAdapter {
+    if (!this.storage) {
+      this.storage = createStorageAdapter();
+    }
+    return this.storage;
+  }
 
   /**
    * Create a JWT session token for a user
@@ -63,19 +199,21 @@ export class UserAuthManager {
   }
 
   /**
-   * Store user session data in KV storage
+   * Store user session data in storage
    */
   static async storeUserSession(session: UserSession): Promise<void> {
+    const storage = this.getStorage();
     const key = `${this.SESSION_PREFIX}${session.userId}`;
-    await kv.set(key, session, { ex: 7 * 24 * 60 * 60 }); // 7 days expiry
+    await storage.set(key, session, { ex: 7 * 24 * 60 * 60 }); // 7 days expiry
   }
 
   /**
-   * Get user session from KV storage
+   * Get user session from storage
    */
   static async getUserSession(userId: string): Promise<UserSession | null> {
+    const storage = this.getStorage();
     const key = `${this.SESSION_PREFIX}${userId}`;
-    const session = await kv.get<UserSession>(key);
+    const session = await storage.get<UserSession>(key);
     
     if (session) {
       // Update last used timestamp
@@ -90,20 +228,22 @@ export class UserAuthManager {
    * Store user Meta tokens securely
    */
   static async storeUserTokens(userId: string, tokens: UserTokenData): Promise<void> {
+    const storage = this.getStorage();
     const key = `${this.TOKEN_PREFIX}${userId}`;
     const tokenData = {
       ...tokens,
       updatedAt: new Date().toISOString(),
     };
-    await kv.set(key, tokenData, { ex: 60 * 24 * 60 * 60 }); // 60 days expiry
+    await storage.set(key, tokenData, { ex: 60 * 24 * 60 * 60 }); // 60 days expiry
   }
 
   /**
    * Get user Meta tokens
    */
   static async getUserTokens(userId: string): Promise<UserTokenData | null> {
+    const storage = this.getStorage();
     const key = `${this.TOKEN_PREFIX}${userId}`;
-    return await kv.get<UserTokenData>(key);
+    return await storage.get<UserTokenData>(key);
   }
 
   /**
@@ -133,12 +273,13 @@ export class UserAuthManager {
    * Delete user session and tokens
    */
   static async deleteUserData(userId: string): Promise<void> {
+    const storage = this.getStorage();
     const sessionKey = `${this.SESSION_PREFIX}${userId}`;
     const tokenKey = `${this.TOKEN_PREFIX}${userId}`;
     
     await Promise.all([
-      kv.del(sessionKey),
-      kv.del(tokenKey)
+      storage.del(sessionKey),
+      storage.del(tokenKey)
     ]);
   }
 
