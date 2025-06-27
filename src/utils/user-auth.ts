@@ -336,8 +336,8 @@ export class UserAuthManager {
     const scopes = [
       'ads_management',
       'ads_read',
-      'business_management',
-      'read_insights'
+      'business_management'
+      // Note: 'read_insights' is included in ads_read
     ];
 
     const params = new URLSearchParams({

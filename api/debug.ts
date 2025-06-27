@@ -27,7 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const params = new URLSearchParams({
         client_id: process.env.META_APP_ID,
         redirect_uri: process.env.META_REDIRECT_URI,
-        scope: 'ads_management,ads_read,business_management,read_insights',
+        scope: 'ads_management,ads_read,business_management',
         response_type: 'code',
         state: 'debug_test_state_123',
       });
