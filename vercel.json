@@ -1,0 +1,42 @@
+{
+  "functions": {
+    "api/mcp.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 60
+    },
+    "api/auth/*.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    },
+    "api/index.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 10
+    },
+    "api/dashboard.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 15
+    }
+  },
+  "env": {
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "ENABLE_EXPERIMENTAL_COREPACK": "1"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/api/index"
+    },
+    {
+      "source": "/mcp",
+      "destination": "/api/mcp"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/api/dashboard"
+    }
+  ]
+}

@@ -10,10 +10,12 @@ This is a Model Context Protocol (MCP) server that provides comprehensive integr
 
 ### Development
 - `npm run dev` - Start the development server with hot reloading (uses tsx)
+- `npm run dev:vercel` - Start local Vercel development server
 - `npm run build` - Compile TypeScript to JavaScript (output in `build/`)
 - `npm test` - Run the Jest test suite (Note: No tests currently exist)
 - `npm run lint` - Run ESLint to check code quality
 - `npm run prepare` - Automatically runs build on npm install
+- `npm run vercel-build` - Build command used by Vercel deployment
 
 ### Testing Individual Features
 When tests are added:
@@ -170,6 +172,47 @@ server.resource({
 });
 ```
 
+## Deployment
+
+### Vercel Deployment
+
+The project is configured for easy deployment to Vercel:
+
+1. **Files Added for Vercel**:
+   - `api/mcp.ts` - Vercel API route that wraps the MCP server
+   - `vercel.json` - Vercel configuration with runtime settings
+   - `VERCEL_DEPLOYMENT.md` - Complete deployment guide
+
+2. **Environment Variables for Vercel**:
+   ```bash
+   META_ACCESS_TOKEN=required
+   META_APP_ID=optional
+   META_APP_SECRET=optional
+   META_AUTO_REFRESH=true/false
+   # See VERCEL_DEPLOYMENT.md for complete list
+   ```
+
+3. **Deployment Commands**:
+   - `npm run vercel-build` - Build for Vercel
+   - `npm run dev:vercel` - Local Vercel development
+
+4. **MCP Client Configuration**:
+   ```json
+   {
+     "mcpServers": {
+       "meta-ads": {
+         "url": "https://your-project.vercel.app/api/mcp"
+       }
+     }
+   }
+   ```
+
+### Local CLI Usage
+
+The original CLI functionality remains available:
+- `npm run dev` - Run as CLI MCP server
+- Built binary available at `build/index.js`
+
 ## Important Considerations
 
 - Always check Meta API documentation for endpoint changes
@@ -180,3 +223,4 @@ server.resource({
 - Date ranges should use ISO 8601 format
 - Targeting parameters require specific formatting per Meta's requirements
 - The project currently lacks test coverage - consider adding tests for critical paths
+- For Vercel deployment, ensure all environment variables are properly configured
