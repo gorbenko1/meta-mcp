@@ -11,11 +11,12 @@ This is a Model Context Protocol (MCP) server that provides comprehensive integr
 ### Development
 - `npm run dev` - Start the development server with hot reloading (uses tsx)
 - `npm run build` - Compile TypeScript to JavaScript (output in `build/`)
-- `npm test` - Run the Jest test suite
+- `npm test` - Run the Jest test suite (Note: No tests currently exist)
 - `npm run lint` - Run ESLint to check code quality
 - `npm run prepare` - Automatically runs build on npm install
 
 ### Testing Individual Features
+When tests are added:
 - To test a specific tool: `npm test -- tools/<tool-name>.test.ts`
 - To run tests in watch mode: `npm test -- --watch`
 - To run with coverage: `npm test -- --coverage`
@@ -38,7 +39,7 @@ This is a Model Context Protocol (MCP) server that provides comprehensive integr
    - Manages token validation and refresh
 
 3. **Tools** (`src/tools/`)
-   - Each file exports multiple related tools via register functions
+   - Each file exports tools via the server.tool() method
    - Tools follow a consistent pattern with Zod schema validation
    - Categories: campaigns, analytics, audiences, creatives, oauth
    - All tools return structured responses with success/error states
@@ -113,13 +114,6 @@ META_BUSINESS_ID=your_business_id
 - `get_token_info` - Get detailed token information and validation
 - `validate_token` - Validate current token status
 
-#### Authentication Flow
-1. Initial token provided via environment variable or OAuth flow
-2. Automatic validation and refresh on startup
-3. Background refresh when tokens near expiration
-4. Multi-account support with account switching
-5. Graceful degradation on auth failures
-
 ### API Version
 
 - Currently using Meta Graph API v23.0 (latest version, released May 2025)
@@ -129,48 +123,50 @@ META_BUSINESS_ID=your_business_id
 
 ### Testing Strategy
 
-- Unit tests for individual tools and utilities
-- Integration tests for Meta API interactions
-- Mock Meta API responses for consistent testing
-- Test fixtures in `__tests__/fixtures/` for realistic data
-- Error scenario testing with edge cases
+- Jest is configured but no tests currently exist
+- When adding tests:
+  - Unit tests for individual tools and utilities
+  - Integration tests for Meta API interactions
+  - Mock Meta API responses for consistent testing
+  - Test fixtures in `__tests__/fixtures/` for realistic data
+  - Error scenario testing with edge cases
 
 ### TypeScript Configuration
 
 - Strict mode enabled for type safety
-- ES2022 target with module resolution
+- ES2022 target with ES module resolution
 - Source maps enabled for debugging
 - Declaration files generated for type exports
 - No implicit any or unused variables
+- Modern ES modules (type: "module" in package.json)
 
 ### Tool Registration Pattern
 
-Tools are registered using a consistent pattern:
+Tools are registered using the MCP SDK pattern:
 ```typescript
-export function registerToolName(server: Server, client: MetaApiClient) {
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    if (request.params.name === "tool_name") {
-      // Implementation
-    }
-  });
-}
+server.tool("tool_name", zodSchema.shape, async (params) => {
+  try {
+    const result = await client.someMethod(params);
+    return { success: true, data: result };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
 ```
 
 ### Resource Implementation Pattern
 
-Resources follow a lazy-loading pattern with caching:
+Resources follow a server.resource() pattern:
 ```typescript
-server.addResource({
-  uri: "resource://type/name",
-  name: "Resource Name",
-  mimeType: "application/json",
-  readMethod: async () => ({
-    contents: [{
-      uri: "resource://type/name",
+server.resource({
+  path: "/campaigns",
+  get: async () => {
+    const data = await client.getCampaigns();
+    return {
       mimeType: "application/json",
-      text: JSON.stringify(data, null, 2)
-    }]
-  })
+      data: JSON.stringify(data, null, 2)
+    };
+  }
 });
 ```
 
@@ -183,3 +179,4 @@ server.addResource({
 - All monetary values should be in cents (lowest denomination)
 - Date ranges should use ISO 8601 format
 - Targeting parameters require specific formatting per Meta's requirements
+- The project currently lacks test coverage - consider adding tests for critical paths
