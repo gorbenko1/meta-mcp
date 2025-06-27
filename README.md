@@ -250,15 +250,17 @@ For web applications, this server is also available as a Vercel deployment with 
 ```json
 {
   "mcpServers": {
-    "meta-ads-web": {
-      "url": "https://your-project.vercel.app/api/mcp",
+    "meta-ads-remote": {
+      "url": "https://mcp.offerarc.com/api/mcp",
       "headers": {
-        "Authorization": "Bearer your_oauth_token"
+        "Authorization": "Bearer your_session_token"
       }
     }
   }
 }
 ```
+
+**Note**: You need to authenticate first at `https://mcp.offerarc.com/api/auth/login` to get your session token.
 
 ## 🛠️ Usage Examples
 

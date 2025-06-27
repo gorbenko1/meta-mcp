@@ -1,6 +1,55 @@
 # Quick Setup Guide - Meta Marketing API MCP Server
 
-## 🚀 5-Minute Setup
+## 🎯 Choose Your Setup
+
+### Option A: Remote Server (Recommended) 🌐
+- ✅ **Multi-user OAuth authentication**
+- ✅ **Hosted on Vercel** (always available)
+- ✅ **No local installation needed**
+- ✅ **Automatic updates**
+
+### Option B: Local Server 💻
+- ✅ **Simple token-based auth**
+- ✅ **Local control**
+- ✅ **No network dependency**
+
+---
+
+## 🌐 Remote Server Setup (5 minutes)
+
+### 1. Authenticate with Your Meta Account
+Visit: `https://mcp.offerarc.com/api/auth/login`
+
+### 2. Get Your Session Token
+After authentication, you'll receive a response like:
+```json
+{
+  "sessionToken": "eyJhbGciOiJIUzI1NiJ9...",
+  "mcpEndpoint": "https://mcp.offerarc.com/api/mcp"
+}
+```
+
+### 3. Configure Claude Desktop
+Add to your `claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "meta-ads-remote": {
+      "url": "https://mcp.offerarc.com/api/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_SESSION_TOKEN_HERE"
+      }
+    }
+  }
+}
+```
+
+### 4. Restart Claude Desktop & Test
+Ask: `"Check the health of the Meta Marketing API server"`
+
+---
+
+## 💻 Local Server Setup
 
 ### 1. Get Your Meta Access Token
 1. Go to [developers.facebook.com](https://developers.facebook.com/)
