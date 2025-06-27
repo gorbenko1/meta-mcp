@@ -34,10 +34,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       .find(c => c.trim().startsWith('oauth_state='))
       ?.split('=')[1];
 
+    console.log('Debug CSRF validation:', {
+      receivedState: state,
+      cookieState: oauthStateCookie,
+      allCookies: cookies,
+      match: oauthStateCookie === state
+    });
+
     if (!oauthStateCookie || oauthStateCookie !== state) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid state parameter - possible CSRF attack'
+        error: 'Invalid state parameter - possible CSRF attack',
+        debug: {
+          receivedState: state,
+          cookieState: oauthStateCookie,
+          cookiesPresent: !!cookies
+        }
       });
     }
 

@@ -10,9 +10,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Generate OAuth state for CSRF protection
     const state = await UserAuthManager.generateOAuthState();
     
+    console.log('Generated OAuth state:', state);
+    
     // Store state in a secure cookie for validation later
+    const isHttps = req.headers.host?.includes('vercel.app') || req.headers.host?.includes('localhost:3000') === false;
+    const cookieOptions = `HttpOnly; ${isHttps ? 'Secure; ' : ''}SameSite=Strict; Max-Age=600; Path=/`;
+    
     res.setHeader('Set-Cookie', [
-      `oauth_state=${state}; HttpOnly; Secure; SameSite=Strict; Max-Age=600; Path=/`, // 10 minutes
+      `oauth_state=${state}; ${cookieOptions}`, // 10 minutes
     ]);
 
     // Generate Meta OAuth URL
