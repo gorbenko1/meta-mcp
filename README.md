@@ -39,9 +39,9 @@ A comprehensive Model Context Protocol (MCP) server that enables AI assistants l
 - 📚 Rich MCP resources for contextual data access
 - 🌐 Multi-account support
 
-## 📦 Installation
+## 📦 Installation & Setup
 
-### Option 1: NPM (Recommended)
+### Option 1: Direct Installation (Recommended)
 ```bash
 npm install -g meta-ads-mcp
 ```
@@ -54,19 +54,43 @@ npm install
 npm run build
 ```
 
-## 🔧 Quick Setup
+### Option 3: Automated Setup (Easiest)
+```bash
+# Clone the repository first
+git clone https://github.com/your-org/meta-ads-mcp.git
+cd meta-ads-mcp
 
-### 1. Get Meta Access Token
+# Run the interactive setup
+npm run setup
+```
+
+The setup script will:
+- ✅ Check system requirements
+- ✅ Validate your Meta access token
+- ✅ Create Claude Desktop configuration
+- ✅ Install dependencies
+- ✅ Test the connection
+
+## 🔧 Configuration Guide
+
+### Step 1: Get Meta Access Token
 1. Create a Meta App at [developers.facebook.com](https://developers.facebook.com/)
 2. Add Marketing API product
 3. Generate an access token with `ads_read` and `ads_management` permissions
+4. (Optional) Set up OAuth for automatic token refresh
 
 ![CleanShot 2025-06-17 at 15 52 35@2x](https://github.com/user-attachments/assets/160a260f-8f1b-44de-9041-f684a47e4a9d)
 
+### Step 2: Configure Claude Desktop
 
-### 2. Configure Claude Desktop
-Add to your `claude_desktop_config.json`:
+#### Find your configuration file:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
 
+If the file doesn't exist, create it with the following content:
+
+#### Basic Configuration (Token-based):
 ```json
 {
   "mcpServers": {
@@ -81,10 +105,167 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-### 3. Restart Claude Desktop
-The server will be available for use with Claude.
+#### Advanced Configuration (with OAuth):
+```json
+{
+  "mcpServers": {
+    "meta-ads": {
+      "command": "npx",
+      "args": ["-y", "meta-ads-mcp"],
+      "env": {
+        "META_ACCESS_TOKEN": "your_access_token_here",
+        "META_APP_ID": "your_app_id",
+        "META_APP_SECRET": "your_app_secret",
+        "META_AUTO_REFRESH": "true",
+        "META_BUSINESS_ID": "your_business_id"
+      }
+    }
+  }
+}
+```
+
+#### Local Development Configuration:
+If you've cloned the repository locally:
+```json
+{
+  "mcpServers": {
+    "meta-ads": {
+      "command": "node",
+      "args": ["/absolute/path/to/meta-ads-mcp/build/index.js"],
+      "env": {
+        "META_ACCESS_TOKEN": "your_access_token_here"
+      }
+    }
+  }
+}
+```
+
+### Step 3: Configure for Cursor
+
+Cursor uses the same MCP configuration as Claude Desktop. Add the configuration to your Cursor settings:
+
+1. Open Cursor Settings
+2. Go to "Extensions" > "Claude"
+3. Add the MCP server configuration in the JSON settings
+
+### Step 4: Restart Your Client
+- **Claude Desktop**: Completely quit and restart the application
+- **Cursor**: Restart the IDE
+
+### Step 5: Verify Setup
+```bash
+# Run health check to verify everything is working
+npm run health-check
+
+# Or if installed globally
+npx meta-ads-mcp --health-check
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+#### 1. "Command not found" or "npx" errors
+```bash
+# Install Node.js if not installed
+# macOS: brew install node
+# Windows: Download from nodejs.org
+# Linux: Use your package manager
+
+# Verify installation
+node --version
+npm --version
+npx --version
+```
+
+#### 2. Permission errors
+```bash
+# Fix npm permissions (macOS/Linux)
+sudo chown -R $(whoami) $(npm config get prefix)/{lib/node_modules,bin,share}
+
+# Or install without sudo
+npm config set prefix ~/.npm-global
+echo 'export PATH=~/.npm-global/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+```
+
+#### 3. Meta API connection issues
+```bash
+# Test your token manually
+curl -G \
+  -d "access_token=YOUR_ACCESS_TOKEN" \
+  "https://graph.facebook.com/v23.0/me/adaccounts"
+```
+
+#### 4. Check Claude Desktop logs
+- **macOS**: `~/Library/Logs/Claude/mcp*.log`
+- **Windows**: `%APPDATA%\Claude\logs\mcp*.log`
+
+```bash
+# macOS/Linux - View logs
+tail -f ~/Library/Logs/Claude/mcp*.log
+
+# Windows - View logs
+type "%APPDATA%\Claude\logs\mcp*.log"
+```
+
+#### 5. Test the server manually
+```bash
+# Test the MCP server directly
+npx -y meta-ads-mcp
+
+# Or if installed locally
+node build/index.js
+```
+
+### Debug Mode
+Enable debug logging by adding to your environment:
+```json
+{
+  "mcpServers": {
+    "meta-ads": {
+      "command": "npx",
+      "args": ["-y", "meta-ads-mcp"],
+      "env": {
+        "META_ACCESS_TOKEN": "your_access_token_here",
+        "DEBUG": "mcp:*",
+        "NODE_ENV": "development"
+      }
+    }
+  }
+}
+```
+
+## 🌐 Web Deployment (Vercel)
+
+For web applications, this server is also available as a Vercel deployment with OAuth authentication:
+
+### Configuration:
+1. Deploy to Vercel or use our hosted version
+2. Set environment variables in Vercel dashboard
+3. Configure OAuth app in Meta Developer Console
+4. Use the web endpoint: `https://your-project.vercel.app/api/mcp`
+
+### MCP Client Configuration for Web:
+```json
+{
+  "mcpServers": {
+    "meta-ads-web": {
+      "url": "https://your-project.vercel.app/api/mcp",
+      "headers": {
+        "Authorization": "Bearer your_oauth_token"
+      }
+    }
+  }
+}
+```
 
 ## 🛠️ Usage Examples
+
+### Test the Connection
+```
+Check the health of the Meta Marketing API server
+```
 
 ### Campaign Management
 ```
@@ -143,29 +324,30 @@ The server provides rich contextual data through MCP resources:
 - `meta://audiences/{account_id}` - Audience insights
 - `meta://audience-health/{account_id}` - Audience health report
 
-## 🔧 Configuration
+## 🔧 Environment Variables
 
-### Environment Variables
+### Required
 ```bash
-# Required
 META_ACCESS_TOKEN=your_access_token_here
-
-# Optional
-META_APP_ID=your_app_id
-META_APP_SECRET=your_app_secret
-META_BUSINESS_ID=your_business_id
-META_API_VERSION=v23.0
-META_API_TIER=standard  # or 'development'
 ```
 
-### Advanced Configuration
-See [Configuration Guide](docs/configuration.md) for detailed setup options.
+### Optional
+```bash
+META_APP_ID=your_app_id                    # For OAuth
+META_APP_SECRET=your_app_secret            # For OAuth
+META_BUSINESS_ID=your_business_id          # For business-specific operations
+META_API_VERSION=v23.0                     # API version (default: v23.0)
+META_API_TIER=standard                     # 'development' or 'standard'
+META_AUTO_REFRESH=true                     # Enable automatic token refresh
+META_REFRESH_TOKEN=your_refresh_token      # For token refresh
+```
 
 ## 📖 Documentation
 
+- **[Quick Setup Guide](SETUP_GUIDE.md)** - 5-minute setup instructions
 - **[Setup Guide](docs/setup.md)** - Complete installation and configuration
 - **[Tools Reference](docs/tools-reference.md)** - All available tools and resources
-- **[Configuration Guide](docs/configuration.md)** - Advanced configuration options
+- **[Example Configuration](examples/claude_desktop_config.json)** - Sample configuration file
 
 ## 🏗️ Architecture
 
@@ -247,14 +429,6 @@ Check the health of the Meta Marketing API server
 3. Make your changes and add tests
 4. Run the test suite: `npm test`
 5. Submit a pull request
-
-### Development Setup
-```bash
-git clone https://github.com/your-org/meta-ads-mcp.git
-cd meta-ads-mcp
-npm install
-npm run dev  # Start in development mode
-```
 
 ## 📄 License
 

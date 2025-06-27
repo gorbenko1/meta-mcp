@@ -14,7 +14,11 @@
     "test": "jest",
     "lint": "eslint src/**/*.ts",
     "prepare": "npm run build",
-    "vercel-build": "npm run build"
+    "vercel-build": "npm run build",
+    "setup": "node scripts/setup-mcp.js",
+    "setup:mcp": "node scripts/setup-mcp.js",
+    "health-check": "node scripts/health-check.js",
+    "check": "node scripts/health-check.js"
   },
   "author": "Meta Ads MCP",
   "license": "MIT",
