@@ -135,7 +135,7 @@ List individual ads within ad sets, campaigns, or accounts.
 
 **Parameters:**
 - `adset_id` (optional): Filter by ad set ID
-- `campaign_id` (optional): Filter by campaign ID  
+- `campaign_id` (optional): Filter by campaign ID
 - `account_id` (optional): Filter by account ID
 - `status` (optional): Filter by status
 - `limit` (optional): Number of ads to return

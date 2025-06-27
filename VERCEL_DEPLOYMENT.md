@@ -358,7 +358,7 @@ Your deployment includes these endpoints:
 ### Authentication
 - `GET /` - Login page and server information
 - `GET /api/auth/login` - Start OAuth flow
-- `GET /api/auth/callback` - OAuth callback handler  
+- `GET /api/auth/callback` - OAuth callback handler
 - `GET /api/auth/profile` - Get user profile
 - `POST /api/auth/logout` - Logout user
 - `POST /api/auth/refresh` - Refresh tokens

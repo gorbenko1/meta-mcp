@@ -4,7 +4,27 @@
       "runtime": "nodejs20.x",
       "maxDuration": 60
     },
-    "api/auth/*.ts": {
+    "api/auth/login.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    },
+    "api/auth/callback.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    },
+    "api/auth/profile.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 15
+    },
+    "api/auth/logout.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 15
+    },
+    "api/auth/refresh.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 30
+    },
+    "api/auth/revoke.ts": {
       "runtime": "nodejs20.x",
       "maxDuration": 30
     },
@@ -15,10 +35,11 @@
     "api/dashboard.ts": {
       "runtime": "nodejs20.x",
       "maxDuration": 15
+    },
+    "api/test-auth.ts": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 15
     }
-  },
-  "env": {
-    "NODE_ENV": "production"
   },
   "build": {
     "env": {

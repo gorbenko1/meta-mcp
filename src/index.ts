@@ -38,14 +38,26 @@ async function main() {
       const currentToken = await auth.refreshTokenIfNeeded();
       console.error("✅ Token validation and refresh successful");
       console.error(`🔑 Token ready: ${currentToken.substring(0, 20)}...`);
-      
+
       // Log OAuth configuration status
-      const hasOAuthConfig = !!(process.env.META_APP_ID && process.env.META_APP_SECRET);
-      console.error(`🔧 OAuth configuration: ${hasOAuthConfig ? "Available" : "Not configured"}`);
-      console.error(`🔄 Auto-refresh: ${process.env.META_AUTO_REFRESH === "true" ? "Enabled" : "Disabled"}`);
+      const hasOAuthConfig = !!(
+        process.env.META_APP_ID && process.env.META_APP_SECRET
+      );
+      console.error(
+        `🔧 OAuth configuration: ${
+          hasOAuthConfig ? "Available" : "Not configured"
+        }`
+      );
+      console.error(
+        `🔄 Auto-refresh: ${
+          process.env.META_AUTO_REFRESH === "true" ? "Enabled" : "Disabled"
+        }`
+      );
     } catch (error) {
       console.error("❌ Token validation failed:", error);
-      console.error("💡 Use OAuth tools to obtain a new token or check configuration");
+      console.error(
+        "💡 Use OAuth tools to obtain a new token or check configuration"
+      );
       process.exit(1);
     }
 
@@ -346,7 +358,14 @@ async function main() {
         },
         authentication: {
           required: ["META_ACCESS_TOKEN"],
-          optional: ["META_APP_ID", "META_APP_SECRET", "META_BUSINESS_ID", "META_REDIRECT_URI", "META_REFRESH_TOKEN", "META_AUTO_REFRESH"],
+          optional: [
+            "META_APP_ID",
+            "META_APP_SECRET",
+            "META_BUSINESS_ID",
+            "META_REDIRECT_URI",
+            "META_REFRESH_TOKEN",
+            "META_AUTO_REFRESH",
+          ],
           token_validation: "automatic_on_startup",
           oauth_support: {
             authorization_flow: "supported",
