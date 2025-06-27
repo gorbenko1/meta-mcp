@@ -29,15 +29,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validate state parameter (CSRF protection)
     const cookies = req.headers.cookie || '';
-    const oauthStateCookie = cookies
-      .split(';')
-      .find(c => c.trim().startsWith('oauth_state='))
-      ?.split('=')[1];
+    
+    // Parse cookies properly
+    const cookieMap = new Map();
+    cookies.split(';').forEach(cookie => {
+      const [name, ...valueParts] = cookie.trim().split('=');
+      if (name && valueParts.length > 0) {
+        cookieMap.set(name, valueParts.join('=')); // Handle values with = in them
+      }
+    });
+    
+    const oauthStateCookie = cookieMap.get('oauth_state');
 
     console.log('Debug CSRF validation:', {
       receivedState: state,
       cookieState: oauthStateCookie,
       allCookies: cookies,
+      cookieMap: Object.fromEntries(cookieMap),
       match: oauthStateCookie === state
     });
 
@@ -48,7 +56,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         debug: {
           receivedState: state,
           cookieState: oauthStateCookie,
-          cookiesPresent: !!cookies
+          cookiesPresent: !!cookies,
+          allCookies: cookies,
+          cookieMap: Object.fromEntries(cookieMap)
         }
       });
     }
