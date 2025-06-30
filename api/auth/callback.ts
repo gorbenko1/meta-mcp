@@ -1,9 +1,12 @@
-import { NextApiRequest, NextApiResponse } from 'next';
-import { UserAuthManager, UserSession } from '../../src/utils/user-auth.js';
+import { NextApiRequest, NextApiResponse } from "next";
+import { UserAuthManager, UserSession } from "../../src/utils/user-auth.js";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
@@ -11,11 +14,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Check for OAuth errors
     if (error) {
-      console.error('OAuth error:', error);
+      console.error("OAuth error:", error);
       return res.status(400).json({
         success: false,
-        error: 'OAuth authorization failed',
-        details: error
+        error: "OAuth authorization failed",
+        details: error,
       });
     }
 
@@ -23,43 +26,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!code || !state) {
       return res.status(400).json({
         success: false,
-        error: 'Missing authorization code or state parameter'
+        error: "Missing authorization code or state parameter",
       });
     }
 
     // Validate state parameter (CSRF protection)
-    const cookies = req.headers.cookie || '';
-    
+    const cookies = req.headers.cookie || "";
+
     // Parse cookies properly
     const cookieMap = new Map();
-    cookies.split(';').forEach(cookie => {
-      const [name, ...valueParts] = cookie.trim().split('=');
+    cookies.split(";").forEach((cookie) => {
+      const [name, ...valueParts] = cookie.trim().split("=");
       if (name && valueParts.length > 0) {
-        cookieMap.set(name, valueParts.join('=')); // Handle values with = in them
+        cookieMap.set(name, valueParts.join("=")); // Handle values with = in them
       }
     });
-    
-    const oauthStateCookie = cookieMap.get('oauth_state');
 
-    console.log('Debug CSRF validation:', {
+    const oauthStateCookie = cookieMap.get("oauth_state");
+
+    console.log("Debug CSRF validation:", {
       receivedState: state,
       cookieState: oauthStateCookie,
       allCookies: cookies,
       cookieMap: Object.fromEntries(cookieMap),
-      match: oauthStateCookie === state
+      match: oauthStateCookie === state,
     });
 
     if (!oauthStateCookie || oauthStateCookie !== state) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid state parameter - possible CSRF attack',
+        error: "Invalid state parameter - possible CSRF attack",
         debug: {
           receivedState: state,
           cookieState: oauthStateCookie,
           cookiesPresent: !!cookies,
           allCookies: cookies,
-          cookieMap: Object.fromEntries(cookieMap)
-        }
+          cookieMap: Object.fromEntries(cookieMap),
+        },
       });
     }
 
@@ -78,7 +81,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       metaUserId: userInfo.id,
       accessToken: tokens.accessToken,
       refreshToken: tokens.refreshToken,
-      tokenExpiration: tokens.expiresIn ? new Date(Date.now() + tokens.expiresIn * 1000) : undefined,
+      tokenExpiration: tokens.expiresIn
+        ? new Date(Date.now() + tokens.expiresIn * 1000)
+        : undefined,
       createdAt: new Date(),
       lastUsed: new Date(),
     };
@@ -91,32 +96,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const sessionToken = await UserAuthManager.createSessionToken(userId);
 
     // Clear OAuth state cookie and set session cookie
-    res.setHeader('Set-Cookie', [
+    res.setHeader("Set-Cookie", [
       `oauth_state=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/`, // Clear state cookie
-      `session_token=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${7 * 24 * 60 * 60}; Path=/`, // 7 days
+      `session_token=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${
+        7 * 24 * 60 * 60
+      }; Path=/`, // 7 days
     ]);
 
-    // Return success with user info and MCP endpoint
-    const mcpEndpoint = `${req.headers.host}/api/mcp`;
-    
-    res.status(200).json({
-      success: true,
-      user: {
-        id: userId,
-        name: userInfo.name,
-        email: userInfo.email,
-        metaUserId: userInfo.id,
-      },
-      mcpEndpoint: `https://${mcpEndpoint}`,
-      sessionToken: sessionToken,
-      message: 'Authentication successful. You can now use the MCP endpoint with your personal Meta account.'
-    });
+    // Redirect to dashboard instead of returning JSON
+    res.redirect(302, "/api/dashboard");
   } catch (error) {
-    console.error('OAuth callback error:', error);
+    console.error("OAuth callback error:", error);
     res.status(500).json({
       success: false,
-      error: 'Authentication failed',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      error: "Authentication failed",
+      message: error instanceof Error ? error.message : "Unknown error",
     });
   }
 }
