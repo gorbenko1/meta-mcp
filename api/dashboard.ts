@@ -18,7 +18,23 @@ export default async function handler(
         .find((c) => c.trim().startsWith("session_token="))
         ?.split("=")[1] || (req.query.token as string);
 
+    console.log("Dashboard auth check:", {
+      hasCookies: !!cookies,
+      cookies,
+      hasQueryToken: !!req.query.token,
+      queryToken: req.query.token
+        ? (req.query.token as string).substring(0, 20) + "..."
+        : null,
+      hasSessionToken: !!sessionToken,
+      sessionTokenSource: sessionToken
+        ? cookies.includes("session_token=")
+          ? "cookie"
+          : "query"
+        : "none",
+    });
+
     if (!sessionToken) {
+      console.log("No session token found, redirecting to homepage");
       return res.redirect(302, "/api");
     }
 

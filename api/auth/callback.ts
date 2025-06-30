@@ -96,15 +96,30 @@ export default async function handler(
     const sessionToken = await UserAuthManager.createSessionToken(userId);
 
     // Clear OAuth state cookie and set session cookie
+    // Use different cookie settings based on environment
+    const isProduction =
+      req.headers.host?.includes("vercel.app") ||
+      req.headers.host?.includes("netlify.app") ||
+      req.headers.host?.includes("offerarc.com");
+
+    const cookieOptions = isProduction
+      ? `HttpOnly; Secure; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; Path=/`
+      : `HttpOnly; SameSite=Lax; Max-Age=${7 * 24 * 60 * 60}; Path=/`;
+
+    console.log("Setting session cookie:", {
+      sessionToken: sessionToken.substring(0, 20) + "...",
+      cookieOptions,
+      host: req.headers.host,
+      isProduction,
+    });
+
     res.setHeader("Set-Cookie", [
-      `oauth_state=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/`, // Clear state cookie
-      `session_token=${sessionToken}; HttpOnly; Secure; SameSite=Strict; Max-Age=${
-        7 * 24 * 60 * 60
-      }; Path=/`, // 7 days
+      `oauth_state=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/`, // Clear state cookie
+      `session_token=${sessionToken}; ${cookieOptions}`, // 7 days
     ]);
 
-    // Redirect to dashboard instead of returning JSON
-    res.redirect(302, "/api/dashboard");
+    // Redirect to dashboard with session token as query param as backup
+    res.redirect(302, `/api/dashboard?token=${sessionToken}`);
   } catch (error) {
     console.error("OAuth callback error:", error);
     res.status(500).json({
