@@ -518,24 +518,33 @@ const handler = async (req: Request) => {
       {
         campaign_id: z.string().describe("The campaign ID to create the ad set in"),
         name: z.string().describe("Ad set name"),
-        targeting: z.object({
-          geo_locations: z.object({ countries: z.array(z.string()) }).optional(),
-          age_min: z.number().optional(),
-          age_max: z.number().optional(),
-          genders: z.array(z.number()).optional(),
-          interests: z.array(z.object({ id: z.string(), name: z.string().optional() })).optional(),
-          behaviors: z.array(z.object({ id: z.string(), name: z.string().optional() })).optional(),
-          custom_audiences: z.array(z.string()).optional(),
-          excluded_custom_audiences: z.array(z.string()).optional()
-        }).describe("Targeting specification"),
-        daily_budget: z.number().optional().describe("Daily budget in cents"),
+        optimization_goal: z.enum([
+          "REACH", "IMPRESSIONS", "CLICKS", "UNIQUE_CLICKS", "APP_INSTALLS", 
+          "OFFSITE_CONVERSIONS", "CONVERSIONS", "LINK_CLICKS", "POST_ENGAGEMENT",
+          "PAGE_LIKES", "EVENT_RESPONSES", "MESSAGES", "APP_DOWNLOADS", "LANDING_PAGE_VIEWS"
+        ]).describe("Optimization goal"),
+        billing_event: z.enum([
+          "IMPRESSIONS", "CLICKS", "APP_INSTALLS", "OFFSITE_CONVERSIONS", 
+          "CONVERSIONS", "LINK_CLICKS", "NONE"
+        ]).describe("What you pay for"),
+        daily_budget: z.number().optional().describe("Daily budget in cents (minimum 100 = $1)"),
         lifetime_budget: z.number().optional().describe("Lifetime budget in cents"),
         bid_strategy: z.enum(["LOWEST_COST_WITHOUT_CAP", "LOWEST_COST_WITH_BID_CAP", "COST_CAP"]).optional(),
-        optimization_goal: z.string().describe("Optimization goal (REACH, IMPRESSIONS, CLICKS, etc.)"),
-        billing_event: z.string().optional().describe("Billing event (IMPRESSIONS, CLICKS, etc.)"),
-        status: z.enum(["ACTIVE", "PAUSED"]).optional().describe("Ad set status")
+        status: z.enum(["ACTIVE", "PAUSED"]).optional().describe("Ad set status"),
+        // Simplified targeting - start basic
+        countries: z.array(z.string()).optional().describe("Country codes (e.g., ['US', 'CA'])"),
+        age_min: z.number().min(13).max(65).optional().describe("Minimum age (13-65)"),
+        age_max: z.number().min(13).max(65).optional().describe("Maximum age (13-65)"),
+        genders: z.array(z.enum(["1", "2"])).optional().describe("1=Male, 2=Female"),
+        // Advanced targeting (optional)
+        interests: z.array(z.string()).optional().describe("Interest targeting IDs"),
+        behaviors: z.array(z.string()).optional().describe("Behavior targeting IDs"),
+        custom_audiences: z.array(z.string()).optional().describe("Custom audience IDs")
       },
-      async ({ campaign_id, name, targeting, daily_budget, lifetime_budget, bid_strategy, optimization_goal, billing_event, status }) => {
+      async ({ 
+        campaign_id, name, optimization_goal, billing_event, daily_budget, lifetime_budget, 
+        bid_strategy, status, countries, age_min, age_max, genders, interests, behaviors, custom_audiences 
+      }) => {
         try {
           if (!authHeader) throw new Error("Authentication required");
           const user = await UserAuthManager.authenticateUser(authHeader);
@@ -546,27 +555,94 @@ const handler = async (req: Request) => {
           const metaClient = new MetaApiClient(auth);
           await auth.refreshTokenIfNeeded();
           
+          // Build targeting object carefully
+          const targeting: any = {};
+          
+          // Geographic targeting
+          if (countries && countries.length > 0) {
+            targeting.geo_locations = { countries };
+          } else {
+            // Default to US if no countries specified
+            targeting.geo_locations = { countries: ["US"] };
+          }
+          
+          // Age targeting
+          if (age_min) targeting.age_min = age_min;
+          if (age_max) targeting.age_max = age_max;
+          
+          // Gender targeting
+          if (genders && genders.length > 0) {
+            targeting.genders = genders.map(g => parseInt(g));
+          }
+          
+          // Interest targeting
+          if (interests && interests.length > 0) {
+            targeting.interests = interests.map(id => ({ id }));
+          }
+          
+          // Behavior targeting  
+          if (behaviors && behaviors.length > 0) {
+            targeting.behaviors = behaviors.map(id => ({ id }));
+          }
+          
+          // Custom audience targeting
+          if (custom_audiences && custom_audiences.length > 0) {
+            targeting.custom_audiences = custom_audiences.map(id => ({ id }));
+          }
+          
+          // Build ad set data with required fields
           const adSetData: any = {
             name,
             campaign_id,
             targeting,
             optimization_goal,
+            billing_event,
             status: status || "PAUSED"
           };
           
-          if (daily_budget) adSetData.daily_budget = daily_budget;
-          if (lifetime_budget) adSetData.lifetime_budget = lifetime_budget;
-          if (bid_strategy) adSetData.bid_strategy = bid_strategy;
-          if (billing_event) adSetData.billing_event = billing_event;
+          // Budget (must have either daily or lifetime)
+          if (daily_budget) {
+            adSetData.daily_budget = Math.max(daily_budget, 100); // Minimum $1
+          } else if (lifetime_budget) {
+            adSetData.lifetime_budget = Math.max(lifetime_budget, 100);
+          } else {
+            // Default to $5 daily budget if none specified
+            adSetData.daily_budget = 500;
+          }
+          
+          // Bid strategy
+          if (bid_strategy) {
+            adSetData.bid_strategy = bid_strategy;
+          }
+          
+          console.log("📊 Creating ad set with data:", JSON.stringify(adSetData, null, 2));
           
           const adSet = await metaClient.createAdSet(campaign_id, adSetData);
           
           return {
-            content: [{ type: "text", text: JSON.stringify({ success: true, ad_set: adSet }, null, 2) }]
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: true, 
+              ad_set: adSet,
+              message: "Ad set created successfully",
+              targeting_used: targeting
+            }, null, 2) }]
           };
         } catch (error) {
+          console.error("❌ Ad set creation failed:", error);
           return {
-            content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: false, 
+              error: error.message,
+              troubleshooting: {
+                common_fixes: [
+                  "Ensure campaign is fully initialized (wait 1-2 minutes after creation)",
+                  "Verify account has payment method configured",
+                  "Check if Facebook Pixel is required for conversion campaigns",
+                  "Try simpler targeting first (just countries and age)",
+                  "Ensure minimum budget requirements are met ($1+ daily)"
+                ]
+              }
+            }, null, 2) }],
             isError: true
           };
         }
@@ -1016,6 +1092,93 @@ const handler = async (req: Request) => {
         } catch (error) {
           return {
             content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // Diagnostic Tools
+    server.tool(
+      "diagnose_campaign_readiness",
+      "Check if a campaign is ready for ad set creation and identify potential issues",
+      {
+        campaign_id: z.string().describe("The campaign ID to diagnose")
+      },
+      async ({ campaign_id }) => {
+        try {
+          if (!authHeader) throw new Error("Authentication required");
+          const user = await UserAuthManager.authenticateUser(authHeader);
+          if (!user) throw new Error("Invalid authentication token");
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (!auth) throw new Error("Failed to initialize user authentication");
+          
+          const metaClient = new MetaApiClient(auth);
+          await auth.refreshTokenIfNeeded();
+          
+          // Get campaign details
+          const campaign = await metaClient.getCampaign(campaign_id);
+          
+          // Get account details
+          const accountId = campaign.account_id;
+          const account = await metaClient.getAdAccount(accountId);
+          
+          // Check for common issues
+          const diagnostics = {
+            campaign_status: campaign.status,
+            campaign_objective: campaign.objective,
+            account_status: account.account_status,
+            account_currency: account.currency,
+            has_payment_method: account.funding_source_details?.length > 0,
+            pixel_setup: "Unknown - check manually in Ads Manager",
+            recommendations: []
+          };
+          
+          // Add recommendations based on findings
+          if (campaign.status !== "ACTIVE" && campaign.status !== "PAUSED") {
+            diagnostics.recommendations.push("Campaign status should be ACTIVE or PAUSED for ad set creation");
+          }
+          
+          if (campaign.objective === "OUTCOME_SALES" || campaign.objective === "CONVERSIONS") {
+            diagnostics.recommendations.push("Sales/conversion campaigns may require Facebook Pixel setup");
+            diagnostics.recommendations.push("Consider using OFFSITE_CONVERSIONS optimization goal");
+          }
+          
+          if (account.account_status !== "ACTIVE") {
+            diagnostics.recommendations.push("Account must be in ACTIVE status for ad creation");
+          }
+          
+          if (!diagnostics.has_payment_method) {
+            diagnostics.recommendations.push("Add a payment method to the ad account");
+          }
+          
+          diagnostics.recommendations.push("Wait 1-2 minutes after campaign creation before adding ad sets");
+          diagnostics.recommendations.push("Start with simple targeting (just countries and age)");
+          
+          return {
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: true, 
+              campaign_id,
+              diagnostics,
+              suggested_ad_set_config: {
+                optimization_goal: campaign.objective === "OUTCOME_SALES" ? "OFFSITE_CONVERSIONS" : "LINK_CLICKS",
+                billing_event: "LINK_CLICKS",
+                daily_budget: 500, // $5 minimum
+                targeting: {
+                  geo_locations: { countries: ["US"] },
+                  age_min: 25,
+                  age_max: 65
+                }
+              }
+            }, null, 2) }]
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: false, 
+              error: error.message,
+              campaign_id
+            }, null, 2) }],
             isError: true
           };
         }
