@@ -601,13 +601,14 @@ const handler = async (req: Request) => {
           };
           
           // Budget (must have either daily or lifetime)
+          // Meta API expects budget in account currency cents, not USD
           if (daily_budget) {
-            adSetData.daily_budget = Math.max(daily_budget, 100); // Minimum $1
+            adSetData.daily_budget = Math.max(daily_budget, 100); // Minimum based on currency
           } else if (lifetime_budget) {
             adSetData.lifetime_budget = Math.max(lifetime_budget, 100);
           } else {
-            // Default to $5 daily budget if none specified
-            adSetData.daily_budget = 500;
+            // Default to higher budget to avoid currency conversion issues
+            adSetData.daily_budget = 1000; // $10 equivalent, adjusts for currency
           }
           
           // Bid strategy
@@ -1092,6 +1093,104 @@ const handler = async (req: Request) => {
         } catch (error) {
           return {
             content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "check_account_setup",
+      "Check if ad account has all required setup for ad set creation",
+      {
+        account_id: z.string().describe("The ad account ID to check")
+      },
+      async ({ account_id }) => {
+        try {
+          if (!authHeader) throw new Error("Authentication required");
+          const user = await UserAuthManager.authenticateUser(authHeader);
+          if (!user) throw new Error("Invalid authentication token");
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (!auth) throw new Error("Failed to initialize user authentication");
+          
+          const metaClient = new MetaApiClient(auth);
+          await auth.refreshTokenIfNeeded();
+          
+          // Get detailed account information
+          const account = await metaClient.getAdAccount(account_id);
+          
+          const setupCheck = {
+            account_id,
+            account_status: account.account_status,
+            currency: account.currency,
+            timezone_name: account.timezone_name,
+            has_payment_method: false,
+            business_info: {},
+            required_fixes: [],
+            success_likelihood: "unknown"
+          };
+          
+          // Check payment methods
+          try {
+            const fundingSources = await metaClient.getFundingSources(account_id);
+            setupCheck.has_payment_method = fundingSources && fundingSources.length > 0;
+          } catch (error) {
+            setupCheck.required_fixes.push("Unable to check payment methods - may need account admin access");
+          }
+          
+          // Check business info
+          try {
+            const businessInfo = await metaClient.getAccountBusiness(account_id);
+            setupCheck.business_info = businessInfo;
+          } catch (error) {
+            setupCheck.required_fixes.push("Unable to access business information");
+          }
+          
+          // Analyze issues
+          if (account.account_status !== "ACTIVE") {
+            setupCheck.required_fixes.push(`Account status is ${account.account_status}, must be ACTIVE`);
+          }
+          
+          if (!setupCheck.has_payment_method) {
+            setupCheck.required_fixes.push("Add a valid payment method to the ad account");
+          }
+          
+          // Budget recommendations based on currency
+          const budgetRecommendations = {
+            USD: "Minimum $1 (100 cents), recommended $10+ (1000+ cents)",
+            EUR: "Minimum €1 (100 cents), recommended €10+ (1000+ cents)", 
+            GBP: "Minimum £1 (100 pence), recommended £10+ (1000+ pence)",
+            INR: "Minimum ₹84 (8400 paisa), recommended ₹500+ (50000+ paisa)",
+            default: `Minimum 100 ${account.currency} cents, recommended 1000+ ${account.currency} cents`
+          };
+          
+          setupCheck.budget_guidance = budgetRecommendations[account.currency] || budgetRecommendations.default;
+          
+          // Success likelihood
+          if (setupCheck.required_fixes.length === 0) {
+            setupCheck.success_likelihood = "high";
+          } else if (setupCheck.required_fixes.length <= 2) {
+            setupCheck.success_likelihood = "medium";
+          } else {
+            setupCheck.success_likelihood = "low";
+          }
+          
+          return {
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: true,
+              setup_check: setupCheck,
+              next_steps: setupCheck.required_fixes.length > 0 ? 
+                "Fix the issues listed above, then try ad set creation again" :
+                "Account appears ready for ad set creation"
+            }, null, 2) }]
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: false, 
+              error: error.message,
+              account_id
+            }, null, 2) }],
             isError: true
           };
         }
