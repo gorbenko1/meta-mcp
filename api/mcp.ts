@@ -1063,14 +1063,23 @@ const handler = async (req: Request) => {
 
     server.tool(
       "create_ad_creative",
-      "Create a new ad creative",
+      "Create a new ad creative with external image URL support",
       {
         account_id: z.string().describe("The ad account ID"),
         name: z.string().describe("Creative name"),
-        object_story_spec: z.object({}).describe("Ad creative specification"),
-        degrees_of_freedom_spec: z.object({}).optional().describe("Degrees of freedom specification")
+        page_id: z.string().describe("Facebook Page ID"),
+        message: z.string().describe("Ad text/message"),
+        link_url: z.string().describe("Destination URL"),
+        picture: z.string().describe("External image URL (fully supported)"),
+        call_to_action_type: z.enum([
+          "LEARN_MORE", "SHOP_NOW", "SIGN_UP", "DOWNLOAD", "BOOK_TRAVEL", 
+          "LISTEN_MUSIC", "WATCH_VIDEO", "GET_QUOTE", "CONTACT_US", "APPLY_NOW"
+        ]).optional().describe("Call to action button"),
+        headline: z.string().optional().describe("Ad headline"),
+        description: z.string().optional().describe("Ad description"),
+        instagram_actor_id: z.string().optional().describe("Instagram account ID (if posting to Instagram)")
       },
-      async ({ account_id, name, object_story_spec, degrees_of_freedom_spec }) => {
+      async ({ account_id, name, page_id, message, link_url, picture, call_to_action_type, headline, description, instagram_actor_id }) => {
         try {
           if (!authHeader) throw new Error("Authentication required");
           const user = await UserAuthManager.authenticateUser(authHeader);
@@ -1081,18 +1090,71 @@ const handler = async (req: Request) => {
           const metaClient = new MetaApiClient(auth);
           await auth.refreshTokenIfNeeded();
           
-          const creative = await metaClient.createAdCreative(account_id, {
+          // Build object_story_spec with proper external image URL support
+          const link_data: any = {
+            link: link_url,
+            message: message,
+            picture: picture  // External URL - fully supported in v23.0
+          };
+          
+          if (headline) link_data.name = headline;
+          if (description) link_data.description = description;
+          if (call_to_action_type) {
+            link_data.call_to_action = {
+              type: call_to_action_type,
+              value: { link: link_url }
+            };
+          }
+          
+          const object_story_spec: any = {
+            page_id: page_id,
+            link_data: link_data
+          };
+          
+          // Add Instagram support if provided
+          if (instagram_actor_id) {
+            object_story_spec.instagram_actor_id = instagram_actor_id;
+          }
+          
+          const creativeData = {
             name,
-            object_story_spec,
-            degrees_of_freedom_spec
-          });
+            object_story_spec
+          };
+          
+          console.log("🎨 Creating ad creative with external image URL:", JSON.stringify(creativeData, null, 2));
+          
+          const creative = await metaClient.createAdCreative(account_id, creativeData);
           
           return {
-            content: [{ type: "text", text: JSON.stringify({ success: true, creative }, null, 2) }]
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: true, 
+              creative,
+              message: "Ad creative created successfully with external image URL",
+              image_url_used: picture,
+              api_version: "v23.0"
+            }, null, 2) }]
           };
         } catch (error) {
+          console.error("❌ Ad creative creation failed:", error);
           return {
-            content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            content: [{ type: "text", text: JSON.stringify({ 
+              success: false, 
+              error: error.message,
+              troubleshooting: {
+                image_url_tips: [
+                  "Ensure the image URL is publicly accessible",
+                  "Image should be HTTPS (not HTTP)",
+                  "Supported formats: JPG, PNG, GIF",
+                  "Recommended size: 1200x628 pixels",
+                  "File size should be under 8MB"
+                ],
+                permission_tips: [
+                  "Ensure you have admin access to the Facebook Page",
+                  "Check that the Page is published and active",
+                  "Verify Instagram account is connected if using instagram_actor_id"
+                ]
+              }
+            }, null, 2) }],
             isError: true
           };
         }
