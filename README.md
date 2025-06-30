@@ -286,7 +286,7 @@ For Vercel deployments, use `mcp-remote` to bridge HTTP to stdio:
 
 ## 🛠️ Available Tools
 
-This MCP server provides **24 comprehensive tools** across all major Meta advertising categories:
+This MCP server provides **25 comprehensive tools** across all major Meta advertising categories:
 
 ### 📊 Analytics & Insights (3 tools)
 - **`get_insights`** - Get detailed performance metrics (impressions, clicks, ROAS, CTR, CPC, etc.)
@@ -315,7 +315,7 @@ This MCP server provides **24 comprehensive tools** across all major Meta advert
 
 ### 🎨 Creative Management (2 tools)
 - **`list_ad_creatives`** - List all ad creatives for an account
-- **`create_ad_creative`** - Create new ad creatives with rich specifications
+- **`create_ad_creative`** - Create new ad creatives with rich specifications (supports external image URLs)
 
 ### 🔧 Account & Basic Tools (3 tools)
 - **`health_check`** - Comprehensive authentication and server status check
@@ -325,8 +325,9 @@ This MCP server provides **24 comprehensive tools** across all major Meta advert
 ### 🔐 Authentication Tools (1 tool)
 - **`get_token_info`** - Token validation and information retrieval
 
-### 🩺 Diagnostic Tools (1 tool)
+### 🩺 Diagnostic Tools (2 tools)
 - **`diagnose_campaign_readiness`** - Check campaign status and identify ad set creation issues
+- **`check_account_setup`** - Comprehensive account validation and setup verification
 
 ## 🛠️ Usage Examples
 
@@ -376,6 +377,9 @@ Create a new ad in my ad set using creative ID 123456 and name it "Headline Test
 Diagnose my "Test 3" campaign to see if it's ready for ad set creation and identify any potential issues
 ```
 ```
+Check my account setup to verify payment methods, business verification, and ad account permissions
+```
+```
 Check why my ad set creation failed and get specific recommendations for my account setup
 ```
 
@@ -398,7 +402,7 @@ Get detailed information about my "Newsletter Subscribers" audience including he
 List all my ad creatives and show their performance data
 ```
 ```
-Create a new ad creative for my holiday campaign with specific messaging and call-to-action
+Create a new ad creative for my holiday campaign with external image URL from my website and specific messaging
 ```
 
 ### Account Management
@@ -460,7 +464,7 @@ META_REFRESH_TOKEN=your_refresh_token      # For token refresh
 ### Core Components
 
 - **Meta API Client**: Handles authentication, rate limiting, and API communication
-- **Tool Handlers**: 24 tools covering analytics, campaigns, ad sets, ads, audiences, creatives, and diagnostics
+- **Tool Handlers**: 25 tools covering analytics, campaigns, ad sets, ads, audiences, creatives, and diagnostics
 - **Resource Providers**: Contextual data access for AI understanding
 - **Error Management**: Robust error handling with automatic retries
 - **Rate Limiter**: Intelligent rate limiting with per-account tracking
@@ -538,18 +542,19 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🏷️ Version History
 
 ### v1.1.0 (Latest)
-- ✅ **Complete tool suite**: 24 comprehensive tools for all Meta advertising needs
-- 🩺 **Advanced diagnostics**: Campaign readiness checking and issue identification
-- 🚀 **Full campaign creation pipeline**: Campaign → Ad Set → Ads complete workflow
+- ✅ **Complete tool suite**: 25 comprehensive tools for all Meta advertising needs
+- 🩺 **Advanced diagnostics**: Campaign readiness checking, account setup validation, and issue identification
+- 🚀 **Full campaign creation pipeline**: Campaign → Ad Set → Ads complete workflow (fully functional)
 - 🎯 **Advanced ad set targeting**: Demographics, interests, behaviors, custom audiences
 - 📱 **Individual ad management**: Create and manage ads with creative assignments
-- 🔧 **Fixed campaign creation**: Added special_ad_categories parameter
+- 🖼️ **External image URL support**: Create ad creatives using external image URLs (picture field in link_data)
+- 🔧 **Fixed campaign creation**: Added special_ad_categories parameter and missing API methods
 - 🗑️ **Removed ping tool**: Simplified tool set, health_check provides better connectivity testing
 - ✅ **Enhanced Vercel deployment**: Full web interface with OAuth authentication
 - ✅ **Advanced analytics**: Performance insights, comparison, and export tools
 - ✅ **Campaign management**: Create, update, pause, resume campaigns
 - ✅ **Audience tools**: Custom and lookalike audience creation and management
-- ✅ **Creative management**: Ad creative listing and creation tools
+- ✅ **Creative management**: Ad creative listing and creation tools with external URL support
 - ✅ **Improved authentication**: Session-based auth for remote deployments
 - ✅ **Better error handling**: Comprehensive TypeScript error resolution
 - ✅ Using Meta Graph API v23.0 (latest version)
