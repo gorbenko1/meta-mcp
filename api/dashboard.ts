@@ -249,6 +249,8 @@ export default async function handler(
             font-size: 0.8rem;
             white-space: pre-wrap;
             overflow-x: auto;
+            word-break: break-all;
+            max-width: 100%;
         }
 
         .instructions {
@@ -305,7 +307,7 @@ export default async function handler(
             line-height: 1.5;
         }
 
-        @media (max-width: 768px) {
+                @media (max-width: 768px) {
             .grid {
                 grid-template-columns: 1fr;
             }
@@ -321,6 +323,15 @@ export default async function handler(
             .user-menu {
                 flex-direction: column;
                 gap: 0.5rem;
+            }
+
+            .config-example {
+                font-size: 0.7rem;
+                padding: 0.75rem;
+            }
+
+            .card {
+                padding: 1rem;
             }
         }
     </style>
