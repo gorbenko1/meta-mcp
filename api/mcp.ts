@@ -3,7 +3,15 @@ import { z } from "zod";
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
 
-const handler = createMcpHandler(
+// Create a wrapper to handle authentication at the request level
+const handler = async (req: Request) => {
+  console.log("🌐 Incoming request to MCP handler");
+  
+  // Extract auth header from the actual request
+  const authHeader = req.headers.get("authorization");
+  console.log("🔑 Auth header present:", !!authHeader);
+  
+  return createMcpHandler(
   (server) => {
     console.log("🚀 MCP server starting");
 
@@ -28,32 +36,7 @@ const handler = createMcpHandler(
       async (args, context) => {
         try {
           console.log("🔍 Health check starting");
-          console.log("Context:", JSON.stringify(context, null, 2));
-          
-          const request = context?.request;
-          if (!request) {
-            console.log("❌ No request object in context");
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(
-                    {
-                      status: "unhealthy",
-                      error: "No request object in context",
-                      context: context,
-                      timestamp: new Date().toISOString(),
-                    },
-                    null,
-                    2
-                  ),
-                },
-              ],
-              isError: true,
-            };
-          }
-
-          const authHeader = request.headers?.get("authorization");
+          console.log("Auth header available:", !!authHeader);
           if (!authHeader) {
             return {
               content: [
@@ -157,15 +140,7 @@ const handler = createMcpHandler(
       async (args, context) => {
         try {
           console.log("📋 Get ad accounts starting");
-          console.log("Context:", JSON.stringify(context, null, 2));
-          
-          const request = context?.request;
-          if (!request) {
-            console.log("❌ No request object in get_ad_accounts");
-            throw new Error("No request object in context");
-          }
-
-          const authHeader = request.headers?.get("authorization");
+          console.log("Using auth header from request scope:", !!authHeader);
           if (!authHeader) {
             throw new Error(
               "Authentication required: Missing Authorization header"
@@ -240,9 +215,9 @@ const handler = createMcpHandler(
           .optional()
           .describe("Filter by campaign status (ACTIVE, PAUSED, etc.)"),
       },
-      async ({ account_id, limit, status }, { request }) => {
+      async ({ account_id, limit, status }, context) => {
         try {
-          const authHeader = request.headers.get("authorization");
+          console.log("📋 Get campaigns starting for account:", account_id);
           if (!authHeader) {
             throw new Error(
               "Authentication required: Missing Authorization header"
@@ -321,6 +296,7 @@ const handler = createMcpHandler(
     maxDuration: 60,
     verboseLogs: true,
   }
-);
+)(req);
+};
 
 export { handler as GET, handler as POST };
