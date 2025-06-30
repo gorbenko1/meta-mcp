@@ -25,11 +25,35 @@ const handler = createMcpHandler(
       "health_check",
       "Check server health and authentication status",
       {},
-      async (args, { request }) => {
+      async (args, context) => {
         try {
           console.log("🔍 Health check starting");
+          console.log("Context:", JSON.stringify(context, null, 2));
+          
+          const request = context?.request;
+          if (!request) {
+            console.log("❌ No request object in context");
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    {
+                      status: "unhealthy",
+                      error: "No request object in context",
+                      context: context,
+                      timestamp: new Date().toISOString(),
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
 
-          const authHeader = request.headers.get("authorization");
+          const authHeader = request.headers?.get("authorization");
           if (!authHeader) {
             return {
               content: [
@@ -130,9 +154,18 @@ const handler = createMcpHandler(
       "get_ad_accounts",
       "Get list of accessible Meta ad accounts",
       {},
-      async (args, { request }) => {
+      async (args, context) => {
         try {
-          const authHeader = request.headers.get("authorization");
+          console.log("📋 Get ad accounts starting");
+          console.log("Context:", JSON.stringify(context, null, 2));
+          
+          const request = context?.request;
+          if (!request) {
+            console.log("❌ No request object in get_ad_accounts");
+            throw new Error("No request object in context");
+          }
+
+          const authHeader = request.headers?.get("authorization");
           if (!authHeader) {
             throw new Error(
               "Authentication required: Missing Authorization header"
