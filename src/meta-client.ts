@@ -528,16 +528,53 @@ export class MetaApiClient {
       status?: string;
     }
   ): Promise<Ad> {
-    const formattedAdSetId = adSetId.startsWith("act_") ? adSetId : `act_${adSetId}`;
-    const body = this.buildQueryString(adData);
+    console.log("=== CREATE AD DEBUG ===");
+    console.log("Ad Set ID:", adSetId);
+    console.log("Ad Data:", JSON.stringify(adData, null, 2));
 
-    return this.makeRequest<Ad>(
-      `${formattedAdSetId}/ads`,
-      "POST",
-      body,
-      formattedAdSetId,
-      true
-    );
+    const body = this.buildQueryString(adData);
+    console.log("Request body:", body);
+    console.log("API endpoint:", `${adSetId}/ads`);
+
+    try {
+      const result = await this.makeRequest<Ad>(
+        `${adSetId}/ads`,
+        "POST",
+        body,
+        undefined, // Don't pass account ID for rate limiting since we don't have it
+        true
+      );
+
+      console.log("Create ad success:", JSON.stringify(result, null, 2));
+      console.log("=====================");
+      return result;
+    } catch (error) {
+      console.log("=== CREATE AD ERROR ===");
+      console.log("Error object:", error);
+      
+      if (error instanceof Error) {
+        console.log("Error message:", error.message);
+        
+        // Try to parse Meta API error response
+        try {
+          const errorData = JSON.parse(error.message);
+          console.log("Parsed Meta API error:", JSON.stringify(errorData, null, 2));
+          
+          if (errorData.error) {
+            console.log("Meta API Error Details:");
+            console.log("- Message:", errorData.error.message);
+            console.log("- Code:", errorData.error.code);
+            console.log("- Type:", errorData.error.type);
+            console.log("- Error Subcode:", errorData.error.error_subcode);
+            console.log("- FBTrace ID:", errorData.error.fbtrace_id);
+          }
+        } catch (parseError) {
+          console.log("Could not parse error as JSON, raw message:", error.message);
+        }
+      }
+      console.log("=====================");
+      throw error;
+    }
   }
 
   // Ad Methods

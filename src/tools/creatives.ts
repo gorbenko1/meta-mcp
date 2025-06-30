@@ -85,17 +85,18 @@ export function registerCreativeTools(
       display_link,
     }) => {
       try {
-        const creativeData: any = {
+        console.log("=== CREATE AD CREATIVE DEBUG ===");
+        console.log("Input parameters:", {
+          account_id,
           name,
-        };
-
-        if (title) creativeData.title = title;
-        if (body) creativeData.body = body;
-        if (image_url) creativeData.image_url = image_url;
-        if (video_id) creativeData.video_id = video_id;
-        if (call_to_action) creativeData.call_to_action = call_to_action;
-        if (link_url) creativeData.link_url = link_url;
-        if (display_link) creativeData.display_link = display_link;
+          title,
+          body,
+          image_url,
+          video_id,
+          call_to_action,
+          link_url,
+          display_link,
+        });
 
         // Validate that we have either an image or video
         if (!image_url && !video_id) {
@@ -110,10 +111,74 @@ export function registerCreativeTools(
           };
         }
 
+        // Construct the proper object_story_spec for Meta API
+        const object_story_spec: any = {};
+
+        // For link ads with external images
+        if (link_url || image_url) {
+          object_story_spec.link_data = {};
+          
+          if (link_url) {
+            object_story_spec.link_data.link = link_url;
+          }
+          
+          if (image_url) {
+            object_story_spec.link_data.picture = image_url;
+          }
+          
+          if (body) {
+            object_story_spec.link_data.message = body;
+          }
+          
+          if (title) {
+            object_story_spec.link_data.name = title;
+          }
+          
+          if (display_link) {
+            object_story_spec.link_data.caption = display_link;
+          }
+          
+          if (call_to_action) {
+            object_story_spec.link_data.call_to_action = {
+              type: call_to_action.type,
+              value: call_to_action.value || {}
+            };
+          }
+        }
+
+        // For video creatives
+        if (video_id) {
+          object_story_spec.video_data = {
+            video_id: video_id,
+          };
+          
+          if (body) {
+            object_story_spec.video_data.message = body;
+          }
+          
+          if (call_to_action) {
+            object_story_spec.video_data.call_to_action = {
+              type: call_to_action.type,
+              value: call_to_action.value || {}
+            };
+          }
+        }
+
+        const creativeData = {
+          name,
+          object_story_spec,
+        };
+
+        console.log("Constructed object_story_spec:", JSON.stringify(object_story_spec, null, 2));
+        console.log("Final creative data:", JSON.stringify(creativeData, null, 2));
+
         const result = await metaClient.createAdCreative(
           account_id,
           creativeData
         );
+
+        console.log("API Response:", JSON.stringify(result, null, 2));
+        console.log("================================");
 
         const response = {
           success: true,
@@ -146,6 +211,43 @@ export function registerCreativeTools(
           ],
         };
       } catch (error) {
+        console.log("=== CREATE AD CREATIVE ERROR ===");
+        console.log("Error object:", error);
+        
+        if (error instanceof Error) {
+          console.log("Error message:", error.message);
+          
+          // Try to parse Meta API error response
+          try {
+            const errorData = JSON.parse(error.message);
+            console.log("Parsed Meta API error:", JSON.stringify(errorData, null, 2));
+            
+            if (errorData.error) {
+              console.log("Meta API Error Details:");
+              console.log("- Message:", errorData.error.message);
+              console.log("- Code:", errorData.error.code);
+              console.log("- Type:", errorData.error.type);
+              console.log("- Error Subcode:", errorData.error.error_subcode);
+              console.log("- FBTrace ID:", errorData.error.fbtrace_id);
+              
+              if (errorData.error.error_data) {
+                console.log("- Error Data:", JSON.stringify(errorData.error.error_data, null, 2));
+              }
+              
+              if (errorData.error.error_user_title) {
+                console.log("- User Title:", errorData.error.error_user_title);
+              }
+              
+              if (errorData.error.error_user_msg) {
+                console.log("- User Message:", errorData.error.error_user_msg);
+              }
+            }
+          } catch (parseError) {
+            console.log("Could not parse error as JSON, raw message:", error.message);
+          }
+        }
+        console.log("===============================");
+
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
         return {
