@@ -2,10 +2,6 @@ import { createMcpHandler } from "@vercel/mcp-adapter";
 import { z } from "zod";
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
-import { registerAnalyticsTools } from "../src/tools/analytics.js";
-import { registerCampaignTools } from "../src/tools/campaigns.js";
-import { registerAudienceTools } from "../src/tools/audiences.js";
-import { registerCreativeTools } from "../src/tools/creatives.js";
 
 // Create a wrapper to handle authentication at the request level
 const handler = async (req: Request) => {
@@ -289,27 +285,92 @@ const handler = async (req: Request) => {
       }
     );
 
-    // Register comprehensive tool sets for authenticated users
-    if (authHeader) {
-      try {
-        const user = await UserAuthManager.authenticateUser(authHeader);
-        if (user) {
-          const auth = await UserAuthManager.createUserAuthManager(user.userId);
-          if (auth) {
-            const metaClient = new MetaApiClient(auth);
-            
-            console.log("🛠️ Registering comprehensive tool sets...");
-            registerAnalyticsTools(server, metaClient);
-            registerCampaignTools(server, metaClient);
-            registerAudienceTools(server, metaClient);
-            registerCreativeTools(server, metaClient);
-            console.log("✅ All tool sets registered successfully");
+    // Get insights tool for performance analytics
+    server.tool(
+      "get_insights",
+      "Get performance insights for campaigns, ad sets, or ads",
+      {
+        object_id: z.string().describe("The ID of the campaign, ad set, or ad"),
+        level: z.enum(["account", "campaign", "adset", "ad"]).describe("The level of insights to retrieve"),
+        date_preset: z.string().optional().describe("Date preset like 'last_7d', 'last_30d'"),
+        fields: z.array(z.string()).optional().describe("Specific metrics to retrieve"),
+        limit: z.number().optional().describe("Number of results to return")
+      },
+      async ({ object_id, level, date_preset, fields, limit }, context) => {
+        try {
+          console.log("📊 Getting insights for:", object_id);
+          
+          if (!authHeader) {
+            throw new Error("Authentication required");
           }
+
+          const user = await UserAuthManager.authenticateUser(authHeader);
+          if (!user) {
+            throw new Error("Invalid authentication token");
+          }
+
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (!auth) {
+            throw new Error("Failed to initialize user authentication");
+          }
+
+          const metaClient = new MetaApiClient(auth);
+          await auth.refreshTokenIfNeeded();
+
+          const params: Record<string, any> = {
+            level,
+            limit: limit || 25,
+            date_preset: date_preset || "last_7d"
+          };
+
+          if (fields && fields.length > 0) {
+            params.fields = fields;
+          }
+
+          const insights = await metaClient.getInsights(object_id, params);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: true,
+                    insights: insights,
+                    object_id,
+                    level,
+                    date_preset: params.date_preset,
+                    message: "Insights retrieved successfully"
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        } catch (error) {
+          console.error("❌ Get insights failed:", error);
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    error: error instanceof Error ? error.message : "Unknown error",
+                    object_id,
+                    timestamp: new Date().toISOString(),
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: true,
+          };
         }
-      } catch (error) {
-        console.log("⚠️ Failed to register advanced tools:", error);
       }
-    }
+    );
 
     console.log("✅ MCP server initialized with tools");
   },
