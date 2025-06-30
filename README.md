@@ -286,7 +286,7 @@ For Vercel deployments, use `mcp-remote` to bridge HTTP to stdio:
 
 ## 🛠️ Available Tools
 
-This MCP server provides **20+ comprehensive tools** across all major Meta advertising categories:
+This MCP server provides **19 comprehensive tools** across all major Meta advertising categories:
 
 ### 📊 Analytics & Insights (3 tools)
 - **`get_insights`** - Get detailed performance metrics (impressions, clicks, ROAS, CTR, CPC, etc.)
@@ -309,8 +309,7 @@ This MCP server provides **20+ comprehensive tools** across all major Meta adver
 - **`list_ad_creatives`** - List all ad creatives for an account
 - **`create_ad_creative`** - Create new ad creatives with rich specifications
 
-### 🔧 Account & Basic Tools (5 tools)
-- **`ping`** - Simple connectivity test
+### 🔧 Account & Basic Tools (4 tools)
 - **`health_check`** - Comprehensive authentication and server status check
 - **`get_ad_accounts`** - List accessible Meta ad accounts
 - **`get_campaigns`** - List campaigns with filtering options
@@ -324,9 +323,6 @@ This MCP server provides **20+ comprehensive tools** across all major Meta adver
 ### Test the Connection
 ```
 Check the health of the Meta Marketing API server and authentication status
-```
-```
-Use the ping tool to test basic connectivity
 ```
 
 ### Analytics & Performance Insights  
@@ -435,7 +431,7 @@ META_REFRESH_TOKEN=your_refresh_token      # For token refresh
 ### Core Components
 
 - **Meta API Client**: Handles authentication, rate limiting, and API communication
-- **Tool Handlers**: 20+ tools covering analytics, campaigns, audiences, and creatives
+- **Tool Handlers**: 19 tools covering analytics, campaigns, audiences, and creatives
 - **Resource Providers**: Contextual data access for AI understanding
 - **Error Management**: Robust error handling with automatic retries
 - **Rate Limiter**: Intelligent rate limiting with per-account tracking
@@ -513,7 +509,8 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🏷️ Version History
 
 ### v1.1.0 (Latest)
-- ✅ **Complete tool suite**: 20+ comprehensive tools for all Meta advertising needs
+- ✅ **Complete tool suite**: 19 comprehensive tools for all Meta advertising needs
+- 🗑️ **Removed ping tool**: Simplified tool set, health_check provides better connectivity testing
 - ✅ **Enhanced Vercel deployment**: Full web interface with OAuth authentication
 - ✅ **Advanced analytics**: Performance insights, comparison, and export tools
 - ✅ **Campaign management**: Create, update, pause, resume campaigns

@@ -15,19 +15,6 @@ const handler = async (req: Request) => {
   (server) => {
     console.log("🚀 MCP server starting");
 
-    // Simple ping tool (no auth required)
-    server.tool("ping", "Simple ping test", {}, async () => {
-      console.log("📍 Ping called");
-      return {
-        content: [
-          {
-            type: "text",
-            text: "pong",
-          },
-        ],
-      };
-    });
-
     // Health check tool (with authentication)
     server.tool(
       "health_check",
