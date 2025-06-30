@@ -97,12 +97,6 @@ export class MetaApiClient {
     return response.data;
   }
 
-  async getAdAccount(accountId: string): Promise<AdAccount> {
-    const formattedAccountId = this.auth.getAccountId(accountId);
-    return this.makeRequest<AdAccount>(
-      `${formattedAccountId}?fields=id,name,account_status,balance,currency,timezone_name,business`
-    );
-  }
 
   // Campaign Methods
   async getCampaigns(
@@ -366,60 +360,6 @@ export class MetaApiClient {
     }
   }
 
-  // Ad Methods
-  async getAds(
-    params: PaginationParams & {
-      adsetId?: string;
-      campaignId?: string;
-      accountId?: string;
-      status?: string;
-      fields?: string[];
-    } = {}
-  ): Promise<PaginatedResult<Ad>> {
-    const {
-      adsetId,
-      campaignId,
-      accountId,
-      status,
-      fields,
-      ...paginationParams
-    } = params;
-
-    let endpoint: string;
-    if (adsetId) {
-      endpoint = `${adsetId}/ads`;
-    } else if (campaignId) {
-      endpoint = `${campaignId}/ads`;
-    } else if (accountId) {
-      const formattedAccountId = this.auth.getAccountId(accountId);
-      endpoint = `${formattedAccountId}/ads`;
-    } else {
-      throw new Error(
-        "Either adsetId, campaignId, or accountId must be provided"
-      );
-    }
-
-    const queryParams: Record<string, any> = {
-      fields:
-        fields?.join(",") ||
-        "id,name,adset_id,campaign_id,status,effective_status,created_time,updated_time,creative",
-      ...paginationParams,
-    };
-
-    if (status) {
-      queryParams.effective_status = JSON.stringify([status]);
-    }
-
-    const query = this.buildQueryString(queryParams);
-    const response = await this.makeRequest<MetaApiResponse<Ad>>(
-      `${endpoint}?${query}`,
-      "GET",
-      null,
-      accountId ? this.auth.getAccountId(accountId) : undefined
-    );
-
-    return PaginationHelper.parsePaginatedResponse(response);
-  }
 
   // Insights Methods
   async getInsights(
@@ -600,41 +540,70 @@ export class MetaApiClient {
     );
   }
 
+  // Ad Methods
   async getAds(
-    adSetId: string,
-    params: PaginationParams & { status?: string[] } = {}
+    params: PaginationParams & {
+      adsetId?: string;
+      campaignId?: string;
+      accountId?: string;
+      status?: string;
+      fields?: string[];
+    } = {}
   ): Promise<PaginatedResult<Ad>> {
-    const formattedAdSetId = adSetId.startsWith("act_") ? adSetId : `act_${adSetId}`;
-    const queryParams = {
-      fields: "id,name,status,effective_status,created_time,adset_id,creative",
-      limit: params.limit || 25,
-      ...PaginationHelper.getPaginationParams(params),
+    const {
+      adsetId,
+      campaignId,
+      accountId,
+      status,
+      fields,
+      ...paginationParams
+    } = params;
+
+    let endpoint: string;
+    if (adsetId) {
+      endpoint = `${adsetId}/ads`;
+    } else if (campaignId) {
+      endpoint = `${campaignId}/ads`;
+    } else if (accountId) {
+      const formattedAccountId = this.auth.getAccountId(accountId);
+      endpoint = `${formattedAccountId}/ads`;
+    } else {
+      throw new Error(
+        "Either adsetId, campaignId, or accountId must be provided"
+      );
+    }
+
+    const queryParams: Record<string, any> = {
+      fields:
+        fields?.join(",") ||
+        "id,name,adset_id,campaign_id,status,effective_status,created_time,updated_time,creative",
+      ...paginationParams,
     };
 
-    if (params.status) {
-      queryParams.status = JSON.stringify(params.status);
+    if (status) {
+      queryParams.effective_status = JSON.stringify([status]);
     }
 
     const query = this.buildQueryString(queryParams);
-    const result = await this.makeRequest<MetaApiResponse<Ad>>(
-      `${formattedAdSetId}/ads?${query}`,
+    const response = await this.makeRequest<MetaApiResponse<Ad>>(
+      `${endpoint}?${query}`,
       "GET",
-      undefined,
-      formattedAdSetId
+      null,
+      accountId ? this.auth.getAccountId(accountId) : undefined
     );
 
-    return PaginationHelper.processResult(result);
+    return PaginationHelper.parsePaginatedResponse(response);
   }
 
   async getAdsByCampaign(
     campaignId: string,
     params: PaginationParams & { status?: string[] } = {}
   ): Promise<PaginatedResult<Ad>> {
-    const formattedCampaignId = campaignId.startsWith("act_") ? campaignId : `act_${campaignId}`;
-    const queryParams = {
+    const queryParams: Record<string, any> = {
       fields: "id,name,status,effective_status,created_time,adset_id,creative",
       limit: params.limit || 25,
-      ...PaginationHelper.getPaginationParams(params),
+      after: params.after,
+      before: params.before,
     };
 
     if (params.status) {
@@ -643,13 +612,13 @@ export class MetaApiClient {
 
     const query = this.buildQueryString(queryParams);
     const result = await this.makeRequest<MetaApiResponse<Ad>>(
-      `${formattedCampaignId}/ads?${query}`,
+      `${campaignId}/ads?${query}`,
       "GET",
       undefined,
-      formattedCampaignId
+      undefined
     );
 
-    return PaginationHelper.processResult(result);
+    return PaginationHelper.parsePaginatedResponse(result);
   }
 
   async getAdsByAccount(
@@ -657,10 +626,11 @@ export class MetaApiClient {
     params: PaginationParams & { status?: string[] } = {}
   ): Promise<PaginatedResult<Ad>> {
     const formattedAccountId = this.auth.getAccountId(accountId);
-    const queryParams = {
+    const queryParams: Record<string, any> = {
       fields: "id,name,status,effective_status,created_time,adset_id,creative",
       limit: params.limit || 25,
-      ...PaginationHelper.getPaginationParams(params),
+      after: params.after,
+      before: params.before,
     };
 
     if (params.status) {
@@ -675,7 +645,7 @@ export class MetaApiClient {
       formattedAccountId
     );
 
-    return PaginationHelper.processResult(result);
+    return PaginationHelper.parsePaginatedResponse(result);
   }
 
   // Account and Business Methods
@@ -727,17 +697,6 @@ export class MetaApiClient {
     }
   }
 
-  async getCampaign(campaignId: string): Promise<Campaign> {
-    const queryParams = {
-      fields: "id,name,status,objective,account_id,created_time,updated_time"
-    };
-    
-    const query = this.buildQueryString(queryParams);
-    return this.makeRequest<Campaign>(
-      `${campaignId}?${query}`,
-      "GET"
-    );
-  }
 
   async getCustomAudience(audienceId: string): Promise<CustomAudience> {
     const queryParams = {
