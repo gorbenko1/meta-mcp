@@ -2,6 +2,10 @@ import { createMcpHandler } from "@vercel/mcp-adapter";
 import { z } from "zod";
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
+import { registerAnalyticsTools } from "../src/tools/analytics.js";
+import { registerCampaignTools } from "../src/tools/campaigns.js";
+import { registerAudienceTools } from "../src/tools/audiences.js";
+import { registerCreativeTools } from "../src/tools/creatives.js";
 
 // Create a wrapper to handle authentication at the request level
 const handler = async (req: Request) => {
@@ -284,6 +288,28 @@ const handler = async (req: Request) => {
         }
       }
     );
+
+    // Register comprehensive tool sets for authenticated users
+    if (authHeader) {
+      try {
+        const user = await UserAuthManager.authenticateUser(authHeader);
+        if (user) {
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (auth) {
+            const metaClient = new MetaApiClient(auth);
+            
+            console.log("🛠️ Registering comprehensive tool sets...");
+            registerAnalyticsTools(server, metaClient);
+            registerCampaignTools(server, metaClient);
+            registerAudienceTools(server, metaClient);
+            registerCreativeTools(server, metaClient);
+            console.log("✅ All tool sets registered successfully");
+          }
+        }
+      } catch (error) {
+        console.log("⚠️ Failed to register advanced tools:", error);
+      }
+    }
 
     console.log("✅ MCP server initialized with tools");
   },
