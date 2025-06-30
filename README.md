@@ -262,59 +262,126 @@ For web applications, this server is also available as a Vercel deployment with 
 
 **Note**: You need to authenticate first at `https://mcp.offerarc.com/api/auth/login` to get your session token.
 
+### Remote MCP Configuration (mcp-remote)
+For Vercel deployments, use `mcp-remote` to bridge HTTP to stdio:
+```json
+{
+  "mcpServers": {
+    "meta-ads": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.offerarc.com/api/mcp",
+        "--header",
+        "Authorization:${META_AUTH_HEADER}"
+      ],
+      "env": {
+        "META_AUTH_HEADER": "Bearer your_session_token_here"
+      }
+    }
+  }
+}
+```
+
+## 🛠️ Available Tools
+
+This MCP server provides **20+ comprehensive tools** across all major Meta advertising categories:
+
+### 📊 Analytics & Insights (3 tools)
+- **`get_insights`** - Get detailed performance metrics (impressions, clicks, ROAS, CTR, CPC, etc.)
+- **`compare_performance`** - Side-by-side performance comparison of multiple campaigns/ads
+- **`export_insights`** - Export performance data in JSON or CSV formats
+
+### 📈 Campaign Management (4 tools)
+- **`create_campaign`** - Create new advertising campaigns with full configuration
+- **`update_campaign`** - Modify existing campaigns (name, budget, status, etc.)
+- **`pause_campaign`** - Pause active campaigns
+- **`resume_campaign`** - Resume/activate paused campaigns
+
+### 👥 Audience Management (4 tools)
+- **`list_audiences`** - List all custom audiences for an account
+- **`create_custom_audience`** - Create custom audiences from various sources
+- **`create_lookalike_audience`** - Generate lookalike audiences from source audiences
+- **`get_audience_info`** - Get detailed information about specific audiences
+
+### 🎨 Creative Management (2 tools)
+- **`list_ad_creatives`** - List all ad creatives for an account
+- **`create_ad_creative`** - Create new ad creatives with rich specifications
+
+### 🔧 Account & Basic Tools (5 tools)
+- **`ping`** - Simple connectivity test
+- **`health_check`** - Comprehensive authentication and server status check
+- **`get_ad_accounts`** - List accessible Meta ad accounts
+- **`get_campaigns`** - List campaigns with filtering options
+- **`get_token_info`** - Get access token information and validation
+
+### 🔐 Authentication Tools (1 tool)
+- **`get_token_info`** - Token validation and information retrieval
+
 ## 🛠️ Usage Examples
 
 ### Test the Connection
 ```
-Check the health of the Meta Marketing API server
+Check the health of the Meta Marketing API server and authentication status
+```
+```
+Use the ping tool to test basic connectivity
+```
+
+### Analytics & Performance Insights  
+```
+Get detailed performance insights for my Deal Draft campaign including impressions, clicks, ROAS, and CTR for the last 30 days
+```
+```
+Compare the performance of my top 3 campaigns side-by-side for the last quarter
+```
+```
+Export campaign performance data for all my campaigns last month in CSV format
 ```
 
 ### Campaign Management
 ```
-Create a new traffic campaign named "Holiday Sale 2024" with a $50 daily budget
+Create a new traffic campaign named "Holiday Sale 2024" with a $50 daily budget and OUTCOME_TRAFFIC objective
 ```
-
 ```
-List all active campaigns and show their performance for the last 7 days
+Update my existing campaign budget to $100 daily and change the name to "Black Friday Special"
 ```
-
 ```
-Pause all campaigns with CPC above $2.00
+Pause all campaigns that have a CPC above $2.00
 ```
-
-### Analytics & Reporting
 ```
-Compare the performance of my top 3 campaigns over the last 30 days
-```
-
-```
-Export campaign performance data for last quarter as CSV
-```
-
-```
-Show me daily performance trends for campaign 123456 over the last 14 days
+Resume my paused "Summer Collection" campaign
 ```
 
 ### Audience Management
 ```
-Create a lookalike audience based on my best customers targeting US users
+List all my custom audiences and show their sizes and status
 ```
-
 ```
-Estimate the audience size for females aged 25-45 interested in fitness
+Create a custom audience named "Website Visitors" from people who visited my site
 ```
-
 ```
-Show me the health status of all my custom audiences
+Create a 5% lookalike audience based on my "High Value Customers" audience targeting the US
+```
+```
+Get detailed information about my "Newsletter Subscribers" audience including health status
 ```
 
 ### Creative Management
 ```
-Create an ad creative with title "Summer Sale" and preview it for mobile feed
+List all my ad creatives and show their performance data
+```
+```
+Create a new ad creative for my holiday campaign with specific messaging and call-to-action
 ```
 
+### Account Management
 ```
-Set up an A/B test comparing different headlines for my campaign
+Show me all my accessible Meta ad accounts with their currencies and time zones
+```
+```
+Get my current access token information including permissions and expiration
 ```
 
 ## 📚 Resources Access
@@ -368,7 +435,7 @@ META_REFRESH_TOKEN=your_refresh_token      # For token refresh
 ### Core Components
 
 - **Meta API Client**: Handles authentication, rate limiting, and API communication
-- **Tool Handlers**: 40+ tools for comprehensive Meta API functionality
+- **Tool Handlers**: 20+ tools covering analytics, campaigns, audiences, and creatives
 - **Resource Providers**: Contextual data access for AI understanding
 - **Error Management**: Robust error handling with automatic retries
 - **Rate Limiter**: Intelligent rate limiting with per-account tracking
@@ -445,7 +512,15 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🏷️ Version History
 
-### v1.0.6 (Latest)
+### v1.1.0 (Latest)
+- ✅ **Complete tool suite**: 20+ comprehensive tools for all Meta advertising needs
+- ✅ **Enhanced Vercel deployment**: Full web interface with OAuth authentication
+- ✅ **Advanced analytics**: Performance insights, comparison, and export tools
+- ✅ **Campaign management**: Create, update, pause, resume campaigns
+- ✅ **Audience tools**: Custom and lookalike audience creation and management
+- ✅ **Creative management**: Ad creative listing and creation tools
+- ✅ **Improved authentication**: Session-based auth for remote deployments
+- ✅ **Better error handling**: Comprehensive TypeScript error resolution
 - ✅ Using Meta Graph API v23.0 (latest version)
 - ✅ Added support for Outcome-Driven Ad Experience (ODAE) objectives
 - ✅ Added campaign-level budget optimization support
