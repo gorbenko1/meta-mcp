@@ -562,24 +562,192 @@ export class MetaApiClient {
     accountId: string,
     creativeData: {
       name: string;
-      title?: string;
-      body?: string;
-      image_url?: string;
-      video_id?: string;
-      call_to_action?: any;
-      link_url?: string;
-      display_link?: string;
+      object_story_spec: any;
+      degrees_of_freedom_spec?: any;
     }
-  ): Promise<{ id: string }> {
+  ): Promise<AdCreative> {
     const formattedAccountId = this.auth.getAccountId(accountId);
     const body = this.buildQueryString(creativeData);
 
-    return this.makeRequest<{ id: string }>(
+    return this.makeRequest<AdCreative>(
       `${formattedAccountId}/adcreatives`,
       "POST",
       body,
       formattedAccountId,
       true
+    );
+  }
+
+  // Ad Management
+  async createAd(
+    adSetId: string,
+    adData: {
+      name: string;
+      adset_id: string;
+      creative: { creative_id: string };
+      status?: string;
+    }
+  ): Promise<Ad> {
+    const formattedAdSetId = adSetId.startsWith("act_") ? adSetId : `act_${adSetId}`;
+    const body = this.buildQueryString(adData);
+
+    return this.makeRequest<Ad>(
+      `${formattedAdSetId}/ads`,
+      "POST",
+      body,
+      formattedAdSetId,
+      true
+    );
+  }
+
+  async getAds(
+    adSetId: string,
+    params: PaginationParams & { status?: string[] } = {}
+  ): Promise<PaginatedResult<Ad>> {
+    const formattedAdSetId = adSetId.startsWith("act_") ? adSetId : `act_${adSetId}`;
+    const queryParams = {
+      fields: "id,name,status,effective_status,created_time,adset_id,creative",
+      limit: params.limit || 25,
+      ...PaginationHelper.getPaginationParams(params),
+    };
+
+    if (params.status) {
+      queryParams.status = JSON.stringify(params.status);
+    }
+
+    const query = this.buildQueryString(queryParams);
+    const result = await this.makeRequest<MetaApiResponse<Ad>>(
+      `${formattedAdSetId}/ads?${query}`,
+      "GET",
+      undefined,
+      formattedAdSetId
+    );
+
+    return PaginationHelper.processResult(result);
+  }
+
+  async getAdsByCampaign(
+    campaignId: string,
+    params: PaginationParams & { status?: string[] } = {}
+  ): Promise<PaginatedResult<Ad>> {
+    const formattedCampaignId = campaignId.startsWith("act_") ? campaignId : `act_${campaignId}`;
+    const queryParams = {
+      fields: "id,name,status,effective_status,created_time,adset_id,creative",
+      limit: params.limit || 25,
+      ...PaginationHelper.getPaginationParams(params),
+    };
+
+    if (params.status) {
+      queryParams.status = JSON.stringify(params.status);
+    }
+
+    const query = this.buildQueryString(queryParams);
+    const result = await this.makeRequest<MetaApiResponse<Ad>>(
+      `${formattedCampaignId}/ads?${query}`,
+      "GET",
+      undefined,
+      formattedCampaignId
+    );
+
+    return PaginationHelper.processResult(result);
+  }
+
+  async getAdsByAccount(
+    accountId: string,
+    params: PaginationParams & { status?: string[] } = {}
+  ): Promise<PaginatedResult<Ad>> {
+    const formattedAccountId = this.auth.getAccountId(accountId);
+    const queryParams = {
+      fields: "id,name,status,effective_status,created_time,adset_id,creative",
+      limit: params.limit || 25,
+      ...PaginationHelper.getPaginationParams(params),
+    };
+
+    if (params.status) {
+      queryParams.status = JSON.stringify(params.status);
+    }
+
+    const query = this.buildQueryString(queryParams);
+    const result = await this.makeRequest<MetaApiResponse<Ad>>(
+      `${formattedAccountId}/ads?${query}`,
+      "GET",
+      undefined,
+      formattedAccountId
+    );
+
+    return PaginationHelper.processResult(result);
+  }
+
+  // Account and Business Methods
+  async getAdAccount(accountId: string): Promise<AdAccount> {
+    const formattedAccountId = this.auth.getAccountId(accountId);
+    const queryParams = {
+      fields: "id,name,account_status,currency,timezone_name,funding_source_details,business"
+    };
+    
+    const query = this.buildQueryString(queryParams);
+    return this.makeRequest<AdAccount>(
+      `${formattedAccountId}?${query}`,
+      "GET",
+      undefined,
+      formattedAccountId
+    );
+  }
+
+  async getFundingSources(accountId: string): Promise<any[]> {
+    const formattedAccountId = this.auth.getAccountId(accountId);
+    
+    try {
+      const result = await this.makeRequest<MetaApiResponse<any>>(
+        `${formattedAccountId}/funding_source_details`,
+        "GET",
+        undefined,
+        formattedAccountId
+      );
+      return result.data || [];
+    } catch (error) {
+      // Return empty array if no permission to access funding sources
+      return [];
+    }
+  }
+
+  async getAccountBusiness(accountId: string): Promise<any> {
+    const formattedAccountId = this.auth.getAccountId(accountId);
+    
+    try {
+      return await this.makeRequest<any>(
+        `${formattedAccountId}/business`,
+        "GET",
+        undefined,
+        formattedAccountId
+      );
+    } catch (error) {
+      // Return empty object if no business info available
+      return {};
+    }
+  }
+
+  async getCampaign(campaignId: string): Promise<Campaign> {
+    const queryParams = {
+      fields: "id,name,status,objective,account_id,created_time,updated_time"
+    };
+    
+    const query = this.buildQueryString(queryParams);
+    return this.makeRequest<Campaign>(
+      `${campaignId}?${query}`,
+      "GET"
+    );
+  }
+
+  async getCustomAudience(audienceId: string): Promise<CustomAudience> {
+    const queryParams = {
+      fields: "id,name,description,approximate_count,delivery_status,operation_status"
+    };
+    
+    const query = this.buildQueryString(queryParams);
+    return this.makeRequest<CustomAudience>(
+      `${audienceId}?${query}`,
+      "GET"
     );
   }
 
