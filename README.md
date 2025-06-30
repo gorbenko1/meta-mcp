@@ -286,7 +286,7 @@ For Vercel deployments, use `mcp-remote` to bridge HTTP to stdio:
 
 ## 🛠️ Available Tools
 
-This MCP server provides **23 comprehensive tools** across all major Meta advertising categories:
+This MCP server provides **24 comprehensive tools** across all major Meta advertising categories:
 
 ### 📊 Analytics & Insights (3 tools)
 - **`get_insights`** - Get detailed performance metrics (impressions, clicks, ROAS, CTR, CPC, etc.)
@@ -324,6 +324,9 @@ This MCP server provides **23 comprehensive tools** across all major Meta advert
 
 ### 🔐 Authentication Tools (1 tool)
 - **`get_token_info`** - Token validation and information retrieval
+
+### 🩺 Diagnostic Tools (1 tool)
+- **`diagnose_campaign_readiness`** - Check campaign status and identify ad set creation issues
 
 ## 🛠️ Usage Examples
 
@@ -366,6 +369,14 @@ Create an ad set for my existing campaign targeting women aged 30-50 in major US
 ```
 ```
 Create a new ad in my ad set using creative ID 123456 and name it "Headline Test A"
+```
+
+### Troubleshooting & Diagnostics
+```
+Diagnose my "Test 3" campaign to see if it's ready for ad set creation and identify any potential issues
+```
+```
+Check why my ad set creation failed and get specific recommendations for my account setup
 ```
 
 ### Audience Management
@@ -449,7 +460,7 @@ META_REFRESH_TOKEN=your_refresh_token      # For token refresh
 ### Core Components
 
 - **Meta API Client**: Handles authentication, rate limiting, and API communication
-- **Tool Handlers**: 23 tools covering analytics, campaigns, ad sets, ads, audiences, and creatives
+- **Tool Handlers**: 24 tools covering analytics, campaigns, ad sets, ads, audiences, creatives, and diagnostics
 - **Resource Providers**: Contextual data access for AI understanding
 - **Error Management**: Robust error handling with automatic retries
 - **Rate Limiter**: Intelligent rate limiting with per-account tracking
@@ -527,7 +538,8 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🏷️ Version History
 
 ### v1.1.0 (Latest)
-- ✅ **Complete tool suite**: 23 comprehensive tools for all Meta advertising needs
+- ✅ **Complete tool suite**: 24 comprehensive tools for all Meta advertising needs
+- 🩺 **Advanced diagnostics**: Campaign readiness checking and issue identification
 - 🚀 **Full campaign creation pipeline**: Campaign → Ad Set → Ads complete workflow
 - 🎯 **Advanced ad set targeting**: Demographics, interests, behaviors, custom audiences
 - 📱 **Individual ad management**: Create and manage ads with creative assignments
