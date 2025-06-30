@@ -286,7 +286,7 @@ For Vercel deployments, use `mcp-remote` to bridge HTTP to stdio:
 
 ## 🛠️ Available Tools
 
-This MCP server provides **19 comprehensive tools** across all major Meta advertising categories:
+This MCP server provides **23 comprehensive tools** across all major Meta advertising categories:
 
 ### 📊 Analytics & Insights (3 tools)
 - **`get_insights`** - Get detailed performance metrics (impressions, clicks, ROAS, CTR, CPC, etc.)
@@ -294,10 +294,18 @@ This MCP server provides **19 comprehensive tools** across all major Meta advert
 - **`export_insights`** - Export performance data in JSON or CSV formats
 
 ### 📈 Campaign Management (4 tools)
-- **`create_campaign`** - Create new advertising campaigns with full configuration
+- **`create_campaign`** - Create new advertising campaigns with full configuration (includes special_ad_categories)
 - **`update_campaign`** - Modify existing campaigns (name, budget, status, etc.)
 - **`pause_campaign`** - Pause active campaigns
 - **`resume_campaign`** - Resume/activate paused campaigns
+
+### 🎯 Ad Set Management (2 tools)
+- **`create_ad_set`** - Create ad sets with detailed targeting, budgets, and optimization goals
+- **`list_ad_sets`** - List and filter ad sets within campaigns
+
+### 📱 Ad Management (2 tools)
+- **`create_ad`** - Create individual ads within ad sets using creative IDs
+- **`list_ads`** - List and filter ads by ad set, campaign, or account
 
 ### 👥 Audience Management (4 tools)
 - **`list_audiences`** - List all custom audiences for an account
@@ -309,11 +317,10 @@ This MCP server provides **19 comprehensive tools** across all major Meta advert
 - **`list_ad_creatives`** - List all ad creatives for an account
 - **`create_ad_creative`** - Create new ad creatives with rich specifications
 
-### 🔧 Account & Basic Tools (4 tools)
+### 🔧 Account & Basic Tools (3 tools)
 - **`health_check`** - Comprehensive authentication and server status check
 - **`get_ad_accounts`** - List accessible Meta ad accounts
 - **`get_campaigns`** - List campaigns with filtering options
-- **`get_token_info`** - Get access token information and validation
 
 ### 🔐 Authentication Tools (1 tool)
 - **`get_token_info`** - Token validation and information retrieval
@@ -348,6 +355,17 @@ Pause all campaigns that have a CPC above $2.00
 ```
 ```
 Resume my paused "Summer Collection" campaign
+```
+
+### Complete Campaign Setup (Campaign → Ad Set → Ads)
+```
+Create a complete "Test 3" campaign setup: 1) Create the campaign with OUTCOME_LEADS objective, 2) Create an ad set targeting US users aged 25-45 interested in entrepreneurship, 3) Create 4 different ads using my existing creatives
+```
+```
+Create an ad set for my existing campaign targeting women aged 30-50 in major US cities with interests in business and personal development
+```
+```
+Create a new ad in my ad set using creative ID 123456 and name it "Headline Test A"
 ```
 
 ### Audience Management
@@ -431,7 +449,7 @@ META_REFRESH_TOKEN=your_refresh_token      # For token refresh
 ### Core Components
 
 - **Meta API Client**: Handles authentication, rate limiting, and API communication
-- **Tool Handlers**: 19 tools covering analytics, campaigns, audiences, and creatives
+- **Tool Handlers**: 23 tools covering analytics, campaigns, ad sets, ads, audiences, and creatives
 - **Resource Providers**: Contextual data access for AI understanding
 - **Error Management**: Robust error handling with automatic retries
 - **Rate Limiter**: Intelligent rate limiting with per-account tracking
@@ -509,7 +527,11 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🏷️ Version History
 
 ### v1.1.0 (Latest)
-- ✅ **Complete tool suite**: 19 comprehensive tools for all Meta advertising needs
+- ✅ **Complete tool suite**: 23 comprehensive tools for all Meta advertising needs
+- 🚀 **Full campaign creation pipeline**: Campaign → Ad Set → Ads complete workflow
+- 🎯 **Advanced ad set targeting**: Demographics, interests, behaviors, custom audiences
+- 📱 **Individual ad management**: Create and manage ads with creative assignments
+- 🔧 **Fixed campaign creation**: Added special_ad_categories parameter
 - 🗑️ **Removed ping tool**: Simplified tool set, health_check provides better connectivity testing
 - ✅ **Enhanced Vercel deployment**: Full web interface with OAuth authentication
 - ✅ **Advanced analytics**: Performance insights, comparison, and export tools

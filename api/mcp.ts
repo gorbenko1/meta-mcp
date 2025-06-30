@@ -386,11 +386,13 @@ const handler = async (req: Request) => {
           const campaignData: any = {
             name,
             objective,
-            status: status || "PAUSED"
+            status: status || "PAUSED",
+            special_ad_categories: []  // Empty array for no special categories
           };
           
           if (daily_budget) campaignData.daily_budget = daily_budget;
           if (lifetime_budget) campaignData.lifetime_budget = lifetime_budget;
+          if (budget_optimization) campaignData.budget_optimization = budget_optimization;
           
           const campaign = await metaClient.createCampaign(account_id, campaignData);
           
@@ -499,6 +501,193 @@ const handler = async (req: Request) => {
           
           return {
             content: [{ type: "text", text: JSON.stringify({ success: true, message: "Campaign resumed successfully" }, null, 2) }]
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // Ad Set Management Tools
+    server.tool(
+      "create_ad_set",
+      "Create a new ad set within a campaign",
+      {
+        campaign_id: z.string().describe("The campaign ID to create the ad set in"),
+        name: z.string().describe("Ad set name"),
+        targeting: z.object({
+          geo_locations: z.object({ countries: z.array(z.string()) }).optional(),
+          age_min: z.number().optional(),
+          age_max: z.number().optional(),
+          genders: z.array(z.number()).optional(),
+          interests: z.array(z.object({ id: z.string(), name: z.string().optional() })).optional(),
+          behaviors: z.array(z.object({ id: z.string(), name: z.string().optional() })).optional(),
+          custom_audiences: z.array(z.string()).optional(),
+          excluded_custom_audiences: z.array(z.string()).optional()
+        }).describe("Targeting specification"),
+        daily_budget: z.number().optional().describe("Daily budget in cents"),
+        lifetime_budget: z.number().optional().describe("Lifetime budget in cents"),
+        bid_strategy: z.enum(["LOWEST_COST_WITHOUT_CAP", "LOWEST_COST_WITH_BID_CAP", "COST_CAP"]).optional(),
+        optimization_goal: z.string().describe("Optimization goal (REACH, IMPRESSIONS, CLICKS, etc.)"),
+        billing_event: z.string().optional().describe("Billing event (IMPRESSIONS, CLICKS, etc.)"),
+        status: z.enum(["ACTIVE", "PAUSED"]).optional().describe("Ad set status")
+      },
+      async ({ campaign_id, name, targeting, daily_budget, lifetime_budget, bid_strategy, optimization_goal, billing_event, status }) => {
+        try {
+          if (!authHeader) throw new Error("Authentication required");
+          const user = await UserAuthManager.authenticateUser(authHeader);
+          if (!user) throw new Error("Invalid authentication token");
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (!auth) throw new Error("Failed to initialize user authentication");
+          
+          const metaClient = new MetaApiClient(auth);
+          await auth.refreshTokenIfNeeded();
+          
+          const adSetData: any = {
+            name,
+            campaign_id,
+            targeting,
+            optimization_goal,
+            status: status || "PAUSED"
+          };
+          
+          if (daily_budget) adSetData.daily_budget = daily_budget;
+          if (lifetime_budget) adSetData.lifetime_budget = lifetime_budget;
+          if (bid_strategy) adSetData.bid_strategy = bid_strategy;
+          if (billing_event) adSetData.billing_event = billing_event;
+          
+          const adSet = await metaClient.createAdSet(campaign_id, adSetData);
+          
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: true, ad_set: adSet }, null, 2) }]
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "list_ad_sets",
+      "List ad sets for a campaign",
+      {
+        campaign_id: z.string().describe("The campaign ID"),
+        limit: z.number().optional().describe("Number of ad sets to return"),
+        status: z.array(z.string()).optional().describe("Filter by status")
+      },
+      async ({ campaign_id, limit, status }) => {
+        try {
+          if (!authHeader) throw new Error("Authentication required");
+          const user = await UserAuthManager.authenticateUser(authHeader);
+          if (!user) throw new Error("Invalid authentication token");
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (!auth) throw new Error("Failed to initialize user authentication");
+          
+          const metaClient = new MetaApiClient(auth);
+          await auth.refreshTokenIfNeeded();
+          
+          const params: any = { limit: limit || 25 };
+          if (status) params.status = status;
+          
+          const adSets = await metaClient.getAdSets(campaign_id, params);
+          
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: true, ad_sets: adSets }, null, 2) }]
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // Ad Management Tools
+    server.tool(
+      "create_ad",
+      "Create a new ad within an ad set",
+      {
+        ad_set_id: z.string().describe("The ad set ID to create the ad in"),
+        name: z.string().describe("Ad name"),
+        creative_id: z.string().describe("The ad creative ID to use"),
+        status: z.enum(["ACTIVE", "PAUSED"]).optional().describe("Ad status")
+      },
+      async ({ ad_set_id, name, creative_id, status }) => {
+        try {
+          if (!authHeader) throw new Error("Authentication required");
+          const user = await UserAuthManager.authenticateUser(authHeader);
+          if (!user) throw new Error("Invalid authentication token");
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (!auth) throw new Error("Failed to initialize user authentication");
+          
+          const metaClient = new MetaApiClient(auth);
+          await auth.refreshTokenIfNeeded();
+          
+          const adData = {
+            name,
+            adset_id: ad_set_id,
+            creative: { creative_id },
+            status: status || "PAUSED"
+          };
+          
+          const ad = await metaClient.createAd(ad_set_id, adData);
+          
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: true, ad }, null, 2) }]
+          };
+        } catch (error) {
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: false, error: error.message }, null, 2) }],
+            isError: true
+          };
+        }
+      }
+    );
+
+    server.tool(
+      "list_ads",
+      "List ads for an ad set or campaign",
+      {
+        ad_set_id: z.string().optional().describe("The ad set ID"),
+        campaign_id: z.string().optional().describe("The campaign ID"), 
+        account_id: z.string().optional().describe("The account ID"),
+        limit: z.number().optional().describe("Number of ads to return"),
+        status: z.array(z.string()).optional().describe("Filter by status")
+      },
+      async ({ ad_set_id, campaign_id, account_id, limit, status }) => {
+        try {
+          if (!authHeader) throw new Error("Authentication required");
+          const user = await UserAuthManager.authenticateUser(authHeader);
+          if (!user) throw new Error("Invalid authentication token");
+          const auth = await UserAuthManager.createUserAuthManager(user.userId);
+          if (!auth) throw new Error("Failed to initialize user authentication");
+          
+          const metaClient = new MetaApiClient(auth);
+          await auth.refreshTokenIfNeeded();
+          
+          const params: any = { limit: limit || 25 };
+          if (status) params.status = status;
+          
+          let ads;
+          if (ad_set_id) {
+            ads = await metaClient.getAds(ad_set_id, params);
+          } else if (campaign_id) {
+            ads = await metaClient.getAdsByCampaign(campaign_id, params);
+          } else if (account_id) {
+            ads = await metaClient.getAdsByAccount(account_id, params);
+          } else {
+            throw new Error("Must provide ad_set_id, campaign_id, or account_id");
+          }
+          
+          return {
+            content: [{ type: "text", text: JSON.stringify({ success: true, ads }, null, 2) }]
           };
         } catch (error) {
           return {
