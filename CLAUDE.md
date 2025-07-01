@@ -17,6 +17,11 @@ This is a Model Context Protocol (MCP) server that provides comprehensive integr
 - `npm run prepare` - Automatically runs build on npm install
 - `npm run vercel-build` - Build command used by Vercel deployment
 
+### Setup & Health Checks
+- `npm run setup` - Interactive setup script for MCP configuration
+- `npm run health-check` - Test server health and authentication status
+- `npm run check` - Alias for health-check
+
 ### Testing Individual Features
 When tests are added:
 - To test a specific tool: `npm test -- tools/<tool-name>.test.ts`
@@ -238,3 +243,9 @@ This project supports both CLI and web deployment:
 - Targeting parameters require specific formatting per Meta's requirements
 - The project currently lacks test coverage - consider adding tests for critical paths
 - For Vercel deployment, ensure all environment variables are properly configured
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
