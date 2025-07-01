@@ -406,20 +406,21 @@ Get guidance on analyzing creative performance metrics. Provides recommended app
 
 **Returns:** Performance analysis guidance and optimization tips.
 
-### `upload_image_for_hash`
-Get step-by-step guidance for uploading images to Meta and obtaining image_hash values for v22.0 API compliance. Image hashes provide better performance and are required for carousel ads.
+### `upload_image_from_url`
+Upload an image from a URL to Meta and get the image_hash for v22.0 API compliance. Downloads the image from the provided URL and uploads it to Meta's servers, returning the hash required for ad creatives.
 
 **Parameters:**
 - `account_id` (required): Meta Ad Account ID (with act_ prefix)
-- `image_info` (optional): Object with file_path, format, and purpose
+- `image_url` (required): URL of the image to download and upload to Meta
+- `image_name` (optional): Custom name for the uploaded image
 
-**Returns:** Complete upload guide including:
-- Graph API direct upload instructions with curl examples
-- SDK upload examples (Python, Node.js)
-- Business Manager upload steps
-- Technical requirements and v22.0 specifications
-- Usage examples for single image vs carousel ads
-- Troubleshooting common upload errors
+**Returns:** Upload results including:
+- Success status and message
+- Original URL and uploaded image details
+- Image hash for use in ad creatives
+- Meta's stored image URL
+- Technical specs and usage examples
+- Next steps for using the hash in creatives
 
 ### `check_api_v22_compliance`
 Check if your creative parameters are compliant with Meta Marketing API v22.0 requirements. Identifies deprecated features and recommends v22.0 best practices.

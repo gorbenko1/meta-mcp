@@ -7,6 +7,7 @@ import {
   TroubleshootCreativeSchema,
   AnalyzeCreativesSchema,
   CreativeValidationEnhancedSchema,
+  UploadImageFromUrlSchema,
 } from "../types/mcp-tools.js";
 
 export function registerCreativeTools(
@@ -1924,35 +1925,12 @@ export function registerCreativeTools(
     }
   );
 
-  // v22.0 Image Upload and Hash Generation Tool
+  // v22.0 Image Upload from URL Tool - FUNCTIONAL
   server.tool(
-    "upload_image_for_hash",
-    "Get step-by-step guidance for uploading images to Meta and obtaining image_hash values for v22.0 API compliance. Image hashes provide better performance and are required for carousel ads.",
-    {
-      account_id: {
-        type: "string",
-        description: "Meta Ad Account ID (with act_ prefix)",
-      },
-      image_info: {
-        type: "object",
-        description: "Information about the image to upload",
-        properties: {
-          file_path: {
-            type: "string",
-            description: "Local file path or URL of image to upload",
-          },
-          format: {
-            type: "string",
-            description: "Image format (JPG, PNG, GIF, WebP)",
-          },
-          purpose: {
-            type: "string",
-            description: "Purpose: single_image, carousel, video_thumbnail",
-          },
-        },
-      },
-    },
-    async ({ account_id, image_info }) => {
+    "upload_image_from_url",
+    "Upload an image from a URL to Meta and get the image_hash for v22.0 API compliance. Downloads the image from the provided URL and uploads it to Meta's servers, returning the hash required for ad creatives.",
+    UploadImageFromUrlSchema.shape,
+    async ({ account_id, image_url, image_name }) => {
       try {
         // Validate account ID format
         if (!account_id.startsWith("act_")) {
@@ -1967,164 +1945,100 @@ export function registerCreativeTools(
           };
         }
 
-        const uploadGuide = {
+        // Validate image URL
+        try {
+          new URL(image_url);
+        } catch (error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: Invalid image URL format: ${image_url}`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        console.log("=== UPLOAD IMAGE FROM URL ===");
+        console.log("Account ID:", account_id);
+        console.log("Image URL:", image_url);
+        console.log("Image Name:", image_name);
+
+        // Use the MetaApiClient to upload the image
+        const uploadResult = await metaClient.uploadImageFromUrl(
           account_id,
-          image_info,
+          image_url,
+          image_name
+        );
+
+        const response = {
+          success: true,
+          message: "Image uploaded successfully to Meta",
           api_version: "v22.0",
-          upload_methods: {
-            graph_api_direct: {
-              description: "Upload directly via Graph API for programmatic use",
-              endpoint: `https://graph.facebook.com/v22.0/${account_id}/adimages`,
-              method: "POST",
-              required_fields: {
-                filename: "Path to image file",
-                access_token:
-                  "Your access token with ads_management permission",
-              },
-              curl_example: `curl -X POST \\
-  "https://graph.facebook.com/v22.0/${account_id}/adimages" \\
-  -F "filename=@/path/to/your/image.jpg" \\
-  -F "access_token=YOUR_ACCESS_TOKEN"`,
-              response_format: {
-                images: {
-                  "image_filename.jpg": {
-                    hash: "abc123def456...",
-                    url: "https://scontent.xx.fbcdn.net/...",
-                  },
-                },
-              },
-            },
-            sdk_upload: {
-              description: "Use Meta Business SDK for easier integration",
-              python_example: `from facebook_business.api import FacebookAdsApi
-from facebook_business.adobjects import AdImage
-
-# Initialize API
-FacebookAdsApi.init(access_token='YOUR_ACCESS_TOKEN')
-
-# Upload image
-image = AdImage(parent_id='${account_id}')
-image[AdImage.Field.filename] = '/path/to/image.jpg'
-image.remote_create()
-
-# Get hash
-image_hash = image[AdImage.Field.hash]
-print(f"Image hash: {image_hash}")`,
-              nodejs_example: `const business = require('facebook-nodejs-business-sdk');
-const AdImage = business.AdImage;
-
-const image = new AdImage(null, '${account_id}');
-image.create({
-  filename: '/path/to/image.jpg'
-}).then((result) => {
-  console.log('Image hash:', result.hash);
-});`,
-            },
-            business_manager: {
-              description: "Upload via Meta Business Manager interface",
-              steps: [
-                "Go to Meta Business Manager (business.facebook.com)",
-                "Navigate to Assets > Images",
-                "Click 'Add Images' and upload your files",
-                "Note the image hash from the image details",
-                "Use the hash in create_ad_creative API calls",
-              ],
-            },
+          upload_details: {
+            account_id,
+            original_url: image_url,
+            uploaded_name: uploadResult.name,
+            image_hash: uploadResult.hash,
+            meta_url: uploadResult.url,
           },
-          image_requirements: {
-            technical_specs: {
-              max_file_size: "30MB",
-              min_dimensions: "600x600 pixels",
-              recommended_dimensions: "1200x628 pixels (1.91:1 ratio)",
-              supported_formats: ["JPG", "PNG", "GIF", "WebP"],
-              color_space: "sRGB recommended",
-            },
-            quality_guidelines: [
-              "Use high-resolution images (1080x1080 or higher)",
-              "Avoid pixelated or blurry images",
-              "Ensure good contrast and readability",
-              "Follow 20% text rule for image overlays",
-              "Use authentic, non-stock imagery when possible",
-            ],
-            v22_specific: [
-              "Image hash method required for carousel ads",
-              "External URLs limited to 8MB for single image ads",
-              "Hash method provides better caching and performance",
-              "Uploaded images automatically added to account library",
-            ],
+          technical_specs: {
+            max_file_size: "30MB uploaded successfully",
+            supported_formats: ["JPG", "PNG", "GIF", "WebP"],
+            upload_endpoint: `https://graph.facebook.com/v22.0/${account_id}/adimages`,
+            api_version: "v22.0",
           },
-          usage_in_creatives: {
+          usage_examples: {
             single_image_ads: {
-              description: "Use either external URL or image hash",
-              external_url_example: {
-                picture: "https://yourdomain.com/image.jpg",
-              },
-              image_hash_example: {
-                image_hash: "abc123def456ghi789",
+              description: "Use the returned hash in create_ad_creative",
+              example: {
+                account_id: account_id,
+                name: "My Creative",
+                page_id: "YOUR_PAGE_ID",
+                image_hash: uploadResult.hash,
+                message: "Your ad text",
+                headline: "Your headline",
+                link_url: "https://your-website.com",
+                call_to_action_type: "SHOP_NOW",
               },
             },
             carousel_ads: {
-              description: "Must use image hash - external URLs not supported",
-              required_structure: {
-                child_attachments: [
-                  {
-                    image_hash: "hash1",
-                    link: "https://example.com/product1",
-                    name: "Product 1",
-                  },
-                  {
-                    image_hash: "hash2",
-                    link: "https://example.com/product2",
-                    name: "Product 2",
-                  },
-                ],
-              },
+              description: "Image hash is required for carousel ads",
+              note: "External URLs are not supported for carousel attachments",
             },
           },
-          troubleshooting: {
-            common_errors: [
-              {
-                error: "Invalid image format",
-                solution: "Use JPG, PNG, GIF, or WebP format",
-              },
-              {
-                error: "File too large",
-                solution: "Compress image to under 30MB",
-              },
-              {
-                error: "Permission denied",
-                solution: "Ensure access token has ads_management permission",
-              },
-              {
-                error: "Account not found",
-                solution: "Verify account ID includes 'act_' prefix",
-              },
-            ],
-          },
           next_steps: [
-            "Upload your image using one of the methods above",
-            "Save the returned image_hash value",
-            "Use the hash in create_ad_creative with image_hash parameter",
-            "Test the creative with preview_ad before launching",
+            `Use the image_hash "${uploadResult.hash}" in create_ad_creative`,
+            "The image is now stored in your Meta ad account library",
+            "Test the creative with validate_creative_enhanced",
+            "Create your ad creative using the hash instead of external URL",
           ],
         };
+
+        console.log("Upload successful!");
+        console.log("===========================");
 
         return {
           content: [
             {
               type: "text",
-              text: JSON.stringify(uploadGuide, null, 2),
+              text: JSON.stringify(response, null, 2),
             },
           ],
         };
       } catch (error) {
+        console.log("=== IMAGE UPLOAD ERROR ===");
+        console.log("Error:", error);
+        console.log("=========================");
+
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error occurred";
         return {
           content: [
             {
               type: "text",
-              text: `Error generating image upload guide: ${errorMessage}`,
+              text: `Error uploading image from URL: ${errorMessage}`,
             },
           ],
           isError: true,

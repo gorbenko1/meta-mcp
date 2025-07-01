@@ -97,7 +97,6 @@ export class MetaApiClient {
     return response.data;
   }
 
-
   // Campaign Methods
   async getCampaigns(
     accountId: string,
@@ -360,7 +359,6 @@ export class MetaApiClient {
     }
   }
 
-
   // Insights Methods
   async getInsights(
     objectId: string,
@@ -551,15 +549,18 @@ export class MetaApiClient {
     } catch (error) {
       console.log("=== CREATE AD ERROR ===");
       console.log("Error object:", error);
-      
+
       if (error instanceof Error) {
         console.log("Error message:", error.message);
-        
+
         // Try to parse Meta API error response
         try {
           const errorData = JSON.parse(error.message);
-          console.log("Parsed Meta API error:", JSON.stringify(errorData, null, 2));
-          
+          console.log(
+            "Parsed Meta API error:",
+            JSON.stringify(errorData, null, 2)
+          );
+
           if (errorData.error) {
             console.log("Meta API Error Details:");
             console.log("- Message:", errorData.error.message);
@@ -569,7 +570,10 @@ export class MetaApiClient {
             console.log("- FBTrace ID:", errorData.error.fbtrace_id);
           }
         } catch (parseError) {
-          console.log("Could not parse error as JSON, raw message:", error.message);
+          console.log(
+            "Could not parse error as JSON, raw message:",
+            error.message
+          );
         }
       }
       console.log("=====================");
@@ -689,9 +693,10 @@ export class MetaApiClient {
   async getAdAccount(accountId: string): Promise<AdAccount> {
     const formattedAccountId = this.auth.getAccountId(accountId);
     const queryParams = {
-      fields: "id,name,account_status,currency,timezone_name,funding_source_details,business"
+      fields:
+        "id,name,account_status,currency,timezone_name,funding_source_details,business",
     };
-    
+
     const query = this.buildQueryString(queryParams);
     return this.makeRequest<AdAccount>(
       `${formattedAccountId}?${query}`,
@@ -703,7 +708,7 @@ export class MetaApiClient {
 
   async getFundingSources(accountId: string): Promise<any[]> {
     const formattedAccountId = this.auth.getAccountId(accountId);
-    
+
     try {
       const result = await this.makeRequest<MetaApiResponse<any>>(
         `${formattedAccountId}/funding_source_details`,
@@ -720,7 +725,7 @@ export class MetaApiClient {
 
   async getAccountBusiness(accountId: string): Promise<any> {
     const formattedAccountId = this.auth.getAccountId(accountId);
-    
+
     try {
       return await this.makeRequest<any>(
         `${formattedAccountId}/business`,
@@ -734,17 +739,14 @@ export class MetaApiClient {
     }
   }
 
-
   async getCustomAudience(audienceId: string): Promise<CustomAudience> {
     const queryParams = {
-      fields: "id,name,description,approximate_count,delivery_status,operation_status"
+      fields:
+        "id,name,description,approximate_count,delivery_status,operation_status",
     };
-    
+
     const query = this.buildQueryString(queryParams);
-    return this.makeRequest<CustomAudience>(
-      `${audienceId}?${query}`,
-      "GET"
-    );
+    return this.makeRequest<CustomAudience>(`${audienceId}?${query}`, "GET");
   }
 
   // Batch Operations
@@ -812,5 +814,100 @@ export class MetaApiClient {
     }
 
     return undefined;
+  }
+
+  // Image Upload for v22.0 compliance
+  async uploadImageFromUrl(
+    accountId: string,
+    imageUrl: string,
+    imageName?: string
+  ): Promise<{ hash: string; url: string; name: string }> {
+    try {
+      const formattedAccountId = this.auth.getAccountId(accountId);
+
+      console.log("=== IMAGE UPLOAD FROM URL DEBUG ===");
+      console.log("Account ID:", formattedAccountId);
+      console.log("Image URL:", imageUrl);
+      console.log("Image Name:", imageName);
+
+      // Download the image from the URL
+      console.log("Downloading image from URL...");
+      const imageResponse = await fetch(imageUrl);
+
+      if (!imageResponse.ok) {
+        throw new Error(
+          `Failed to download image: ${imageResponse.status} ${imageResponse.statusText}`
+        );
+      }
+
+      const imageBuffer = await imageResponse.arrayBuffer();
+      const imageBlob = new Blob([imageBuffer], {
+        type: imageResponse.headers.get("content-type") || "image/jpeg",
+      });
+
+      console.log("Image downloaded, size:", imageBuffer.byteLength, "bytes");
+      console.log("Content type:", imageResponse.headers.get("content-type"));
+
+      // Generate filename if not provided
+      const filename = imageName || `uploaded_image_${Date.now()}.jpg`;
+
+      // Create FormData for upload
+      const formData = new FormData();
+      formData.append("filename", imageBlob, filename);
+      formData.append("access_token", this.auth.getAccessToken());
+
+      console.log("Uploading to Meta API...");
+      console.log(
+        "Endpoint:",
+        `https://graph.facebook.com/v22.0/${formattedAccountId}/adimages`
+      );
+
+      // Upload to Meta API
+      const uploadResponse = await fetch(
+        `https://graph.facebook.com/v22.0/${formattedAccountId}/adimages`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const uploadResult = (await uploadResponse.json()) as any;
+      console.log("Upload response:", JSON.stringify(uploadResult, null, 2));
+
+      if (!uploadResponse.ok) {
+        console.log("Upload failed with status:", uploadResponse.status);
+        throw new Error(`Image upload failed: ${JSON.stringify(uploadResult)}`);
+      }
+
+      // Extract image hash from response
+      const images = uploadResult.images;
+      if (!images || Object.keys(images).length === 0) {
+        throw new Error("No image hash returned from Meta API");
+      }
+
+      // Get the first (and usually only) image result
+      const imageKey = Object.keys(images)[0];
+      const imageResult = images[imageKey];
+
+      if (!imageResult.hash) {
+        throw new Error("No hash found in image upload response");
+      }
+
+      console.log("Image uploaded successfully!");
+      console.log("Image hash:", imageResult.hash);
+      console.log("Image URL:", imageResult.url);
+      console.log("===================================");
+
+      return {
+        hash: imageResult.hash,
+        url: imageResult.url || imageUrl,
+        name: filename,
+      };
+    } catch (error) {
+      console.log("=== IMAGE UPLOAD ERROR ===");
+      console.log("Error:", error);
+      console.log("=========================");
+      throw error;
+    }
   }
 }

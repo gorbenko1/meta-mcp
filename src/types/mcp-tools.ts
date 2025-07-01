@@ -823,7 +823,141 @@ export const AnalyzeCreativesSchema = z.object({
     .describe("Maximum number of creatives to analyze"),
 });
 
-export const CreativeValidationEnhancedSchema = CreateAdCreativeSchema;
+export const CreativeValidationEnhancedSchema = z.object({
+  account_id: z.string().describe("Meta Ad Account ID"),
+  name: z.string().min(1).describe("Creative name"),
+  page_id: z
+    .string()
+    .describe("Facebook Page ID (required for object_story_spec)"),
+  message: z.string().describe("Primary ad text/message"),
+  headline: z.string().optional().describe("Ad title/headline"),
+  picture: z
+    .string()
+    .url()
+    .optional()
+    .describe("External image URL - must be publicly accessible"),
+  image_hash: z
+    .string()
+    .optional()
+    .describe("Pre-uploaded image hash (alternative to picture URL)"),
+  video_id: z.string().optional().describe("Video ID for video creatives"),
+  call_to_action_type: z
+    .enum([
+      "LEARN_MORE",
+      "SHOP_NOW",
+      "SIGN_UP",
+      "DOWNLOAD",
+      "BOOK_TRAVEL",
+      "LISTEN_MUSIC",
+      "WATCH_VIDEO",
+      "GET_QUOTE",
+      "CONTACT_US",
+      "APPLY_NOW",
+      "GET_DIRECTIONS",
+      "CALL_NOW",
+      "MESSAGE_PAGE",
+      "SUBSCRIBE",
+      "BOOK_NOW",
+      "ORDER_NOW",
+      "DONATE_NOW",
+      "SAY_THANKS",
+      "SELL_NOW",
+      "SHARE",
+      "OPEN_LINK",
+      "LIKE_PAGE",
+      "FOLLOW_PAGE",
+      "FOLLOW_USER",
+      "REQUEST_TIME",
+      "VISIT_PAGES_FEED",
+      "USE_APP",
+      "PLAY_GAME",
+      "INSTALL_APP",
+      "USE_MOBILE_APP",
+      "INSTALL_MOBILE_APP",
+      "OPEN_MOVIES",
+      "AUDIO_CALL",
+      "VIDEO_CALL",
+      "GET_OFFER",
+      "GET_OFFER_VIEW",
+      "BUY_NOW",
+      "ADD_TO_CART",
+      "SELL",
+      "GIFT_WRAP",
+      "MAKE_AN_OFFER",
+    ])
+    .optional()
+    .describe("Call to action button type (40+ supported types)"),
+  link_url: z
+    .string()
+    .url()
+    .optional()
+    .describe(
+      "Destination URL where users will be directed when clicking the ad"
+    ),
+  description: z.string().optional().describe("Additional description text"),
+  instagram_actor_id: z
+    .string()
+    .optional()
+    .describe("Instagram account ID for cross-posting"),
+  adlabels: z
+    .array(z.string())
+    .optional()
+    .describe("Ad labels for organization and tracking"),
+  enable_standard_enhancements: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Enable v22.0 Standard Enhancements with individual feature control"
+    ),
+  enhancement_features: z
+    .object({
+      enhance_cta: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("Enhance call-to-action buttons"),
+      image_brightness_and_contrast: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("Auto-adjust image brightness and contrast"),
+      text_improvements: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("Improve ad text readability"),
+      image_templates: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Apply image templates and frames"),
+    })
+    .optional()
+    .describe("Individual enhancement features for v22.0 compliance"),
+  attachment_style: z
+    .enum(["link", "album"])
+    .optional()
+    .default("link")
+    .describe("Attachment style for link ads"),
+  caption: z
+    .string()
+    .optional()
+    .describe("Caption text (typically domain name)"),
+});
+
+// Upload Image from URL Schema
+export const UploadImageFromUrlSchema = z.object({
+  account_id: z.string().describe("Meta Ad Account ID (with act_ prefix)"),
+  image_url: z
+    .string()
+    .url()
+    .describe("URL of the image to download and upload to Meta"),
+  image_name: z
+    .string()
+    .optional()
+    .describe("Optional custom name for the uploaded image"),
+});
 
 // Type exports for runtime use
 export type ListCampaignsParams = z.infer<typeof ListCampaignsSchema>;
@@ -861,3 +995,4 @@ export type AnalyzeCreativesParams = z.infer<typeof AnalyzeCreativesSchema>;
 export type CreativeValidationEnhancedParams = z.infer<
   typeof CreativeValidationEnhancedSchema
 >;
+export type UploadImageFromUrlParams = z.infer<typeof UploadImageFromUrlSchema>;
