@@ -816,7 +816,7 @@ export class MetaApiClient {
     return undefined;
   }
 
-  // Image Upload for v22.0 compliance
+  // Image Upload for v23.0 compliance
   async uploadImageFromUrl(
     accountId: string,
     imageUrl: string,
@@ -864,7 +864,7 @@ export class MetaApiClient {
 
       // Upload to Meta API
       const uploadResponse = await fetch(
-        `https://graph.facebook.com/v22.0/${formattedAccountId}/adimages`,
+        `https://graph.facebook.com/v23.0/${formattedAccountId}/adimages`,
         {
           method: "POST",
           body: formData,

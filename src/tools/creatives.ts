@@ -99,7 +99,7 @@ export function registerCreativeTools(
       caption,
     }) => {
       try {
-        console.log("=== CREATE AD CREATIVE DEBUG (v22.0) ===");
+        console.log("=== CREATE AD CREATIVE DEBUG (v23.0) ===");
         console.log("Input parameters:", {
           account_id,
           name,
@@ -197,7 +197,7 @@ export function registerCreativeTools(
             object_story_spec.link_data.caption = caption;
           }
 
-          // v22.0 Call-to-action structure with proper value object
+          // v23.0 Call-to-action structure with proper value object
           if (call_to_action_type) {
             object_story_spec.link_data.call_to_action = {
               type: call_to_action_type,
@@ -244,7 +244,7 @@ export function registerCreativeTools(
           object_story_spec,
         };
 
-        // Add v22.0 Standard Enhancements with new structure
+        // Add v23.0 Standard Enhancements with new structure
         if (enable_standard_enhancements && enhancement_features) {
           creativeData.degrees_of_freedom_spec = {
             creative_features_spec: {},
@@ -289,7 +289,7 @@ export function registerCreativeTools(
           JSON.stringify(object_story_spec, null, 2)
         );
         console.log(
-          "Final creative data (v22.0):",
+          "Final creative data (v23.0):",
           JSON.stringify(creativeData, null, 2)
         );
 
@@ -304,8 +304,8 @@ export function registerCreativeTools(
         const response = {
           success: true,
           creative_id: result.id,
-          message: `Ad creative "${name}" created successfully with v22.0 features`,
-          api_version: "v22.0",
+          message: `Ad creative "${name}" created successfully with v23.0 features`,
+          api_version: "v23.0",
           details: {
             id: result.id,
             name,
@@ -341,13 +341,13 @@ export function registerCreativeTools(
           ],
         };
       } catch (error) {
-        console.log("=== CREATE AD CREATIVE ERROR (v22.0) ===");
+        console.log("=== CREATE AD CREATIVE ERROR (v23.0) ===");
         console.log("Error object:", error);
 
         if (error instanceof Error) {
           console.log("Error message:", error.message);
 
-          // Enhanced error handling for v22.0 specific errors
+          // Enhanced error handling for v23.0 specific errors
           try {
             const errorData = JSON.parse(error.message);
             console.log(
@@ -363,7 +363,7 @@ export function registerCreativeTools(
               console.log("- Error Subcode:", errorData.error.error_subcode);
               console.log("- FBTrace ID:", errorData.error.fbtrace_id);
 
-              // Provide specific guidance for common v22.0 errors
+              // Provide specific guidance for common v23.0 errors
               let specificGuidance = "";
               if (errorData.error.code === 100) {
                 switch (errorData.error.error_subcode) {
@@ -377,7 +377,7 @@ export function registerCreativeTools(
                     break;
                   case 3858082:
                     specificGuidance =
-                      "Standard Enhancements error. For v22.0, use individual feature controls instead of the legacy bundle approach.";
+                      "Standard Enhancements error. For v23.0, use individual feature controls instead of the legacy bundle approach.";
                     break;
                   default:
                     specificGuidance =
@@ -413,7 +413,7 @@ export function registerCreativeTools(
                 content: [
                   {
                     type: "text",
-                    text: `Error creating ad creative (Meta API v22.0): ${enhancedErrorMessage}`,
+                    text: `Error creating ad creative (Meta API v23.0): ${enhancedErrorMessage}`,
                   },
                 ],
                 isError: true,
@@ -1925,10 +1925,10 @@ export function registerCreativeTools(
     }
   );
 
-  // v22.0 Image Upload from URL Tool - FUNCTIONAL
+  // v23.0 Image Upload from URL Tool - FUNCTIONAL
   server.tool(
     "upload_image_from_url",
-    "Upload an image from a URL to Meta and get the image_hash for v22.0 API compliance. Downloads the image from the provided URL and uploads it to Meta's servers, returning the hash required for ad creatives.",
+    "Upload an image from a URL to Meta and get the image_hash for v23.0 API compliance. Downloads the image from the provided URL and uploads it to Meta's servers, returning the hash required for ad creatives.",
     UploadImageFromUrlSchema.shape,
     async ({ account_id, image_url, image_name }) => {
       try {
@@ -1975,7 +1975,7 @@ export function registerCreativeTools(
         const response = {
           success: true,
           message: "Image uploaded successfully to Meta",
-          api_version: "v22.0",
+          api_version: "v23.0",
           upload_details: {
             account_id,
             original_url: image_url,
@@ -1986,8 +1986,8 @@ export function registerCreativeTools(
           technical_specs: {
             max_file_size: "30MB uploaded successfully",
             supported_formats: ["JPG", "PNG", "GIF", "WebP"],
-            upload_endpoint: `https://graph.facebook.com/v22.0/${account_id}/adimages`,
-            api_version: "v22.0",
+            upload_endpoint: `https://graph.facebook.com/v23.0/${account_id}/adimages`,
+            api_version: "v23.0",
           },
           usage_examples: {
             single_image_ads: {
@@ -2047,15 +2047,15 @@ export function registerCreativeTools(
     }
   );
 
-  // Meta Marketing API v22.0 Compliance Checker
+  // Meta Marketing API v23.0 Compliance Checker
   server.tool(
-    "check_api_v22_compliance",
-    "Check if your creative parameters are compliant with Meta Marketing API v22.0 requirements. Identifies deprecated features and recommends v22.0 best practices.",
+    "check_api_v23_compliance",
+    "Check if your creative parameters are compliant with Meta Marketing API v23.0 requirements. Identifies deprecated features and recommends v23.0 best practices.",
     CreateAdCreativeSchema.shape,
     async (params) => {
       try {
         const complianceCheck = {
-          api_version: "v22.0",
+          api_version: "v23.0",
           check_date: new Date().toISOString(),
           overall_compliance: "checking",
           critical_issues: [] as string[],
@@ -2080,7 +2080,7 @@ export function registerCreativeTools(
             },
           },
           migration_timeline: {
-            current_status: "v22.0 active since January 21, 2025",
+            current_status: "v23.0 active since April 21, 2025",
             deprecation_warning: "Legacy Standard Enhancements deprecated",
             grace_period_end: "April 22, 2025 (estimated)",
             action_required: "Migrate to individual enhancement features",
@@ -2106,7 +2106,7 @@ export function registerCreativeTools(
           complianceCheck.v22_features.standard_enhancements.status =
             "compliant";
           complianceCheck.v22_features.standard_enhancements.details =
-            "Using v22.0 individual feature controls";
+            "Using v23.0 individual feature controls";
           complianceCheck.recommendations.push(
             "Monitor enhancement performance in Meta Ads Manager"
           );
@@ -2168,10 +2168,10 @@ export function registerCreativeTools(
           if (v22CTATypes.includes(params.call_to_action_type)) {
             complianceCheck.v22_features.enhanced_cta.status = "compliant";
             complianceCheck.v22_features.enhanced_cta.details =
-              "Using supported v22.0 CTA type";
+              "Using supported v23.0 CTA type";
           } else {
             complianceCheck.warnings.push(
-              `CTA type '${params.call_to_action_type}' may not be supported in v22.0`
+              `CTA type '${params.call_to_action_type}' may not be supported in v23.0`
             );
             complianceCheck.v22_features.enhanced_cta.status = "warning";
             complianceCheck.v22_features.enhanced_cta.details =
@@ -2212,7 +2212,7 @@ export function registerCreativeTools(
           complianceCheck.overall_compliance = "fully-compliant";
         }
 
-        // Add general v22.0 recommendations
+        // Add general v23.0 recommendations
         complianceCheck.recommendations.push(
           "Test creatives in Graph API Explorer before production deployment",
           "Monitor Meta's developer changelog for quarterly API updates",
@@ -2235,7 +2235,7 @@ export function registerCreativeTools(
           content: [
             {
               type: "text",
-              text: `Error checking v22.0 compliance: ${errorMessage}`,
+              text: `Error checking v23.0 compliance: ${errorMessage}`,
             },
           ],
           isError: true,
@@ -2247,7 +2247,7 @@ export function registerCreativeTools(
   // Enhanced Error Code Reference Tool
   server.tool(
     "get_meta_error_codes",
-    "Get detailed reference for Meta Marketing API error codes, subcodes, and specific solutions. Essential for troubleshooting v22.0 API integration issues.",
+    "Get detailed reference for Meta Marketing API error codes, subcodes, and specific solutions. Essential for troubleshooting v23.0 API integration issues.",
     {
       error_code: {
         type: "string",
@@ -2264,7 +2264,7 @@ export function registerCreativeTools(
     async ({ error_code, error_subcode }) => {
       try {
         const errorReference = {
-          api_version: "v22.0",
+          api_version: "v23.0",
           lookup_date: new Date().toISOString(),
           requested_code: error_code,
           requested_subcode: error_subcode,
@@ -2307,7 +2307,7 @@ export function registerCreativeTools(
                 },
                 "3858082": {
                   description:
-                    "Standard Enhancements requirement (v22.0 specific)",
+                    "Standard Enhancements requirement (v23.0 specific)",
                   common_causes: [
                     "Using deprecated standard_enhancements bundle",
                     "Invalid enhancement feature configuration",

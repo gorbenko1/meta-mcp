@@ -407,7 +407,7 @@ Get guidance on analyzing creative performance metrics. Provides recommended app
 **Returns:** Performance analysis guidance and optimization tips.
 
 ### `upload_image_from_url`
-Upload an image from a URL to Meta and get the image_hash for v22.0 API compliance. Downloads the image from the provided URL and uploads it to Meta's servers, returning the hash required for ad creatives.
+Upload an image from a URL to Meta and get the image_hash for v23.0 API compliance. Downloads the image from the provided URL and uploads it to Meta's servers, returning the hash required for ad creatives.
 
 **Parameters:**
 - `account_id` (required): Meta Ad Account ID (with act_ prefix)
@@ -422,20 +422,20 @@ Upload an image from a URL to Meta and get the image_hash for v22.0 API complian
 - Technical specs and usage examples
 - Next steps for using the hash in creatives
 
-### `check_api_v22_compliance`
-Check if your creative parameters are compliant with Meta Marketing API v22.0 requirements. Identifies deprecated features and recommends v22.0 best practices.
+### `check_api_v23_compliance`
+Check if your creative parameters are compliant with Meta Marketing API v23.0 requirements. Identifies deprecated features and recommends v23.0 best practices.
 
 **Parameters:** Same as create_ad_creative
 
 **Returns:** Comprehensive compliance report including:
 - Overall compliance status
 - Critical issues and warnings
-- v22.0 feature checks (Standard Enhancements, CTA types, image handling)
+- v23.0 feature checks (Standard Enhancements, CTA types, image handling)
 - Migration timeline and action required
-- Specific recommendations for v22.0 optimization
+- Specific recommendations for v23.0 optimization
 
 ### `get_meta_error_codes`
-Get detailed reference for Meta Marketing API error codes, subcodes, and specific solutions. Essential for troubleshooting v22.0 API integration issues.
+Get detailed reference for Meta Marketing API error codes, subcodes, and specific solutions. Essential for troubleshooting v23.0 API integration issues.
 
 **Parameters:**
 - `error_code` (optional): Specific error code to look up
@@ -443,7 +443,7 @@ Get detailed reference for Meta Marketing API error codes, subcodes, and specifi
 
 **Returns:** Detailed error reference including:
 - Common error codes (100, 200, 190, 4) with subcodes
-- v22.0 specific errors (Standard Enhancements, account format)
+- v23.0 specific errors (Standard Enhancements, account format)
 - Specific solutions and example fixes
 - Debugging tips and best practices
 - FBTrace ID usage guidance

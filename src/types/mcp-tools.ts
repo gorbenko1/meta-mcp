@@ -734,13 +734,13 @@ export const CreateAdCreativeSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Ad labels for organization and tracking"),
-  // v22.0 Standard Enhancements (new structure)
+  // v23.0 Standard Enhancements (new structure)
   enable_standard_enhancements: z
     .boolean()
     .optional()
     .default(false)
     .describe(
-      "Enable v22.0 Standard Enhancements with individual feature control"
+      "Enable v23.0 Standard Enhancements with individual feature control"
     ),
   enhancement_features: z
     .object({
@@ -766,7 +766,7 @@ export const CreateAdCreativeSchema = z.object({
         .describe("Apply image templates and frames"),
     })
     .optional()
-    .describe("Individual enhancement features for v22.0 compliance"),
+    .describe("Individual enhancement features for v23.0 compliance"),
   attachment_style: z
     .enum(["link", "album"])
     .optional()
@@ -908,7 +908,7 @@ export const CreativeValidationEnhancedSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      "Enable v22.0 Standard Enhancements with individual feature control"
+      "Enable v23.0 Standard Enhancements with individual feature control"
     ),
   enhancement_features: z
     .object({
@@ -934,7 +934,7 @@ export const CreativeValidationEnhancedSchema = z.object({
         .describe("Apply image templates and frames"),
     })
     .optional()
-    .describe("Individual enhancement features for v22.0 compliance"),
+    .describe("Individual enhancement features for v23.0 compliance"),
   attachment_style: z
     .enum(["link", "album"])
     .optional()

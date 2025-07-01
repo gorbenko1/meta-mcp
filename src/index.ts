@@ -323,7 +323,7 @@ async function main() {
           "analyze_account_creatives",
           "upload_creative_asset",
           "upload_image_from_url",
-          "check_api_v22_compliance",
+          "check_api_v23_compliance",
           "get_meta_error_codes",
           "setup_ab_test",
           "get_creative_performance",
