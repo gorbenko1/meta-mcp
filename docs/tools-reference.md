@@ -11,6 +11,7 @@ This document provides a comprehensive reference for all tools and resources ava
 - [Utility Tools](#utility-tools)
 - [MCP Resources](#mcp-resources)
 - [Common Workflows](#common-workflows)
+- [Diagnostic & Troubleshooting Tools](#diagnostic--troubleshooting-tools)
 
 ## Campaign Management Tools
 
@@ -548,3 +549,124 @@ The server will automatically retry with exponential backoff when rate limits ar
 ### Invalid URLs
 **Error**: "Invalid image_url: Must be a valid URL"
 **Solution**: Ensure URLs are properly formatted and accessible
+
+## Diagnostic & Troubleshooting Tools
+
+### `verify_account_setup`
+Verify that an ad account has all necessary components for ad creation.
+
+**Parameters:**
+- `account_id` (required): Meta Ad Account ID to verify
+
+**Example:**
+```
+Verify setup for account act_123456789
+```
+
+**Response includes:**
+- Account access status
+- Payment method configuration
+- Campaign count
+- Setup recommendations and warnings
+
+### `check_campaign_readiness`
+Check if a campaign is ready for ad set creation and get specific requirements.
+
+**Parameters:**
+- `campaign_id` (required): Campaign ID to check
+
+**Example:**
+```
+Check readiness for campaign 120228246450490163
+```
+
+**Response includes:**
+- Campaign status and objective
+- Required setup items
+- Recommended optimization goals and billing events
+- Minimum budget suggestions
+
+### `get_meta_api_reference`
+Get reference information for Meta Marketing API parameters.
+
+**Parameters:** None
+
+**Example:**
+```
+Get Meta API parameter reference
+```
+
+**Response includes:**
+- Valid optimization goals and billing events
+- Compatible parameter combinations
+- Campaign objective requirements
+- Troubleshooting tips for common errors
+
+### `get_quick_fixes`
+Get specific fix suggestions for common Meta Ads API errors.
+
+**Parameters:**
+- `error_message` (required): The error message you received
+
+**Example:**
+```
+Get quick fixes for "Invalid parameter" error
+```
+
+**Response includes:**
+- Likely causes of the error
+- Specific fix suggestions
+- Next steps to resolve the issue
+- Parameter recommendations
+
+### `list_campaign_ad_sets`
+List all ad sets within a specific campaign to understand structure.
+
+**Parameters:**
+- `campaign_id` (required): Campaign ID to list ad sets for
+
+**Example:**
+```
+List ad sets for campaign 120228246450490163
+```
+
+**Response includes:**
+- All ad sets in the campaign
+- Status and budget information
+- Summary statistics
+- Targeting information
+
+### `create_ad_set_enhanced`
+Enhanced ad set creation with better validation and error messages.
+
+**Parameters:** Same as `create_ad_set` but with improved validation
+
+**Example:**
+```
+Create enhanced ad set with campaign_id 120228246450490163
+```
+
+**Features:**
+- Pre-creation validation
+- Better error messages with specific guidance
+- Automatic parameter compatibility checking
+- Objective-specific recommendations
+
+## Usage Recommendations
+
+### Before Creating Ad Sets:
+1. Run `verify_account_setup` to check overall readiness
+2. Run `check_campaign_readiness` for the target campaign
+3. Use `get_meta_api_reference` if you need parameter guidance
+4. Use `create_ad_set_enhanced` instead of `create_ad_set` for better error handling
+
+### When You Get Errors:
+1. Copy the error message
+2. Run `get_quick_fixes` with the error message
+3. Follow the suggested fixes
+4. Use `get_meta_api_reference` for valid parameter combinations
+
+### For Debugging:
+1. Use `list_campaign_ad_sets` to see existing structure
+2. Use `verify_account_setup` to check permissions
+3. Use `check_campaign_readiness` to verify campaign status

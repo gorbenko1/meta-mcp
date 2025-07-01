@@ -296,8 +296,11 @@ async function main() {
           // Ad set tools
           "list_ad_sets",
           "create_ad_set",
+          "create_ad_set_enhanced",
+          "list_campaign_ad_sets",
           // Ad tools
           "list_ads",
+          "create_ad",
           // Analytics tools
           "get_insights",
           "compare_performance",
@@ -312,6 +315,7 @@ async function main() {
           // Creative tools
           "list_creatives",
           "create_ad_creative",
+          "validate_creative_setup",
           "preview_ad",
           "setup_ab_test",
           // OAuth tools
@@ -321,6 +325,11 @@ async function main() {
           "generate_system_user_token",
           "get_token_info",
           "validate_token",
+          // Diagnostic & Helper tools
+          "check_campaign_readiness",
+          "get_meta_api_reference",
+          "get_quick_fixes",
+          "verify_account_setup",
           // Utility tools
           "get_ad_accounts",
           "health_check",
@@ -477,6 +486,24 @@ async function main() {
                 "get_insights",
               ],
             },
+            troubleshooting_and_diagnostics: {
+              description:
+                "Diagnose and fix common Meta Ads API issues with enhanced error handling",
+              step_by_step: [
+                "1. Use 'verify_account_setup' to check overall account readiness",
+                "2. Use 'check_campaign_readiness' before creating ad sets",
+                "3. Use 'get_meta_api_reference' for valid parameter combinations",
+                "4. Use 'get_quick_fixes' with error messages for specific solutions",
+                "5. Use 'list_campaign_ad_sets' to see existing ad set structure",
+              ],
+              key_tools: [
+                "verify_account_setup",
+                "check_campaign_readiness",
+                "get_meta_api_reference",
+                "get_quick_fixes",
+                "list_campaign_ad_sets",
+              ],
+            },
             budget_optimization: {
               description: "Monitor and optimize campaign budgets and spending",
               step_by_step: [
@@ -532,8 +559,25 @@ async function main() {
               description: "Performance metrics, analysis, and reporting",
             },
             ad_management: {
-              tools: ["list_ad_sets", "create_ad_set", "list_ads", "create_ad"],
+              tools: [
+                "list_ad_sets",
+                "create_ad_set",
+                "create_ad_set_enhanced",
+                "list_campaign_ad_sets",
+                "list_ads",
+                "create_ad",
+              ],
               description: "Ad set and individual ad management",
+            },
+            diagnostic_and_troubleshooting: {
+              tools: [
+                "check_campaign_readiness",
+                "get_meta_api_reference",
+                "get_quick_fixes",
+                "verify_account_setup",
+              ],
+              description:
+                "Error diagnosis, troubleshooting, and validation tools",
             },
           },
           best_practices: {

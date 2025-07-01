@@ -432,9 +432,136 @@ export function registerCampaignTools(
     }
   );
 
-  // Create Ad Set Tool
+  // Campaign Readiness Check Tool
   server.tool(
-    "create_ad_set",
+    "check_campaign_readiness",
+    "Check if a campaign is ready for ad set creation and provide specific setup requirements. Use this before creating ad sets to avoid common errors.",
+    DeleteCampaignSchema.shape, // Reusing for campaign_id param
+    async ({ campaign_id }) => {
+      try {
+        const campaign = await metaClient.getCampaign(campaign_id);
+        const accountId = campaign.account_id;
+
+        const readinessCheck = {
+          campaign_id,
+          campaign_name: campaign.name,
+          objective: campaign.objective,
+          status: campaign.status,
+          is_ready: true,
+          issues: [] as string[],
+          requirements: [] as string[],
+          recommendations: [] as string[],
+        };
+
+        // Check campaign status
+        if (campaign.status === "PAUSED") {
+          readinessCheck.issues.push("Campaign is currently paused");
+          readinessCheck.requirements.push(
+            "Resume campaign before creating ad sets"
+          );
+        }
+
+        // Check objective-specific requirements
+        if (
+          campaign.objective === "OUTCOME_LEADS" ||
+          campaign.objective === "CONVERSIONS"
+        ) {
+          readinessCheck.requirements.push(
+            "Facebook Pixel may be required for conversion tracking"
+          );
+          readinessCheck.requirements.push(
+            "Lead form or conversion events should be configured"
+          );
+        }
+
+        // Check budget setup
+        if (!campaign.daily_budget && !campaign.lifetime_budget) {
+          readinessCheck.issues.push("No budget configured on campaign");
+          readinessCheck.requirements.push(
+            "Set campaign budget or use ad set level budgets"
+          );
+        }
+
+        // Provide objective-specific optimization recommendations
+        const objectiveMap: Record<
+          string,
+          {
+            recommended_optimization: string[];
+            recommended_billing: string[];
+            min_budget: number;
+          }
+        > = {
+          OUTCOME_LEADS: {
+            recommended_optimization: [
+              "LEAD_GENERATION",
+              "OFFSITE_CONVERSIONS",
+            ],
+            recommended_billing: ["IMPRESSIONS", "CLICKS"],
+            min_budget: 500,
+          },
+          OUTCOME_TRAFFIC: {
+            recommended_optimization: ["LINK_CLICKS", "LANDING_PAGE_VIEWS"],
+            recommended_billing: ["LINK_CLICKS", "IMPRESSIONS"],
+            min_budget: 100,
+          },
+          OUTCOME_SALES: {
+            recommended_optimization: ["CONVERSIONS", "OFFSITE_CONVERSIONS"],
+            recommended_billing: ["IMPRESSIONS", "CLICKS"],
+            min_budget: 1000,
+          },
+        };
+
+        const objectiveData = objectiveMap[campaign.objective];
+        if (objectiveData) {
+          readinessCheck.recommendations.push(
+            `For ${
+              campaign.objective
+            }, use optimization_goal: ${objectiveData.recommended_optimization.join(
+              " or "
+            )}`
+          );
+          readinessCheck.recommendations.push(
+            `Recommended billing_event: ${objectiveData.recommended_billing.join(
+              " or "
+            )}`
+          );
+          readinessCheck.recommendations.push(
+            `Minimum daily budget: $${objectiveData.min_budget / 100} (${
+              objectiveData.min_budget
+            } cents)`
+          );
+        }
+
+        readinessCheck.is_ready = readinessCheck.issues.length === 0;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(readinessCheck, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error checking campaign readiness: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Enhanced Create Ad Set Tool with better validation
+  server.tool(
+    "create_ad_set_enhanced",
+    "Create an ad set with enhanced validation and helpful error messages. This improved version checks requirements before attempting creation and provides specific guidance for common issues.",
     CreateAdSetSchema.shape,
     async ({
       campaign_id,
@@ -958,6 +1085,489 @@ export function registerCampaignTools(
             {
               type: "text",
               text: `Error getting campaign details: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // List Ad Sets for Campaign Tool
+  server.tool(
+    "list_campaign_ad_sets",
+    "List all ad sets within a specific campaign. Helps you see existing ad sets before creating new ones and understand the campaign structure.",
+    DeleteCampaignSchema.shape, // Reusing for campaign_id param
+    async ({ campaign_id }) => {
+      try {
+        const result = await metaClient.getAdSets({
+          campaignId: campaign_id,
+          limit: 50,
+        });
+
+        const adSets = result.data.map((adSet) => ({
+          id: adSet.id,
+          name: adSet.name,
+          status: adSet.status,
+          effective_status: adSet.effective_status,
+          optimization_goal: adSet.optimization_goal,
+          billing_event: adSet.billing_event,
+          daily_budget: adSet.daily_budget,
+          lifetime_budget: adSet.lifetime_budget,
+          created_time: adSet.created_time,
+          targeting: adSet.targeting,
+        }));
+
+        const response = {
+          campaign_id,
+          ad_sets: adSets,
+          total_count: adSets.length,
+          summary: {
+            active_count: adSets.filter(
+              (as) => as.effective_status === "ACTIVE"
+            ).length,
+            paused_count: adSets.filter(
+              (as) => as.effective_status === "PAUSED"
+            ).length,
+            total_daily_budget: adSets.reduce(
+              (sum, as) => sum + (as.daily_budget || 0),
+              0
+            ),
+          },
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error listing ad sets for campaign: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Meta API Parameter Reference Tool
+  server.tool(
+    "get_meta_api_reference",
+    "Get reference information for Meta Marketing API parameters including valid optimization goals, billing events, and their combinations. Essential for troubleshooting parameter errors.",
+    {},
+    async () => {
+      const reference = {
+        optimization_goals: {
+          description: "Available optimization goals for ad sets",
+          values: [
+            "REACH",
+            "IMPRESSIONS",
+            "CLICKS",
+            "UNIQUE_CLICKS",
+            "APP_INSTALLS",
+            "OFFSITE_CONVERSIONS",
+            "CONVERSIONS",
+            "LINK_CLICKS",
+            "POST_ENGAGEMENT",
+            "PAGE_LIKES",
+            "EVENT_RESPONSES",
+            "MESSAGES",
+            "APP_DOWNLOADS",
+            "LANDING_PAGE_VIEWS",
+            "LEAD_GENERATION",
+            "QUALITY_LEAD",
+            "QUALITY_CALL",
+            "THRUPLAY",
+            "VIDEO_VIEWS",
+          ],
+        },
+        billing_events: {
+          description: "Available billing events for ad sets",
+          values: [
+            "APP_INSTALLS",
+            "CLICKS",
+            "IMPRESSIONS",
+            "LINK_CLICKS",
+            "NONE",
+            "OFFER_CLAIMS",
+            "PAGE_LIKES",
+            "POST_ENGAGEMENT",
+            "THRUPLAY",
+            "PURCHASE",
+            "LISTING_INTERACTION",
+          ],
+        },
+        valid_combinations: {
+          description:
+            "Common valid optimization_goal + billing_event combinations",
+          combinations: [
+            {
+              optimization_goal: "LINK_CLICKS",
+              billing_event: "IMPRESSIONS",
+              use_case: "Website traffic",
+            },
+            {
+              optimization_goal: "LINK_CLICKS",
+              billing_event: "LINK_CLICKS",
+              use_case: "Pay per click",
+            },
+            {
+              optimization_goal: "LANDING_PAGE_VIEWS",
+              billing_event: "IMPRESSIONS",
+              use_case: "Page views",
+            },
+            {
+              optimization_goal: "CONVERSIONS",
+              billing_event: "IMPRESSIONS",
+              use_case: "Conversions with pixel",
+            },
+            {
+              optimization_goal: "LEAD_GENERATION",
+              billing_event: "IMPRESSIONS",
+              use_case: "Lead forms",
+            },
+            {
+              optimization_goal: "REACH",
+              billing_event: "IMPRESSIONS",
+              use_case: "Brand awareness",
+            },
+            {
+              optimization_goal: "POST_ENGAGEMENT",
+              billing_event: "IMPRESSIONS",
+              use_case: "Social engagement",
+            },
+            {
+              optimization_goal: "VIDEO_VIEWS",
+              billing_event: "IMPRESSIONS",
+              use_case: "Video marketing",
+            },
+          ],
+        },
+        campaign_objectives: {
+          description: "Campaign objectives and their requirements",
+          objectives: {
+            OUTCOME_TRAFFIC: {
+              description: "Drive website traffic",
+              recommended_optimization: ["LINK_CLICKS", "LANDING_PAGE_VIEWS"],
+              requires_promoted_object: true,
+              promoted_object_fields: ["page_id", "pixel_id"],
+            },
+            OUTCOME_LEADS: {
+              description: "Generate leads",
+              recommended_optimization: ["LEAD_GENERATION", "CONVERSIONS"],
+              requires_promoted_object: true,
+              promoted_object_fields: ["pixel_id", "custom_event_type"],
+            },
+            OUTCOME_SALES: {
+              description: "Drive purchases",
+              recommended_optimization: ["CONVERSIONS", "OFFSITE_CONVERSIONS"],
+              requires_promoted_object: true,
+              promoted_object_fields: ["pixel_id", "custom_event_type"],
+            },
+            OUTCOME_ENGAGEMENT: {
+              description: "Increase engagement",
+              recommended_optimization: ["POST_ENGAGEMENT", "PAGE_LIKES"],
+              requires_promoted_object: true,
+              promoted_object_fields: ["page_id"],
+            },
+          },
+        },
+        troubleshooting_tips: {
+          invalid_parameter: [
+            "Check that optimization_goal and billing_event are compatible",
+            "Ensure campaign objective matches ad set optimization goal",
+            "Verify promoted_object is provided for campaigns that require it",
+            "Check that budget is in cents (multiply dollars by 100)",
+          ],
+          permission_errors: [
+            "Verify you have admin access to the Facebook Page",
+            "Check that the Facebook Pixel is installed and accessible",
+            "Ensure the campaign exists and you have permission to modify it",
+          ],
+          common_mistakes: [
+            "Using CONVERSIONS without Facebook Pixel setup",
+            "Mixing incompatible optimization goals with billing events",
+            "Forgetting to resume paused campaigns before creating ad sets",
+            "Not providing promoted_object for conversion campaigns",
+          ],
+        },
+      };
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(reference, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  // Quick Fix Suggestions Tool
+  server.tool(
+    "get_quick_fixes",
+    "Get specific fix suggestions for common Meta Ads API errors. Provide an error message to get targeted solutions.",
+    {
+      error_message: {
+        type: "string",
+        description: "The error message you received from the API",
+      },
+    },
+    async ({ error_message }) => {
+      const fixes = {
+        error_message,
+        suggestions: [] as string[],
+        likely_causes: [] as string[],
+        next_steps: [] as string[],
+      };
+
+      const errorLower = error_message.toLowerCase();
+
+      // Invalid parameter errors
+      if (errorLower.includes("invalid parameter")) {
+        fixes.likely_causes.push(
+          "Parameter combination is not supported by Meta API"
+        );
+        fixes.suggestions.push(
+          "Use 'get_meta_api_reference' tool to see valid parameter combinations"
+        );
+        fixes.suggestions.push(
+          "Check that optimization_goal and billing_event are compatible"
+        );
+        fixes.suggestions.push(
+          "Verify campaign objective matches your ad set parameters"
+        );
+        fixes.next_steps.push(
+          "Run 'check_campaign_readiness' on your campaign first"
+        );
+      }
+
+      // Permission errors
+      if (
+        errorLower.includes("permission") ||
+        errorLower.includes("does not exist")
+      ) {
+        fixes.likely_causes.push(
+          "Insufficient permissions or object doesn't exist"
+        );
+        fixes.suggestions.push(
+          "Verify you have admin access to the Facebook Page"
+        );
+        fixes.suggestions.push("Check that campaign/ad set IDs are correct");
+        fixes.suggestions.push("Ensure the object hasn't been deleted");
+        fixes.next_steps.push("Use 'list_campaigns' to verify campaign exists");
+      }
+
+      // Billing event errors
+      if (errorLower.includes("billing_event")) {
+        fixes.likely_causes.push(
+          "Invalid billing event for the optimization goal"
+        );
+        fixes.suggestions.push(
+          "Use IMPRESSIONS as billing_event (most compatible)"
+        );
+        fixes.suggestions.push(
+          "Check valid combinations with 'get_meta_api_reference'"
+        );
+        fixes.next_steps.push(
+          "Try optimization_goal: LINK_CLICKS with billing_event: IMPRESSIONS"
+        );
+      }
+
+      // Optimization goal errors
+      if (errorLower.includes("optimization_goal")) {
+        fixes.likely_causes.push(
+          "Optimization goal not supported for campaign objective"
+        );
+        fixes.suggestions.push("Match optimization goal to campaign objective");
+        fixes.suggestions.push(
+          "For OUTCOME_TRAFFIC: use LINK_CLICKS or LANDING_PAGE_VIEWS"
+        );
+        fixes.suggestions.push(
+          "For OUTCOME_LEADS: use LEAD_GENERATION or CONVERSIONS"
+        );
+        fixes.next_steps.push(
+          "Run 'check_campaign_readiness' to see recommendations"
+        );
+      }
+
+      // Budget errors
+      if (errorLower.includes("budget")) {
+        fixes.likely_causes.push(
+          "Budget amount too low or incorrectly formatted"
+        );
+        fixes.suggestions.push(
+          "Ensure budget is in cents (multiply dollars by 100)"
+        );
+        fixes.suggestions.push(
+          "Minimum daily budget is usually $1.00 (100 cents)"
+        );
+        fixes.suggestions.push(
+          "Provide either daily_budget OR lifetime_budget, not both"
+        );
+        fixes.next_steps.push("Try daily_budget: 500 (for $5.00 daily)");
+      }
+
+      // If no specific matches, provide general guidance
+      if (fixes.suggestions.length === 0) {
+        fixes.suggestions.push(
+          "Use 'get_meta_api_reference' for parameter guidance"
+        );
+        fixes.suggestions.push(
+          "Run 'check_campaign_readiness' before creating ad sets"
+        );
+        fixes.suggestions.push(
+          "Try simpler parameters first (LINK_CLICKS + IMPRESSIONS)"
+        );
+        fixes.next_steps.push(
+          "Share the full error message for more specific help"
+        );
+      }
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(fixes, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  // Account Setup Verification Tool
+  server.tool(
+    "verify_account_setup",
+    "Verify that an ad account has all necessary components for ad creation including pages, pixels, and payment methods. Run this before starting major campaigns.",
+    {
+      account_id: {
+        type: "string",
+        description: "Meta Ad Account ID to verify",
+      },
+    },
+    async ({ account_id }) => {
+      try {
+        const verification = {
+          account_id,
+          setup_status: "checking",
+          components: {
+            account_access: { status: "unknown", details: "" },
+            payment_method: { status: "unknown", details: "" },
+            facebook_pages: { status: "unknown", details: "", count: 0 },
+            active_campaigns: { status: "unknown", details: "", count: 0 },
+          },
+          recommendations: [] as string[],
+          warnings: [] as string[],
+        };
+
+        // Check account access
+        try {
+          const account = await metaClient.getAdAccount(account_id);
+          verification.components.account_access = {
+            status: "success",
+            details: `Account "${account.name}" accessible`,
+          };
+        } catch (error) {
+          verification.components.account_access = {
+            status: "error",
+            details: "Cannot access account - check permissions",
+          };
+          verification.warnings.push("Account access issues detected");
+        }
+
+        // Check for active campaigns
+        try {
+          const campaigns = await metaClient.getCampaigns(account_id, {
+            limit: 10,
+          });
+          verification.components.active_campaigns = {
+            status: campaigns.data.length > 0 ? "success" : "warning",
+            details: `Found ${campaigns.data.length} campaigns`,
+            count: campaigns.data.length,
+          };
+
+          if (campaigns.data.length === 0) {
+            verification.recommendations.push(
+              "Create your first campaign to start advertising"
+            );
+          }
+        } catch (error) {
+          verification.components.active_campaigns = {
+            status: "error",
+            details: "Cannot retrieve campaigns",
+            count: 0,
+          };
+        }
+
+        // Check payment methods (this might require additional permissions)
+        try {
+          const funding = await metaClient.getFundingSources(account_id);
+          verification.components.payment_method = {
+            status: funding.length > 0 ? "success" : "warning",
+            details:
+              funding.length > 0
+                ? "Payment method configured"
+                : "No payment method found",
+          };
+
+          if (funding.length === 0) {
+            verification.warnings.push(
+              "No payment method configured - required for ad delivery"
+            );
+            verification.recommendations.push(
+              "Add a payment method in Meta Business Manager"
+            );
+          }
+        } catch (error) {
+          verification.components.payment_method = {
+            status: "unknown",
+            details: "Cannot check payment methods (insufficient permissions)",
+          };
+        }
+
+        // Overall status
+        const hasErrors = Object.values(verification.components).some(
+          (c) => c.status === "error"
+        );
+        const hasWarnings = Object.values(verification.components).some(
+          (c) => c.status === "warning"
+        );
+
+        if (hasErrors) {
+          verification.setup_status = "needs_attention";
+        } else if (hasWarnings) {
+          verification.setup_status = "mostly_ready";
+        } else {
+          verification.setup_status = "ready";
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(verification, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error verifying account setup: ${errorMessage}`,
             },
           ],
           isError: true,
