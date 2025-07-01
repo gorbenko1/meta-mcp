@@ -658,24 +658,46 @@ export const ListCreativesSchema = z.object({
 export const CreateAdCreativeSchema = z.object({
   account_id: z.string().describe("Meta Ad Account ID"),
   name: z.string().min(1).describe("Creative name"),
-  title: z.string().optional().describe("Ad title"),
-  body: z.string().optional().describe("Ad body text"),
-  image_url: z.string().url().optional().describe("Image URL for the creative"),
-  video_id: z.string().optional().describe("Video ID for video creatives"),
-  call_to_action: z
-    .object({
-      type: z
-        .string()
-        .describe("Call to action type (e.g., LEARN_MORE, SHOP_NOW)"),
-      value: z
-        .any()
-        .optional()
-        .describe("Call to action value (e.g., link URL)"),
-    })
+  page_id: z
+    .string()
+    .describe("Facebook Page ID (required for object_story_spec)"),
+  message: z.string().optional().describe("Ad body text/message"),
+  headline: z.string().optional().describe("Ad title/headline"),
+  picture: z
+    .string()
+    .url()
     .optional()
-    .describe("Call to action configuration"),
-  link_url: z.string().url().optional().describe("Destination URL for the ad"),
-  display_link: z.string().optional().describe("Display link text"),
+    .describe("External image URL for the creative"),
+  video_id: z.string().optional().describe("Video ID for video creatives"),
+  call_to_action_type: z
+    .enum([
+      "LEARN_MORE",
+      "SHOP_NOW",
+      "SIGN_UP",
+      "DOWNLOAD",
+      "BOOK_TRAVEL",
+      "LISTEN_MUSIC",
+      "WATCH_VIDEO",
+      "GET_QUOTE",
+      "CONTACT_US",
+      "APPLY_NOW",
+    ])
+    .optional()
+    .describe("Call to action button type"),
+  link_url: z
+    .string()
+    .url()
+    .optional()
+    .describe("Primary destination URL for the ad"),
+  description: z.string().optional().describe("Ad description text"),
+  instagram_actor_id: z
+    .string()
+    .optional()
+    .describe("Instagram account ID for cross-posting"),
+  adlabels: z
+    .array(z.string())
+    .optional()
+    .describe("Ad labels for organization"),
 });
 
 export const PreviewAdSchema = z.object({

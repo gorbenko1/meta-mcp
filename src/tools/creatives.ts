@@ -76,35 +76,41 @@ export function registerCreativeTools(
     async ({
       account_id,
       name,
-      title,
-      body,
-      image_url,
+      page_id,
+      headline,
+      message,
+      picture,
       video_id,
-      call_to_action,
+      call_to_action_type,
       link_url,
-      display_link,
+      description,
+      instagram_actor_id,
+      adlabels,
     }) => {
       try {
         console.log("=== CREATE AD CREATIVE DEBUG ===");
         console.log("Input parameters:", {
           account_id,
           name,
-          title,
-          body,
-          image_url,
+          page_id,
+          headline,
+          message,
+          picture,
           video_id,
-          call_to_action,
+          call_to_action_type,
           link_url,
-          display_link,
+          description,
+          instagram_actor_id,
+          adlabels,
         });
 
         // Validate that we have either an image or video
-        if (!image_url && !video_id) {
+        if (!picture && !video_id) {
           return {
             content: [
               {
                 type: "text",
-                text: "Error: Either image_url or video_id must be provided for the creative",
+                text: "Error: Either picture (image URL) or video_id must be provided for the creative",
               },
             ],
             isError: true,
@@ -112,36 +118,37 @@ export function registerCreativeTools(
         }
 
         // Construct the proper object_story_spec for Meta API
-        const object_story_spec: any = {};
+        const object_story_spec: any = {
+          page_id: page_id, // Required for most creative types
+        };
 
         // For link ads with external images
-        if (link_url || image_url) {
+        if (link_url || picture) {
           object_story_spec.link_data = {};
-          
+
           if (link_url) {
             object_story_spec.link_data.link = link_url;
           }
-          
-          if (image_url) {
-            object_story_spec.link_data.picture = image_url;
+
+          if (picture) {
+            object_story_spec.link_data.picture = picture;
           }
-          
-          if (body) {
-            object_story_spec.link_data.message = body;
+
+          if (message) {
+            object_story_spec.link_data.message = message;
           }
-          
-          if (title) {
-            object_story_spec.link_data.name = title;
+
+          if (headline) {
+            object_story_spec.link_data.name = headline;
           }
-          
-          if (display_link) {
-            object_story_spec.link_data.caption = display_link;
+
+          if (description) {
+            object_story_spec.link_data.description = description;
           }
-          
-          if (call_to_action) {
+
+          if (call_to_action_type) {
             object_story_spec.link_data.call_to_action = {
-              type: call_to_action.type,
-              value: call_to_action.value || {}
+              type: call_to_action_type,
             };
           }
         }
@@ -151,26 +158,45 @@ export function registerCreativeTools(
           object_story_spec.video_data = {
             video_id: video_id,
           };
-          
-          if (body) {
-            object_story_spec.video_data.message = body;
+
+          if (message) {
+            object_story_spec.video_data.message = message;
           }
-          
-          if (call_to_action) {
+
+          if (headline) {
+            object_story_spec.video_data.title = headline;
+          }
+
+          if (call_to_action_type) {
             object_story_spec.video_data.call_to_action = {
-              type: call_to_action.type,
-              value: call_to_action.value || {}
+              type: call_to_action_type,
             };
           }
         }
 
-        const creativeData = {
+        // Add Instagram actor if provided
+        if (instagram_actor_id) {
+          object_story_spec.instagram_actor_id = instagram_actor_id;
+        }
+
+        const creativeData: any = {
           name,
           object_story_spec,
         };
 
-        console.log("Constructed object_story_spec:", JSON.stringify(object_story_spec, null, 2));
-        console.log("Final creative data:", JSON.stringify(creativeData, null, 2));
+        // Add ad labels if provided
+        if (adlabels && adlabels.length > 0) {
+          creativeData.adlabels = adlabels.map((label) => ({ name: label }));
+        }
+
+        console.log(
+          "Constructed object_story_spec:",
+          JSON.stringify(object_story_spec, null, 2)
+        );
+        console.log(
+          "Final creative data:",
+          JSON.stringify(creativeData, null, 2)
+        );
 
         const result = await metaClient.createAdCreative(
           account_id,
@@ -187,13 +213,15 @@ export function registerCreativeTools(
           details: {
             id: result.id,
             name,
-            title,
-            body,
-            image_url,
+            page_id,
+            headline,
+            message,
+            picture,
             video_id,
-            call_to_action,
+            call_to_action_type,
             link_url,
             account_id,
+            instagram_actor_id,
           },
           next_steps: [
             "Use this creative in ad creation",
@@ -213,15 +241,18 @@ export function registerCreativeTools(
       } catch (error) {
         console.log("=== CREATE AD CREATIVE ERROR ===");
         console.log("Error object:", error);
-        
+
         if (error instanceof Error) {
           console.log("Error message:", error.message);
-          
+
           // Try to parse Meta API error response
           try {
             const errorData = JSON.parse(error.message);
-            console.log("Parsed Meta API error:", JSON.stringify(errorData, null, 2));
-            
+            console.log(
+              "Parsed Meta API error:",
+              JSON.stringify(errorData, null, 2)
+            );
+
             if (errorData.error) {
               console.log("Meta API Error Details:");
               console.log("- Message:", errorData.error.message);
@@ -229,21 +260,27 @@ export function registerCreativeTools(
               console.log("- Type:", errorData.error.type);
               console.log("- Error Subcode:", errorData.error.error_subcode);
               console.log("- FBTrace ID:", errorData.error.fbtrace_id);
-              
+
               if (errorData.error.error_data) {
-                console.log("- Error Data:", JSON.stringify(errorData.error.error_data, null, 2));
+                console.log(
+                  "- Error Data:",
+                  JSON.stringify(errorData.error.error_data, null, 2)
+                );
               }
-              
+
               if (errorData.error.error_user_title) {
                 console.log("- User Title:", errorData.error.error_user_title);
               }
-              
+
               if (errorData.error.error_user_msg) {
                 console.log("- User Message:", errorData.error.error_user_msg);
               }
             }
           } catch (parseError) {
-            console.log("Could not parse error as JSON, raw message:", error.message);
+            console.log(
+              "Could not parse error as JSON, raw message:",
+              error.message
+            );
           }
         }
         console.log("===============================");
@@ -255,6 +292,213 @@ export function registerCreativeTools(
             {
               type: "text",
               text: `Error creating ad creative: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Validate Creative Setup Tool
+  server.tool(
+    "validate_creative_setup",
+    CreateAdCreativeSchema.shape,
+    async ({
+      account_id,
+      name,
+      page_id,
+      headline,
+      message,
+      picture,
+      video_id,
+      call_to_action_type,
+      link_url,
+      description,
+    }) => {
+      try {
+        const validationResults = {
+          account_id,
+          name,
+          is_valid: true,
+          issues: [] as string[],
+          warnings: [] as string[],
+          recommendations: [] as string[],
+          requirements_check: {
+            has_media: false,
+            has_page_id: false,
+            has_name: false,
+            has_content: false,
+            call_to_action_valid: true,
+            urls_valid: true,
+          },
+        };
+
+        // Check required fields
+        if (!page_id) {
+          validationResults.issues.push(
+            "Missing page_id: Facebook Page ID is required for object_story_spec"
+          );
+          validationResults.is_valid = false;
+        } else {
+          validationResults.requirements_check.has_page_id = true;
+        }
+
+        if (!name || name.trim().length === 0) {
+          validationResults.issues.push(
+            "Missing or empty name: Creative name is required"
+          );
+          validationResults.is_valid = false;
+        } else {
+          validationResults.requirements_check.has_name = true;
+        }
+
+        // Check media requirements
+        if (!picture && !video_id) {
+          validationResults.issues.push(
+            "Missing media: Either picture (image URL) or video_id must be provided"
+          );
+          validationResults.is_valid = false;
+        } else {
+          validationResults.requirements_check.has_media = true;
+        }
+
+        // Check content
+        if (!message && !headline) {
+          validationResults.warnings.push(
+            "No content provided: Consider adding headline or message text for better performance"
+          );
+        } else {
+          validationResults.requirements_check.has_content = true;
+        }
+
+        // Validate call to action type
+        if (call_to_action_type) {
+          const validCTATypes = [
+            "LEARN_MORE",
+            "SHOP_NOW",
+            "SIGN_UP",
+            "DOWNLOAD",
+            "BOOK_TRAVEL",
+            "LISTEN_MUSIC",
+            "WATCH_VIDEO",
+            "GET_QUOTE",
+            "CONTACT_US",
+            "APPLY_NOW",
+          ];
+
+          if (!validCTATypes.includes(call_to_action_type)) {
+            validationResults.issues.push(
+              `Invalid call_to_action_type: ${call_to_action_type}. Must be one of: ${validCTATypes.join(
+                ", "
+              )}`
+            );
+            validationResults.is_valid = false;
+            validationResults.requirements_check.call_to_action_valid = false;
+          }
+        }
+
+        // URL validation
+        if (picture) {
+          try {
+            new URL(picture);
+          } catch {
+            validationResults.issues.push(
+              "Invalid picture URL: Must be a valid URL"
+            );
+            validationResults.is_valid = false;
+            validationResults.requirements_check.urls_valid = false;
+          }
+        }
+
+        if (link_url) {
+          try {
+            new URL(link_url);
+          } catch {
+            validationResults.issues.push(
+              "Invalid link_url: Must be a valid URL"
+            );
+            validationResults.is_valid = false;
+            validationResults.requirements_check.urls_valid = false;
+          }
+        }
+
+        // Add recommendations
+        if (!headline && message) {
+          validationResults.recommendations.push(
+            "Consider adding a headline for better ad performance"
+          );
+        }
+
+        if (!call_to_action_type && link_url) {
+          validationResults.recommendations.push(
+            "Consider adding a call-to-action button when using a destination URL"
+          );
+        }
+
+        if (picture && video_id) {
+          validationResults.recommendations.push(
+            "Both image and video provided - video will take precedence in creative"
+          );
+        }
+
+        if (!description && link_url) {
+          validationResults.recommendations.push(
+            "Consider adding a description for better user experience"
+          );
+        }
+
+        // Object story spec preview
+        const object_story_spec_preview: any = {
+          page_id: page_id,
+        };
+
+        if (link_url || picture) {
+          object_story_spec_preview.link_data = {};
+          if (link_url) object_story_spec_preview.link_data.link = link_url;
+          if (picture) object_story_spec_preview.link_data.picture = picture;
+          if (message) object_story_spec_preview.link_data.message = message;
+          if (headline) object_story_spec_preview.link_data.name = headline;
+          if (description)
+            object_story_spec_preview.link_data.description = description;
+          if (call_to_action_type) {
+            object_story_spec_preview.link_data.call_to_action = {
+              type: call_to_action_type,
+            };
+          }
+        }
+
+        if (video_id) {
+          object_story_spec_preview.video_data = {
+            video_id: video_id,
+          };
+          if (message) object_story_spec_preview.video_data.message = message;
+          if (headline) object_story_spec_preview.video_data.title = headline;
+          if (call_to_action_type) {
+            object_story_spec_preview.video_data.call_to_action = {
+              type: call_to_action_type,
+            };
+          }
+        }
+
+        validationResults.object_story_spec_preview = object_story_spec_preview;
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(validationResults, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error validating creative setup: ${errorMessage}`,
             },
           ],
           isError: true,

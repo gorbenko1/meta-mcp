@@ -286,16 +286,16 @@ Estimate audience size for US adults aged 25-45 interested in fitness
 ## Creative Management Tools
 
 ### `list_creatives`
-List ad creatives in an ad account.
+List all ad creatives in an ad account.
 
 **Parameters:**
 - `account_id` (required): Meta Ad Account ID
-- `limit` (optional): Number of creatives to return
-- `after` (optional): Pagination cursor
+- `limit` (optional): Number of creatives to return (1-100, default: 25)
+- `after` (optional): Pagination cursor for next page
 
 **Example:**
 ```
-List all ad creatives for account act_123456789
+List all creatives for account act_123456789
 ```
 
 ### `create_ad_creative`
@@ -304,17 +304,96 @@ Create a new ad creative.
 **Parameters:**
 - `account_id` (required): Meta Ad Account ID
 - `name` (required): Creative name
-- `title` (optional): Ad title
-- `body` (optional): Ad body text
-- `image_url` (optional): Image URL
-- `video_id` (optional): Video ID
-- `call_to_action` (optional): Call-to-action configuration
-- `link_url` (optional): Destination URL
-- `display_link` (optional): Display link text
+- `page_id` (required): Facebook Page ID (required for object_story_spec)
+- `picture` (optional): External image URL for the creative
+- `video_id` (optional): Video ID for video creatives
+- `headline` (optional): Ad title/headline
+- `message` (optional): Ad body text/message
+- `description` (optional): Ad description text
+- `link_url` (optional): Primary destination URL for the ad
+- `call_to_action_type` (optional): Call to action button type (LEARN_MORE, SHOP_NOW, SIGN_UP, DOWNLOAD, BOOK_TRAVEL, LISTEN_MUSIC, WATCH_VIDEO, GET_QUOTE, CONTACT_US, APPLY_NOW)
+- `instagram_actor_id` (optional): Instagram account ID for cross-posting
+- `adlabels` (optional): Array of label names for organization
 
-**Example:**
+**Requirements:**
+- Either `picture` (image URL) OR `video_id` must be provided
+- At least one of `headline` or `message` is recommended for better performance
+
+**Example Usage:**
+
+```javascript
+// Image ad with link
+{
+  "account_id": "act_123456789",
+  "name": "Summer Sale Creative",
+  "page_id": "page_123456789",
+  "headline": "50% Off Summer Collection",
+  "message": "Don't miss our biggest sale of the year!",
+  "picture": "https://example.com/summer-sale.jpg",
+  "link_url": "https://example.com/sale",
+  "description": "Limited time offer - shop now!",
+  "call_to_action_type": "SHOP_NOW"
+}
 ```
-Create an ad creative with title "Summer Sale" and image URL https://example.com/image.jpg
+
+```javascript
+// Video creative
+{
+  "account_id": "act_123456789",
+  "name": "Product Demo Video",
+  "page_id": "page_123456789",
+  "video_id": "12345678901234567",
+  "headline": "See Our Product in Action",
+  "message": "Watch how our product can transform your workflow",
+  "call_to_action_type": "LEARN_MORE",
+  "link_url": "https://example.com/demo"
+}
+```
+
+### `validate_creative_setup`
+Validates ad creative parameters before creation to identify potential issues.
+
+**Parameters:**
+- All the same parameters as `create_ad_creative`
+
+**Returns:**
+- `is_valid`: Boolean indicating if the creative will likely succeed
+- `issues`: Array of blocking issues that must be resolved
+- `warnings`: Array of potential problems to consider
+- `recommendations`: Array of suggestions for improvement
+- `requirements_check`: Object showing which requirements are met
+  - `has_media`: Whether image or video is provided
+  - `has_page_id`: Whether Facebook Page ID is provided
+  - `has_name`: Whether creative name is provided
+  - `has_content`: Whether headline or message is provided
+  - `call_to_action_valid`: Whether CTA type is valid
+  - `urls_valid`: Whether all URLs are properly formatted
+- `object_story_spec_preview`: Preview of the generated object_story_spec
+
+**Example Response:**
+
+```json
+{
+  "is_valid": true,
+  "issues": [],
+  "warnings": ["No content provided: Consider adding headline or message text for better performance"],
+  "recommendations": ["Consider adding a call-to-action button when using a destination URL"],
+  "requirements_check": {
+    "has_media": true,
+    "has_page_id": true,
+    "has_name": true,
+    "has_content": false,
+    "call_to_action_valid": true,
+    "urls_valid": true
+  },
+  "object_story_spec_preview": {
+    "page_id": "page_123456789",
+    "link_data": {
+      "link": "https://example.com",
+      "picture": "https://example.com/image.jpg"
+    }
+  }
+}
 ```
 
 ### `preview_ad`
@@ -328,18 +407,6 @@ Generate a preview of how an ad creative will appear.
 **Example:**
 ```
 Preview creative 12345 in mobile feed format
-```
-
-### `setup_ab_test`
-Get guidance on setting up A/B tests for creatives.
-
-**Parameters:**
-- `account_id` (required): Meta Ad Account ID
-- `name` (required): Test name
-
-**Example:**
-```
-Set up A/B test for comparing different headlines in account act_123456789
 ```
 
 ## Utility Tools
@@ -447,3 +514,37 @@ The server automatically handles Meta's rate limiting:
 - **Write operations**: 3 points each
 
 The server will automatically retry with exponential backoff when rate limits are hit.
+
+## Key Changes from Previous Version
+
+1. **Added required `page_id` field**: All ad creatives now require a Facebook Page ID
+2. **Updated call-to-action structure**: CTAs now use proper enum values and structured value objects
+3. **Enhanced validation**: Better error checking and user-friendly feedback
+4. **Added validation tool**: Pre-creation validation to catch issues early
+5. **Improved object_story_spec construction**: Better alignment with Meta's API requirements
+
+## Best Practices
+
+1. **Always validate first**: Use `validate_creative_setup` before `create_ad_creative`
+2. **Include meaningful content**: Add both title and body for better performance
+3. **Use appropriate CTAs**: Match call-to-action type to your campaign objective
+4. **Test image URLs**: Ensure image URLs are accessible and point to valid images
+5. **Consider cross-posting**: Use `instagram_actor_id` for Instagram integration
+
+## Common Issues and Solutions
+
+### Missing page_id
+**Error**: "Missing page_id: Facebook Page ID is required for object_story_spec"
+**Solution**: Provide a valid Facebook Page ID that your account has access to
+
+### Invalid call_to_action type
+**Error**: "Invalid call_to_action type: XYZ"
+**Solution**: Use one of the supported CTA types: LEARN_MORE, SHOP_NOW, SIGN_UP, etc.
+
+### Missing media
+**Error**: "Missing media: Either image_url or video_id must be provided"
+**Solution**: Provide either a valid image URL or video ID
+
+### Invalid URLs
+**Error**: "Invalid image_url: Must be a valid URL"
+**Solution**: Ensure URLs are properly formatted and accessible
