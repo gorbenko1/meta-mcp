@@ -325,6 +325,7 @@ async function main() {
           "get_ad_accounts",
           "health_check",
           "get_capabilities",
+          "get_ai_guidance",
         ],
         resources_available: [
           "meta://campaigns/{account_id}",
@@ -385,6 +386,239 @@ async function main() {
         ],
       };
     });
+
+    // Add AI workflow guidance tool
+    server.tool(
+      "get_ai_guidance",
+      "Get comprehensive guidance for AI assistants on how to effectively use this Meta Marketing API server. Includes common workflows, tool combinations, troubleshooting tips, and best practices for campaign management and analytics.",
+      {},
+      async () => {
+        const guidance = {
+          server_purpose: {
+            description:
+              "This MCP server provides comprehensive access to Meta (Facebook/Instagram) advertising capabilities including campaign management, performance analytics, audience targeting, and creative optimization.",
+            primary_use_cases: [
+              "Campaign performance analysis and optimization",
+              "Automated campaign creation and management",
+              "Audience research and targeting insights",
+              "Creative performance testing and analysis",
+              "Budget management and ROI optimization",
+              "Multi-account advertising workflow automation",
+            ],
+          },
+          common_workflows: {
+            campaign_analysis: {
+              description:
+                "Analyze campaign performance and identify optimization opportunities",
+              step_by_step: [
+                "1. Use 'get_ad_accounts' to list available accounts",
+                "2. Use 'list_campaigns' to see all campaigns in an account",
+                "3. Use 'get_insights' with campaign IDs to get performance metrics",
+                "4. Use 'compare_performance' to compare multiple campaigns",
+                "5. Use 'export_insights' to save data in CSV/JSON format",
+              ],
+              key_tools: [
+                "get_ad_accounts",
+                "list_campaigns",
+                "get_insights",
+                "compare_performance",
+                "export_insights",
+              ],
+            },
+            new_campaign_setup: {
+              description: "Create and launch a new advertising campaign",
+              step_by_step: [
+                "1. Use 'get_ad_accounts' to select the target account",
+                "2. Use 'create_campaign' with objective and budget settings",
+                "3. Use 'create_ad_set' to define targeting and optimization",
+                "4. Use 'create_ad_creative' to set up ad content and visuals",
+                "5. Use 'create_ad' to link creative to ad set",
+                "6. Use 'resume_campaign' to activate when ready",
+              ],
+              key_tools: [
+                "create_campaign",
+                "create_ad_set",
+                "create_ad_creative",
+                "create_ad",
+                "resume_campaign",
+              ],
+            },
+            audience_research: {
+              description:
+                "Research and create targeted audiences for campaigns",
+              step_by_step: [
+                "1. Use 'list_audiences' to see existing custom audiences",
+                "2. Use 'create_custom_audience' for new audience segments",
+                "3. Use 'create_lookalike_audience' based on high-value customers",
+                "4. Use 'get_audience_info' to check audience size and health",
+                "5. Use targeting insights from 'get_insights' to refine",
+              ],
+              key_tools: [
+                "list_audiences",
+                "create_custom_audience",
+                "create_lookalike_audience",
+                "get_audience_info",
+              ],
+            },
+            creative_optimization: {
+              description:
+                "Test and optimize ad creatives for better performance",
+              step_by_step: [
+                "1. Use 'list_creatives' to see existing ad creatives",
+                "2. Use 'create_ad_creative' to test new variations",
+                "3. Use 'validate_creative_setup' to check before launch",
+                "4. Use 'get_insights' with ad-level breakdown to compare creative performance",
+                "5. Use 'export_insights' to analyze creative performance data",
+              ],
+              key_tools: [
+                "list_creatives",
+                "create_ad_creative",
+                "validate_creative_setup",
+                "get_insights",
+              ],
+            },
+            budget_optimization: {
+              description: "Monitor and optimize campaign budgets and spending",
+              step_by_step: [
+                "1. Use 'get_insights' with spend metrics to check current performance",
+                "2. Use 'compare_performance' to identify top-performing campaigns",
+                "3. Use 'update_campaign' to adjust budgets based on performance",
+                "4. Use 'pause_campaign' to stop underperforming campaigns",
+                "5. Use 'resume_campaign' to reactivate optimized campaigns",
+              ],
+              key_tools: [
+                "get_insights",
+                "compare_performance",
+                "update_campaign",
+                "pause_campaign",
+                "resume_campaign",
+              ],
+            },
+          },
+          tool_categories: {
+            account_management: {
+              tools: ["get_ad_accounts", "health_check", "get_token_info"],
+              description: "Account access, authentication, and server status",
+            },
+            campaign_operations: {
+              tools: [
+                "list_campaigns",
+                "create_campaign",
+                "update_campaign",
+                "pause_campaign",
+                "resume_campaign",
+              ],
+              description: "Full campaign lifecycle management",
+            },
+            targeting_and_audiences: {
+              tools: [
+                "list_audiences",
+                "create_custom_audience",
+                "create_lookalike_audience",
+                "get_audience_info",
+              ],
+              description: "Audience creation, management, and insights",
+            },
+            creative_management: {
+              tools: [
+                "list_creatives",
+                "create_ad_creative",
+                "validate_creative_setup",
+              ],
+              description: "Ad creative creation, validation, and management",
+            },
+            performance_analytics: {
+              tools: ["get_insights", "compare_performance", "export_insights"],
+              description: "Performance metrics, analysis, and reporting",
+            },
+            ad_management: {
+              tools: ["list_ad_sets", "create_ad_set", "list_ads", "create_ad"],
+              description: "Ad set and individual ad management",
+            },
+          },
+          best_practices: {
+            error_handling: [
+              "Always check health_check before starting major operations",
+              "Use get_ad_accounts to verify account access before campaign operations",
+              "Use validate_creative_setup before creating ad creatives",
+              "Handle rate limiting by spacing out API calls appropriately",
+            ],
+            performance_optimization: [
+              "Use compare_performance to identify patterns across campaigns",
+              "Export insights data for deeper analysis with export_insights",
+              "Monitor budget utilization with regular get_insights calls",
+              "Test multiple creatives per ad set for better performance",
+            ],
+            workflow_efficiency: [
+              "Start with list operations to understand current state",
+              "Group related operations together (create campaign → ad set → creative → ad)",
+              "Use descriptive names for campaigns and ad sets for better organization",
+              "Regular performance monitoring to catch issues early",
+            ],
+          },
+          troubleshooting: {
+            authentication_issues: [
+              "Use get_token_info to check token validity and permissions",
+              "Verify account access with get_ad_accounts",
+              "Check server status with health_check",
+            ],
+            campaign_creation_failures: [
+              "Verify account permissions with get_ad_accounts",
+              "Check required fields in create_campaign parameters",
+              "Ensure budget amounts meet minimum requirements",
+              "Validate campaign objectives are supported",
+            ],
+            creative_validation_errors: [
+              "Use validate_creative_setup before create_ad_creative",
+              "Ensure page_id is valid and accessible",
+              "Check image URLs are accessible and meet specifications",
+              "Verify call-to-action types are supported",
+            ],
+            performance_data_issues: [
+              "Check date ranges are valid and not too historical",
+              "Verify object IDs exist and are accessible",
+              "Use smaller date ranges for better data availability",
+              "Check if campaigns were active during requested date ranges",
+            ],
+          },
+          rate_limiting_guidance: {
+            description:
+              "Meta API has strict rate limits that vary by access level",
+            best_practices: [
+              "Space out API calls to avoid hitting rate limits",
+              "Use batch operations when available",
+              "Monitor rate limit headers in responses",
+              "Implement exponential backoff for rate limit errors",
+            ],
+            limits_by_tier: {
+              development: "60 points per 5 minutes",
+              standard: "9000 points per 5 minutes",
+            },
+            point_costs: {
+              read_operations: "1 point each",
+              write_operations: "3 points each",
+            },
+          },
+          next_steps_suggestions: [
+            "Start with health_check to verify server connectivity",
+            "Use get_ad_accounts to see available accounts",
+            "Explore existing campaigns with list_campaigns",
+            "Check current performance with get_insights",
+            "Review available audiences with list_audiences",
+            "Examine creative assets with list_creatives",
+          ],
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(guidance, null, 2),
+            },
+          ],
+        };
+      }
+    );
 
     console.error("🔗 Connecting to MCP transport...");
     console.error(

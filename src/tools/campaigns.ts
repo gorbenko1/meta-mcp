@@ -16,6 +16,7 @@ export function registerCampaignTools(
   // List Campaigns Tool
   server.tool(
     "list_campaigns",
+    "List and filter advertising campaigns for a Meta ad account. Use this to see all campaigns, check their status, budgets, and performance. Supports filtering by status (ACTIVE, PAUSED, etc.) and pagination.",
     ListCampaignsSchema.shape,
     async ({ account_id, status, limit, after }) => {
       try {
@@ -78,6 +79,7 @@ export function registerCampaignTools(
   // Create Campaign Tool
   server.tool(
     "create_campaign",
+    "Create a new advertising campaign with specified objective, budget, and targeting options. Choose between daily or lifetime budget, set start/stop times, and configure optimization settings. Campaign starts in PAUSED status by default.",
     CreateCampaignSchema.shape,
     async ({
       account_id,
@@ -168,6 +170,7 @@ export function registerCampaignTools(
   // Update Campaign Tool
   server.tool(
     "update_campaign",
+    "Modify an existing campaign's settings including name, status, budget amounts, or schedule. Useful for optimizing campaigns based on performance data or changing business requirements.",
     UpdateCampaignSchema.shape,
     async ({
       campaign_id,
@@ -236,6 +239,7 @@ export function registerCampaignTools(
   // Pause Campaign Tool
   server.tool(
     "pause_campaign",
+    "Immediately pause a running campaign to stop ad delivery and spending. Use this for emergency stops, budget protection, or when campaigns need temporary suspension for optimization.",
     DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
@@ -275,6 +279,7 @@ export function registerCampaignTools(
   // Resume Campaign Tool
   server.tool(
     "resume_campaign",
+    "Reactivate a paused campaign to resume ad delivery and spending. Use this after campaign optimization, budget adjustments, or when ready to restart advertising efforts.",
     DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
