@@ -359,14 +359,10 @@ Get comprehensive best practices for creating high-performing ad creatives. Incl
 Diagnose and fix common creative creation and performance issues. Provide an error message or describe your issue to get specific solutions and recommendations.
 
 **Parameters:**
-- `issue_description` (required): Description of the issue or error message
+- `issue_description` (required): Describe the issue or paste error message
 - `creative_type` (optional): Type of creative (image, video, carousel, collection)
 
-**Returns:** Troubleshooting guide with:
-- Issue diagnosis
-- Step-by-step solutions
-- Prevention tips
-- Related tools for further assistance
+**Returns:** Diagnosis, solutions, prevention tips, and related tools.
 
 ### `analyze_account_creatives`
 Analyze all creatives in an account to identify patterns, performance insights, and optimization opportunities. Provides summary statistics and recommendations.
@@ -409,6 +405,47 @@ Get guidance on analyzing creative performance metrics. Provides recommended app
 - `creative_id` (required): Creative ID to analyze
 
 **Returns:** Performance analysis guidance and optimization tips.
+
+### `upload_image_for_hash`
+Get step-by-step guidance for uploading images to Meta and obtaining image_hash values for v22.0 API compliance. Image hashes provide better performance and are required for carousel ads.
+
+**Parameters:**
+- `account_id` (required): Meta Ad Account ID (with act_ prefix)
+- `image_info` (optional): Object with file_path, format, and purpose
+
+**Returns:** Complete upload guide including:
+- Graph API direct upload instructions with curl examples
+- SDK upload examples (Python, Node.js)
+- Business Manager upload steps
+- Technical requirements and v22.0 specifications
+- Usage examples for single image vs carousel ads
+- Troubleshooting common upload errors
+
+### `check_api_v22_compliance`
+Check if your creative parameters are compliant with Meta Marketing API v22.0 requirements. Identifies deprecated features and recommends v22.0 best practices.
+
+**Parameters:** Same as create_ad_creative
+
+**Returns:** Comprehensive compliance report including:
+- Overall compliance status
+- Critical issues and warnings
+- v22.0 feature checks (Standard Enhancements, CTA types, image handling)
+- Migration timeline and action required
+- Specific recommendations for v22.0 optimization
+
+### `get_meta_error_codes`
+Get detailed reference for Meta Marketing API error codes, subcodes, and specific solutions. Essential for troubleshooting v22.0 API integration issues.
+
+**Parameters:**
+- `error_code` (optional): Specific error code to look up
+- `error_subcode` (optional): Specific error subcode for detailed guidance
+
+**Returns:** Detailed error reference including:
+- Common error codes (100, 200, 190, 4) with subcodes
+- v22.0 specific errors (Standard Enhancements, account format)
+- Specific solutions and example fixes
+- Debugging tips and best practices
+- FBTrace ID usage guidance
 
 ## Utility Tools
 

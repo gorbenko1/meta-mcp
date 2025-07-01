@@ -668,6 +668,10 @@ export const CreateAdCreativeSchema = z.object({
     .url()
     .optional()
     .describe("External image URL - must be publicly accessible"),
+  image_hash: z
+    .string()
+    .optional()
+    .describe("Pre-uploaded image hash (alternative to picture URL)"),
   video_id: z.string().optional().describe("Video ID for video creatives"),
   call_to_action_type: z
     .enum([
@@ -681,9 +685,40 @@ export const CreateAdCreativeSchema = z.object({
       "GET_QUOTE",
       "CONTACT_US",
       "APPLY_NOW",
+      "GET_DIRECTIONS",
+      "CALL_NOW",
+      "MESSAGE_PAGE",
+      "SUBSCRIBE",
+      "BOOK_NOW",
+      "ORDER_NOW",
+      "DONATE_NOW",
+      "SAY_THANKS",
+      "SELL_NOW",
+      "SHARE",
+      "OPEN_LINK",
+      "LIKE_PAGE",
+      "FOLLOW_PAGE",
+      "FOLLOW_USER",
+      "REQUEST_TIME",
+      "VISIT_PAGES_FEED",
+      "USE_APP",
+      "PLAY_GAME",
+      "INSTALL_APP",
+      "USE_MOBILE_APP",
+      "INSTALL_MOBILE_APP",
+      "OPEN_MOVIES",
+      "AUDIO_CALL",
+      "VIDEO_CALL",
+      "GET_OFFER",
+      "GET_OFFER_VIEW",
+      "BUY_NOW",
+      "ADD_TO_CART",
+      "SELL",
+      "GIFT_WRAP",
+      "MAKE_AN_OFFER",
     ])
     .optional()
-    .describe("Call to action button type"),
+    .describe("Call to action button type (40+ supported types)"),
   link_url: z
     .string()
     .url()
@@ -699,6 +734,48 @@ export const CreateAdCreativeSchema = z.object({
     .array(z.string())
     .optional()
     .describe("Ad labels for organization and tracking"),
+  // v22.0 Standard Enhancements (new structure)
+  enable_standard_enhancements: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe(
+      "Enable v22.0 Standard Enhancements with individual feature control"
+    ),
+  enhancement_features: z
+    .object({
+      enhance_cta: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("Enhance call-to-action buttons"),
+      image_brightness_and_contrast: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("Auto-adjust image brightness and contrast"),
+      text_improvements: z
+        .boolean()
+        .optional()
+        .default(true)
+        .describe("Improve ad text readability"),
+      image_templates: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe("Apply image templates and frames"),
+    })
+    .optional()
+    .describe("Individual enhancement features for v22.0 compliance"),
+  attachment_style: z
+    .enum(["link", "album"])
+    .optional()
+    .default("link")
+    .describe("Attachment style for link ads"),
+  caption: z
+    .string()
+    .optional()
+    .describe("Caption text (typically domain name)"),
 });
 
 export const PreviewAdSchema = z.object({

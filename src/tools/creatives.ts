@@ -85,15 +85,20 @@ export function registerCreativeTools(
       headline,
       message,
       picture,
+      image_hash,
       video_id,
       call_to_action_type,
       link_url,
       description,
       instagram_actor_id,
       adlabels,
+      enable_standard_enhancements,
+      enhancement_features,
+      attachment_style,
+      caption,
     }) => {
       try {
-        console.log("=== CREATE AD CREATIVE DEBUG ===");
+        console.log("=== CREATE AD CREATIVE DEBUG (v22.0) ===");
         console.log("Input parameters:", {
           account_id,
           name,
@@ -101,21 +106,52 @@ export function registerCreativeTools(
           headline,
           message,
           picture,
+          image_hash,
           video_id,
           call_to_action_type,
           link_url,
           description,
           instagram_actor_id,
           adlabels,
+          enable_standard_enhancements,
+          enhancement_features,
+          attachment_style,
+          caption,
         });
 
-        // Validate that we have either an image or video
-        if (!picture && !video_id) {
+        // Validate account ID format (must include "act_" prefix)
+        if (!account_id.startsWith("act_")) {
           return {
             content: [
               {
                 type: "text",
-                text: "Error: Either picture (image URL) or video_id must be provided for the creative",
+                text: `Error (Meta API Code 100, Subcode 33): Invalid account ID format. Must include "act_" prefix. Use "act_${account_id}" instead of "${account_id}".`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Validate that we have either an image (URL or hash) or video
+        if (!picture && !image_hash && !video_id) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Error: Either picture (image URL), image_hash (pre-uploaded image), or video_id must be provided for the creative",
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        // Validate image vs hash usage
+        if (picture && image_hash) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: "Error: Cannot use both picture (external URL) and image_hash (uploaded image). Choose one method.",
               },
             ],
             isError: true,
@@ -127,16 +163,21 @@ export function registerCreativeTools(
           page_id: page_id, // Required for most creative types
         };
 
-        // For link ads with external images
-        if (link_url || picture) {
-          object_story_spec.link_data = {};
+        // For link ads with external images or uploaded images
+        if (link_url || picture || image_hash) {
+          object_story_spec.link_data = {
+            attachment_style: attachment_style || "link",
+          };
 
           if (link_url) {
             object_story_spec.link_data.link = link_url;
           }
 
+          // Use either external image URL or uploaded image hash
           if (picture) {
             object_story_spec.link_data.picture = picture;
+          } else if (image_hash) {
+            object_story_spec.link_data.image_hash = image_hash;
           }
 
           if (message) {
@@ -151,9 +192,18 @@ export function registerCreativeTools(
             object_story_spec.link_data.description = description;
           }
 
+          if (caption) {
+            object_story_spec.link_data.caption = caption;
+          }
+
+          // v22.0 Call-to-action structure with proper value object
           if (call_to_action_type) {
             object_story_spec.link_data.call_to_action = {
               type: call_to_action_type,
+              value: {
+                link: link_url,
+                link_format: "WEBSITE_LINK",
+              },
             };
           }
         }
@@ -175,6 +225,10 @@ export function registerCreativeTools(
           if (call_to_action_type) {
             object_story_spec.video_data.call_to_action = {
               type: call_to_action_type,
+              value: {
+                link: link_url,
+                link_format: "WEBSITE_LINK",
+              },
             };
           }
         }
@@ -189,6 +243,41 @@ export function registerCreativeTools(
           object_story_spec,
         };
 
+        // Add v22.0 Standard Enhancements with new structure
+        if (enable_standard_enhancements && enhancement_features) {
+          creativeData.degrees_of_freedom_spec = {
+            creative_features_spec: {},
+          };
+
+          if (enhancement_features.enhance_cta) {
+            creativeData.degrees_of_freedom_spec.creative_features_spec.enhance_cta =
+              {
+                enroll_status: "OPT_IN",
+              };
+          }
+
+          if (enhancement_features.image_brightness_and_contrast) {
+            creativeData.degrees_of_freedom_spec.creative_features_spec.image_brightness_and_contrast =
+              {
+                enroll_status: "OPT_IN",
+              };
+          }
+
+          if (enhancement_features.text_improvements) {
+            creativeData.degrees_of_freedom_spec.creative_features_spec.text_improvements =
+              {
+                enroll_status: "OPT_IN",
+              };
+          }
+
+          if (enhancement_features.image_templates) {
+            creativeData.degrees_of_freedom_spec.creative_features_spec.image_templates =
+              {
+                enroll_status: "OPT_IN",
+              };
+          }
+        }
+
         // Add ad labels if provided
         if (adlabels && adlabels.length > 0) {
           creativeData.adlabels = adlabels.map((label) => ({ name: label }));
@@ -199,7 +288,7 @@ export function registerCreativeTools(
           JSON.stringify(object_story_spec, null, 2)
         );
         console.log(
-          "Final creative data:",
+          "Final creative data (v22.0):",
           JSON.stringify(creativeData, null, 2)
         );
 
@@ -214,7 +303,8 @@ export function registerCreativeTools(
         const response = {
           success: true,
           creative_id: result.id,
-          message: `Ad creative "${name}" created successfully`,
+          message: `Ad creative "${name}" created successfully with v22.0 features`,
+          api_version: "v22.0",
           details: {
             id: result.id,
             name,
@@ -222,16 +312,22 @@ export function registerCreativeTools(
             headline,
             message,
             picture,
+            image_hash,
             video_id,
             call_to_action_type,
             link_url,
             account_id,
             instagram_actor_id,
+            v22_enhancements: enable_standard_enhancements,
+            enhancement_features: enhancement_features,
           },
           next_steps: [
             "Use this creative in ad creation",
             "Preview the creative across different placements",
             "Test different variations for A/B testing",
+            enable_standard_enhancements
+              ? "Monitor enhancement performance in Meta Ads Manager"
+              : "Consider enabling Standard Enhancements for better performance",
           ],
         };
 
@@ -244,13 +340,13 @@ export function registerCreativeTools(
           ],
         };
       } catch (error) {
-        console.log("=== CREATE AD CREATIVE ERROR ===");
+        console.log("=== CREATE AD CREATIVE ERROR (v22.0) ===");
         console.log("Error object:", error);
 
         if (error instanceof Error) {
           console.log("Error message:", error.message);
 
-          // Try to parse Meta API error response
+          // Enhanced error handling for v22.0 specific errors
           try {
             const errorData = JSON.parse(error.message);
             console.log(
@@ -266,6 +362,28 @@ export function registerCreativeTools(
               console.log("- Error Subcode:", errorData.error.error_subcode);
               console.log("- FBTrace ID:", errorData.error.fbtrace_id);
 
+              // Provide specific guidance for common v22.0 errors
+              let specificGuidance = "";
+              if (errorData.error.code === 100) {
+                switch (errorData.error.error_subcode) {
+                  case 33:
+                    specificGuidance =
+                      "Account access issue. Verify your account ID includes 'act_' prefix and you have proper permissions.";
+                    break;
+                  case 1443048:
+                    specificGuidance =
+                      "object_story_spec validation failed. Ensure page_id is correct and all required fields are provided.";
+                    break;
+                  case 3858082:
+                    specificGuidance =
+                      "Standard Enhancements error. For v22.0, use individual feature controls instead of the legacy bundle approach.";
+                    break;
+                  default:
+                    specificGuidance =
+                      "Parameter validation error. Check all required fields and data formats.";
+                }
+              }
+
               if (errorData.error.error_data) {
                 console.log(
                   "- Error Data:",
@@ -280,6 +398,25 @@ export function registerCreativeTools(
               if (errorData.error.error_user_msg) {
                 console.log("- User Message:", errorData.error.error_user_msg);
               }
+
+              if (specificGuidance) {
+                console.log("- Specific Guidance:", specificGuidance);
+              }
+
+              // Return enhanced error response
+              const enhancedErrorMessage = specificGuidance
+                ? `${errorData.error.message}\n\nSpecific Guidance: ${specificGuidance}\n\nFBTrace ID: ${errorData.error.fbtrace_id}`
+                : errorData.error.message;
+
+              return {
+                content: [
+                  {
+                    type: "text",
+                    text: `Error creating ad creative (Meta API v22.0): ${enhancedErrorMessage}`,
+                  },
+                ],
+                isError: true,
+              };
             }
           } catch (parseError) {
             console.log(
@@ -1779,6 +1916,604 @@ export function registerCreativeTools(
             {
               type: "text",
               text: `Error analyzing account creatives: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // v22.0 Image Upload and Hash Generation Tool
+  server.tool(
+    "upload_image_for_hash",
+    "Get step-by-step guidance for uploading images to Meta and obtaining image_hash values for v22.0 API compliance. Image hashes provide better performance and are required for carousel ads.",
+    {
+      account_id: {
+        type: "string",
+        description: "Meta Ad Account ID (with act_ prefix)",
+      },
+      image_info: {
+        type: "object",
+        description: "Information about the image to upload",
+        properties: {
+          file_path: {
+            type: "string",
+            description: "Local file path or URL of image to upload",
+          },
+          format: {
+            type: "string",
+            description: "Image format (JPG, PNG, GIF, WebP)",
+          },
+          purpose: {
+            type: "string",
+            description: "Purpose: single_image, carousel, video_thumbnail",
+          },
+        },
+      },
+    },
+    async ({ account_id, image_info }) => {
+      try {
+        // Validate account ID format
+        if (!account_id.startsWith("act_")) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: Account ID must include "act_" prefix. Use "act_${account_id}" instead.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+
+        const uploadGuide = {
+          account_id,
+          image_info,
+          api_version: "v22.0",
+          upload_methods: {
+            graph_api_direct: {
+              description: "Upload directly via Graph API for programmatic use",
+              endpoint: `https://graph.facebook.com/v22.0/${account_id}/adimages`,
+              method: "POST",
+              required_fields: {
+                filename: "Path to image file",
+                access_token:
+                  "Your access token with ads_management permission",
+              },
+              curl_example: `curl -X POST \\
+  "https://graph.facebook.com/v22.0/${account_id}/adimages" \\
+  -F "filename=@/path/to/your/image.jpg" \\
+  -F "access_token=YOUR_ACCESS_TOKEN"`,
+              response_format: {
+                images: {
+                  "image_filename.jpg": {
+                    hash: "abc123def456...",
+                    url: "https://scontent.xx.fbcdn.net/...",
+                  },
+                },
+              },
+            },
+            sdk_upload: {
+              description: "Use Meta Business SDK for easier integration",
+              python_example: `from facebook_business.api import FacebookAdsApi
+from facebook_business.adobjects import AdImage
+
+# Initialize API
+FacebookAdsApi.init(access_token='YOUR_ACCESS_TOKEN')
+
+# Upload image
+image = AdImage(parent_id='${account_id}')
+image[AdImage.Field.filename] = '/path/to/image.jpg'
+image.remote_create()
+
+# Get hash
+image_hash = image[AdImage.Field.hash]
+print(f"Image hash: {image_hash}")`,
+              nodejs_example: `const business = require('facebook-nodejs-business-sdk');
+const AdImage = business.AdImage;
+
+const image = new AdImage(null, '${account_id}');
+image.create({
+  filename: '/path/to/image.jpg'
+}).then((result) => {
+  console.log('Image hash:', result.hash);
+});`,
+            },
+            business_manager: {
+              description: "Upload via Meta Business Manager interface",
+              steps: [
+                "Go to Meta Business Manager (business.facebook.com)",
+                "Navigate to Assets > Images",
+                "Click 'Add Images' and upload your files",
+                "Note the image hash from the image details",
+                "Use the hash in create_ad_creative API calls",
+              ],
+            },
+          },
+          image_requirements: {
+            technical_specs: {
+              max_file_size: "30MB",
+              min_dimensions: "600x600 pixels",
+              recommended_dimensions: "1200x628 pixels (1.91:1 ratio)",
+              supported_formats: ["JPG", "PNG", "GIF", "WebP"],
+              color_space: "sRGB recommended",
+            },
+            quality_guidelines: [
+              "Use high-resolution images (1080x1080 or higher)",
+              "Avoid pixelated or blurry images",
+              "Ensure good contrast and readability",
+              "Follow 20% text rule for image overlays",
+              "Use authentic, non-stock imagery when possible",
+            ],
+            v22_specific: [
+              "Image hash method required for carousel ads",
+              "External URLs limited to 8MB for single image ads",
+              "Hash method provides better caching and performance",
+              "Uploaded images automatically added to account library",
+            ],
+          },
+          usage_in_creatives: {
+            single_image_ads: {
+              description: "Use either external URL or image hash",
+              external_url_example: {
+                picture: "https://yourdomain.com/image.jpg",
+              },
+              image_hash_example: {
+                image_hash: "abc123def456ghi789",
+              },
+            },
+            carousel_ads: {
+              description: "Must use image hash - external URLs not supported",
+              required_structure: {
+                child_attachments: [
+                  {
+                    image_hash: "hash1",
+                    link: "https://example.com/product1",
+                    name: "Product 1",
+                  },
+                  {
+                    image_hash: "hash2",
+                    link: "https://example.com/product2",
+                    name: "Product 2",
+                  },
+                ],
+              },
+            },
+          },
+          troubleshooting: {
+            common_errors: [
+              {
+                error: "Invalid image format",
+                solution: "Use JPG, PNG, GIF, or WebP format",
+              },
+              {
+                error: "File too large",
+                solution: "Compress image to under 30MB",
+              },
+              {
+                error: "Permission denied",
+                solution: "Ensure access token has ads_management permission",
+              },
+              {
+                error: "Account not found",
+                solution: "Verify account ID includes 'act_' prefix",
+              },
+            ],
+          },
+          next_steps: [
+            "Upload your image using one of the methods above",
+            "Save the returned image_hash value",
+            "Use the hash in create_ad_creative with image_hash parameter",
+            "Test the creative with preview_ad before launching",
+          ],
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(uploadGuide, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error generating image upload guide: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Meta Marketing API v22.0 Compliance Checker
+  server.tool(
+    "check_api_v22_compliance",
+    "Check if your creative parameters are compliant with Meta Marketing API v22.0 requirements. Identifies deprecated features and recommends v22.0 best practices.",
+    CreateAdCreativeSchema.shape,
+    async (params) => {
+      try {
+        const complianceCheck = {
+          api_version: "v22.0",
+          check_date: new Date().toISOString(),
+          overall_compliance: "checking",
+          critical_issues: [] as string[],
+          warnings: [] as string[],
+          recommendations: [] as string[],
+          v22_features: {
+            standard_enhancements: {
+              status: "unknown",
+              details: "",
+            },
+            enhanced_cta: {
+              status: "unknown",
+              details: "",
+            },
+            image_handling: {
+              status: "unknown",
+              details: "",
+            },
+            account_format: {
+              status: "unknown",
+              details: "",
+            },
+          },
+          migration_timeline: {
+            current_status: "v22.0 active since January 21, 2025",
+            deprecation_warning: "Legacy Standard Enhancements deprecated",
+            grace_period_end: "April 22, 2025 (estimated)",
+            action_required: "Migrate to individual enhancement features",
+          },
+        };
+
+        // Check account ID format
+        if (!params.account_id.startsWith("act_")) {
+          complianceCheck.critical_issues.push(
+            "Account ID missing 'act_' prefix - will cause Error Code 100, Subcode 33"
+          );
+          complianceCheck.v22_features.account_format.status = "error";
+          complianceCheck.v22_features.account_format.details =
+            "Must use 'act_XXXXXXXXX' format";
+        } else {
+          complianceCheck.v22_features.account_format.status = "compliant";
+          complianceCheck.v22_features.account_format.details =
+            "Correct account ID format";
+        }
+
+        // Check Standard Enhancements usage
+        if (params.enable_standard_enhancements) {
+          complianceCheck.v22_features.standard_enhancements.status =
+            "compliant";
+          complianceCheck.v22_features.standard_enhancements.details =
+            "Using v22.0 individual feature controls";
+          complianceCheck.recommendations.push(
+            "Monitor enhancement performance in Meta Ads Manager"
+          );
+        } else {
+          complianceCheck.v22_features.standard_enhancements.status = "unused";
+          complianceCheck.v22_features.standard_enhancements.details =
+            "Standard Enhancements not enabled";
+          complianceCheck.recommendations.push(
+            "Consider enabling Standard Enhancements for better creative performance"
+          );
+        }
+
+        // Check call-to-action compliance
+        if (params.call_to_action_type) {
+          const v22CTATypes = [
+            "LEARN_MORE",
+            "SHOP_NOW",
+            "SIGN_UP",
+            "DOWNLOAD",
+            "BOOK_TRAVEL",
+            "LISTEN_MUSIC",
+            "WATCH_VIDEO",
+            "GET_QUOTE",
+            "CONTACT_US",
+            "APPLY_NOW",
+            "GET_DIRECTIONS",
+            "CALL_NOW",
+            "MESSAGE_PAGE",
+            "SUBSCRIBE",
+            "BOOK_NOW",
+            "ORDER_NOW",
+            "DONATE_NOW",
+            "SAY_THANKS",
+            "SELL_NOW",
+            "SHARE",
+            "OPEN_LINK",
+            "LIKE_PAGE",
+            "FOLLOW_PAGE",
+            "FOLLOW_USER",
+            "REQUEST_TIME",
+            "VISIT_PAGES_FEED",
+            "USE_APP",
+            "PLAY_GAME",
+            "INSTALL_APP",
+            "USE_MOBILE_APP",
+            "INSTALL_MOBILE_APP",
+            "OPEN_MOVIES",
+            "AUDIO_CALL",
+            "VIDEO_CALL",
+            "GET_OFFER",
+            "GET_OFFER_VIEW",
+            "BUY_NOW",
+            "ADD_TO_CART",
+            "SELL",
+            "GIFT_WRAP",
+            "MAKE_AN_OFFER",
+          ];
+
+          if (v22CTATypes.includes(params.call_to_action_type)) {
+            complianceCheck.v22_features.enhanced_cta.status = "compliant";
+            complianceCheck.v22_features.enhanced_cta.details =
+              "Using supported v22.0 CTA type";
+          } else {
+            complianceCheck.warnings.push(
+              `CTA type '${params.call_to_action_type}' may not be supported in v22.0`
+            );
+            complianceCheck.v22_features.enhanced_cta.status = "warning";
+            complianceCheck.v22_features.enhanced_cta.details =
+              "CTA type compatibility uncertain";
+          }
+        }
+
+        // Check image handling method
+        if (params.picture && params.image_hash) {
+          complianceCheck.critical_issues.push(
+            "Cannot use both picture URL and image_hash - choose one method"
+          );
+          complianceCheck.v22_features.image_handling.status = "error";
+          complianceCheck.v22_features.image_handling.details =
+            "Conflicting image methods";
+        } else if (params.image_hash) {
+          complianceCheck.v22_features.image_handling.status = "optimal";
+          complianceCheck.v22_features.image_handling.details =
+            "Using image_hash for better performance and carousel compatibility";
+          complianceCheck.recommendations.push(
+            "Image hash method provides better caching and is required for carousel ads"
+          );
+        } else if (params.picture) {
+          complianceCheck.v22_features.image_handling.status = "acceptable";
+          complianceCheck.v22_features.image_handling.details =
+            "Using external URL (8MB limit, not suitable for carousels)";
+          complianceCheck.recommendations.push(
+            "Consider using image_hash method for better performance and carousel compatibility"
+          );
+        }
+
+        // Determine overall compliance
+        if (complianceCheck.critical_issues.length > 0) {
+          complianceCheck.overall_compliance = "non-compliant";
+        } else if (complianceCheck.warnings.length > 0) {
+          complianceCheck.overall_compliance = "compliant-with-warnings";
+        } else {
+          complianceCheck.overall_compliance = "fully-compliant";
+        }
+
+        // Add general v22.0 recommendations
+        complianceCheck.recommendations.push(
+          "Test creatives in Graph API Explorer before production deployment",
+          "Monitor Meta's developer changelog for quarterly API updates",
+          "Implement comprehensive error handling for specific subcodes",
+          "Use validate_creative_enhanced before creating creatives"
+        );
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(complianceCheck, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error checking v22.0 compliance: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Enhanced Error Code Reference Tool
+  server.tool(
+    "get_meta_error_codes",
+    "Get detailed reference for Meta Marketing API error codes, subcodes, and specific solutions. Essential for troubleshooting v22.0 API integration issues.",
+    {
+      error_code: {
+        type: "string",
+        description:
+          "Specific error code to look up (optional - returns all if not provided)",
+        optional: true,
+      },
+      error_subcode: {
+        type: "string",
+        description: "Specific error subcode for detailed guidance (optional)",
+        optional: true,
+      },
+    },
+    async ({ error_code, error_subcode }) => {
+      try {
+        const errorReference = {
+          api_version: "v22.0",
+          lookup_date: new Date().toISOString(),
+          requested_code: error_code,
+          requested_subcode: error_subcode,
+          common_errors: {
+            "100": {
+              description:
+                "Invalid parameter errors - most common creative API error",
+              subcodes: {
+                "33": {
+                  description:
+                    "Object access issues, typically account ID format",
+                  common_causes: [
+                    "Account ID missing 'act_' prefix",
+                    "Invalid or inaccessible account ID",
+                    "Insufficient permissions for the account",
+                  ],
+                  solutions: [
+                    "Ensure account ID includes 'act_' prefix (e.g., 'act_123456789')",
+                    "Verify you have admin access to the ad account",
+                    "Check that access token includes ads_management permission",
+                    "Confirm account is active and not disabled",
+                  ],
+                  example_fix: "Change '123456789' to 'act_123456789'",
+                },
+                "1443048": {
+                  description: "object_story_spec validation failed",
+                  common_causes: [
+                    "Missing required page_id in object_story_spec",
+                    "Invalid Facebook Page ID",
+                    "Malformed link_data or video_data structure",
+                    "Missing required fields for creative type",
+                  ],
+                  solutions: [
+                    "Ensure page_id is provided and valid",
+                    "Verify you have admin access to the Facebook Page",
+                    "Check object_story_spec structure matches Meta documentation",
+                    "Validate all URLs in the creative specification",
+                  ],
+                  example_fix: "Add valid page_id to object_story_spec",
+                },
+                "3858082": {
+                  description:
+                    "Standard Enhancements requirement (v22.0 specific)",
+                  common_causes: [
+                    "Using deprecated standard_enhancements bundle",
+                    "Invalid enhancement feature configuration",
+                    "Missing required enroll_status values",
+                  ],
+                  solutions: [
+                    "Replace standard_enhancements with individual features",
+                    "Use degrees_of_freedom_spec with creative_features_spec",
+                    "Set enroll_status to 'OPT_IN' for each feature",
+                    "Remove legacy enhancement parameters",
+                  ],
+                  v22_example: {
+                    deprecated: `{"standard_enhancements": {"enroll_status": "OPT_IN"}}`,
+                    correct: `{
+  "degrees_of_freedom_spec": {
+    "creative_features_spec": {
+      "enhance_cta": {"enroll_status": "OPT_IN"},
+      "image_brightness_and_contrast": {"enroll_status": "OPT_IN"},
+      "text_improvements": {"enroll_status": "OPT_IN"}
+    }
+  }
+}`,
+                  },
+                },
+              },
+            },
+            "200": {
+              description: "Permissions errors",
+              common_causes: [
+                "Insufficient permissions for the operation",
+                "Token does not have required scopes",
+                "User not admin of the page or account",
+              ],
+              solutions: [
+                "Request ads_management permission",
+                "Ensure user has admin role on Facebook Page",
+                "Verify business verification is complete",
+                "Check if account is under review or restricted",
+              ],
+            },
+            "190": {
+              description: "Access token errors",
+              common_causes: [
+                "Expired access token",
+                "Invalid access token format",
+                "Revoked or deauthorized token",
+              ],
+              solutions: [
+                "Refresh the access token",
+                "Regenerate long-lived token",
+                "Check app is still authorized",
+                "Verify token has not been manually revoked",
+              ],
+            },
+            "4": {
+              description: "Rate limiting errors",
+              common_causes: [
+                "Too many API calls in short time period",
+                "Exceeded account-level rate limits",
+                "Concurrent request limits reached",
+              ],
+              solutions: [
+                "Implement exponential backoff retry logic",
+                "Reduce API call frequency",
+                "Use batch requests where possible",
+                "Monitor rate limit headers in responses",
+              ],
+            },
+          },
+          debugging_tips: [
+            "Always check the fbtrace_id for Meta support",
+            "Look for error_user_msg for user-friendly explanations",
+            "Check error_data for additional context",
+            "Use Graph API Explorer to test parameters",
+            "Enable debug mode for detailed error information",
+          ],
+          v22_specific_guidance: [
+            "Use individual enhancement features instead of bundles",
+            "Ensure account ID includes 'act_' prefix",
+            "Test with image_hash method for better compatibility",
+            "Implement proper error handling for subcode-specific guidance",
+            "Monitor Meta's changelog for quarterly API updates",
+          ],
+        };
+
+        // Filter response if specific code/subcode requested
+        let filteredResponse: any = errorReference;
+        const commonErrors = errorReference.common_errors as any;
+        if (error_code && commonErrors[error_code]) {
+          const errorDetails = commonErrors[error_code];
+          filteredResponse = {
+            ...errorReference,
+            filtered_result: {
+              code: error_code,
+              details: errorDetails,
+            },
+          };
+
+          if (error_subcode && errorDetails.subcodes?.[error_subcode]) {
+            filteredResponse.filtered_result.subcode_details =
+              errorDetails.subcodes[error_subcode];
+          }
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(filteredResponse, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error retrieving error code reference: ${errorMessage}`,
             },
           ],
           isError: true,
