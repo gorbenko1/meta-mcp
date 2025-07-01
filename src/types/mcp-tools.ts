@@ -661,13 +661,13 @@ export const CreateAdCreativeSchema = z.object({
   page_id: z
     .string()
     .describe("Facebook Page ID (required for object_story_spec)"),
-  message: z.string().optional().describe("Ad body text/message"),
+  message: z.string().describe("Primary ad text/message"),
   headline: z.string().optional().describe("Ad title/headline"),
   picture: z
     .string()
     .url()
     .optional()
-    .describe("External image URL for the creative"),
+    .describe("External image URL - must be publicly accessible"),
   video_id: z.string().optional().describe("Video ID for video creatives"),
   call_to_action_type: z
     .enum([
@@ -687,9 +687,10 @@ export const CreateAdCreativeSchema = z.object({
   link_url: z
     .string()
     .url()
-    .optional()
-    .describe("Primary destination URL for the ad"),
-  description: z.string().optional().describe("Ad description text"),
+    .describe(
+      "Destination URL where users will be directed when clicking the ad"
+    ),
+  description: z.string().optional().describe("Additional description text"),
   instagram_actor_id: z
     .string()
     .optional()
@@ -697,7 +698,7 @@ export const CreateAdCreativeSchema = z.object({
   adlabels: z
     .array(z.string())
     .optional()
-    .describe("Ad labels for organization"),
+    .describe("Ad labels for organization and tracking"),
 });
 
 export const PreviewAdSchema = z.object({
@@ -720,6 +721,32 @@ export const PreviewAdSchema = z.object({
     .optional()
     .describe("Product item IDs for dynamic ads"),
 });
+
+// Enhanced Creative Tool Schemas
+export const TroubleshootCreativeSchema = z.object({
+  issue_description: z
+    .string()
+    .min(5)
+    .describe(
+      "Describe the creative issue you're experiencing or paste the error message"
+    ),
+  creative_type: z
+    .enum(["image", "video", "carousel", "collection"])
+    .optional()
+    .describe("Type of creative experiencing issues"),
+});
+
+export const AnalyzeCreativesSchema = z.object({
+  account_id: z.string().describe("Meta Ad Account ID to analyze"),
+  limit: z
+    .number()
+    .min(1)
+    .max(100)
+    .default(50)
+    .describe("Maximum number of creatives to analyze"),
+});
+
+export const CreativeValidationEnhancedSchema = CreateAdCreativeSchema;
 
 // Type exports for runtime use
 export type ListCampaignsParams = z.infer<typeof ListCampaignsSchema>;
@@ -749,4 +776,11 @@ export type ExchangeCodeParams = z.infer<typeof ExchangeCodeSchema>;
 export type RefreshTokenParams = z.infer<typeof RefreshTokenSchema>;
 export type GenerateSystemTokenParams = z.infer<
   typeof GenerateSystemTokenSchema
+>;
+export type TroubleshootCreativeParams = z.infer<
+  typeof TroubleshootCreativeSchema
+>;
+export type AnalyzeCreativesParams = z.infer<typeof AnalyzeCreativesSchema>;
+export type CreativeValidationEnhancedParams = z.infer<
+  typeof CreativeValidationEnhancedSchema
 >;

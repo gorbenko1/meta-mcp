@@ -440,7 +440,6 @@ export function registerCampaignTools(
     async ({ campaign_id }) => {
       try {
         const campaign = await metaClient.getCampaign(campaign_id);
-        const accountId = campaign.account_id;
 
         const readinessCheck = {
           campaign_id,
@@ -1130,7 +1129,7 @@ export function registerCampaignTools(
               (as) => as.effective_status === "PAUSED"
             ).length,
             total_daily_budget: adSets.reduce(
-              (sum, as) => sum + (as.daily_budget || 0),
+              (sum, as) => sum + (Number(as.daily_budget) || 0),
               0
             ),
           },

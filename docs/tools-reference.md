@@ -287,128 +287,128 @@ Estimate audience size for US adults aged 25-45 interested in fitness
 ## Creative Management Tools
 
 ### `list_creatives`
-List all ad creatives in an ad account.
+List all ad creatives in an ad account. Use this to see existing creatives, their formats, and content before creating new ones or reusing existing creatives.
 
 **Parameters:**
 - `account_id` (required): Meta Ad Account ID
-- `limit` (optional): Number of creatives to return (1-100, default: 25)
-- `after` (optional): Pagination cursor for next page
+- `limit` (optional): Maximum number of creatives to return
+- `after` (optional): Pagination cursor
 
-**Example:**
-```
-List all creatives for account act_123456789
-```
+**Returns:** List of creatives with details including name, title, body, image_url, call_to_action, and object_story_spec.
 
 ### `create_ad_creative`
-Create a new ad creative.
+Create a new ad creative with images, videos, text, and call-to-action buttons. Supports both image and video creatives with proper object_story_spec structure for Meta API compliance.
 
 **Parameters:**
 - `account_id` (required): Meta Ad Account ID
 - `name` (required): Creative name
-- `page_id` (required): Facebook Page ID (required for object_story_spec)
-- `picture` (optional): External image URL for the creative
+- `page_id` (required): Facebook Page ID
+- `headline` (optional): Ad headline text
+- `message` (required): Primary ad text
+- `picture` (optional): External image URL (fully supported)
 - `video_id` (optional): Video ID for video creatives
-- `headline` (optional): Ad title/headline
-- `message` (optional): Ad body text/message
-- `description` (optional): Ad description text
-- `link_url` (optional): Primary destination URL for the ad
-- `call_to_action_type` (optional): Call to action button type (LEARN_MORE, SHOP_NOW, SIGN_UP, DOWNLOAD, BOOK_TRAVEL, LISTEN_MUSIC, WATCH_VIDEO, GET_QUOTE, CONTACT_US, APPLY_NOW)
-- `instagram_actor_id` (optional): Instagram account ID for cross-posting
-- `adlabels` (optional): Array of label names for organization
+- `call_to_action_type` (optional): CTA button type (LEARN_MORE, SHOP_NOW, etc.)
+- `link_url` (required): Destination URL
+- `description` (optional): Additional description text
+- `instagram_actor_id` (optional): Instagram account ID
+- `adlabels` (optional): Array of label names
 
-**Requirements:**
-- Either `picture` (image URL) OR `video_id` must be provided
-- At least one of `headline` or `message` is recommended for better performance
-
-**Example Usage:**
-
-```javascript
-// Image ad with link
-{
-  "account_id": "act_123456789",
-  "name": "Summer Sale Creative",
-  "page_id": "page_123456789",
-  "headline": "50% Off Summer Collection",
-  "message": "Don't miss our biggest sale of the year!",
-  "picture": "https://example.com/summer-sale.jpg",
-  "link_url": "https://example.com/sale",
-  "description": "Limited time offer - shop now!",
-  "call_to_action_type": "SHOP_NOW"
-}
-```
-
-```javascript
-// Video creative
-{
-  "account_id": "act_123456789",
-  "name": "Product Demo Video",
-  "page_id": "page_123456789",
-  "video_id": "12345678901234567",
-  "headline": "See Our Product in Action",
-  "message": "Watch how our product can transform your workflow",
-  "call_to_action_type": "LEARN_MORE",
-  "link_url": "https://example.com/demo"
-}
-```
+**Returns:** Created creative details including ID and configuration.
 
 ### `validate_creative_setup`
-Validates ad creative parameters before creation to identify potential issues.
+Validate ad creative parameters before creation to catch errors early. Checks required fields, URL validity, and provides object_story_spec preview. Use this before create_ad_creative to avoid API errors.
 
-**Parameters:**
-- All the same parameters as `create_ad_creative`
+**Parameters:** Same as create_ad_creative
 
-**Returns:**
-- `is_valid`: Boolean indicating if the creative will likely succeed
-- `issues`: Array of blocking issues that must be resolved
-- `warnings`: Array of potential problems to consider
-- `recommendations`: Array of suggestions for improvement
-- `requirements_check`: Object showing which requirements are met
-  - `has_media`: Whether image or video is provided
-  - `has_page_id`: Whether Facebook Page ID is provided
-  - `has_name`: Whether creative name is provided
-  - `has_content`: Whether headline or message is provided
-  - `call_to_action_valid`: Whether CTA type is valid
-  - `urls_valid`: Whether all URLs are properly formatted
-- `object_story_spec_preview`: Preview of the generated object_story_spec
+**Returns:** Validation results with issues, warnings, recommendations, and object_story_spec preview.
 
-**Example Response:**
+### `validate_creative_enhanced`
+Enhanced creative validation with comprehensive checks including page permissions, image accessibility, and Meta API compliance. Provides detailed feedback and fix suggestions.
 
-```json
-{
-  "is_valid": true,
-  "issues": [],
-  "warnings": ["No content provided: Consider adding headline or message text for better performance"],
-  "recommendations": ["Consider adding a call-to-action button when using a destination URL"],
-  "requirements_check": {
-    "has_media": true,
-    "has_page_id": true,
-    "has_name": true,
-    "has_content": false,
-    "call_to_action_valid": true,
-    "urls_valid": true
-  },
-  "object_story_spec_preview": {
-    "page_id": "page_123456789",
-    "link_data": {
-      "link": "https://example.com",
-      "picture": "https://example.com/image.jpg"
-    }
-  }
-}
-```
+**Parameters:** Same as create_ad_creative
+
+**Returns:** Comprehensive validation report with:
+- Status checks for required fields, media, URLs, permissions, and API compliance
+- Detailed error messages and fix suggestions
+- Overall readiness assessment
+- object_story_spec preview
 
 ### `preview_ad`
-Generate a preview of how an ad creative will appear.
+Generate HTML preview of how an ad creative will appear in different placements and formats. Useful for testing creative appearance before launching campaigns.
 
 **Parameters:**
-- `creative_id` (required): Creative ID to preview
-- `ad_format` (required): Ad format for preview
-- `product_item_ids` (optional): Product item IDs for dynamic ads
+- `creative_id` (required): Ad creative ID
+- `ad_format` (required): Preview format
+- `product_item_ids` (optional): Product IDs for dynamic ads
 
-**Example:**
-```
-Preview creative 12345 in mobile feed format
-```
+**Returns:** HTML preview of the creative.
+
+### `get_creative_best_practices`
+Get comprehensive best practices for creating high-performing ad creatives. Includes platform-specific guidelines, content recommendations, and optimization strategies.
+
+**Parameters:** None
+
+**Returns:** Detailed best practices guide including:
+- Image and video technical specifications
+- Design and content recommendations
+- Platform-specific tips (Facebook, Instagram, Stories, Reels)
+- Copy guidelines and CTA strategies
+- Testing strategies and common mistakes to avoid
+
+### `troubleshoot_creative_issues`
+Diagnose and fix common creative creation and performance issues. Provide an error message or describe your issue to get specific solutions and recommendations.
+
+**Parameters:**
+- `issue_description` (required): Description of the issue or error message
+- `creative_type` (optional): Type of creative (image, video, carousel, collection)
+
+**Returns:** Troubleshooting guide with:
+- Issue diagnosis
+- Step-by-step solutions
+- Prevention tips
+- Related tools for further assistance
+
+### `analyze_account_creatives`
+Analyze all creatives in an account to identify patterns, performance insights, and optimization opportunities. Provides summary statistics and recommendations.
+
+**Parameters:**
+- `account_id` (required): Meta Ad Account ID
+- `limit` (optional): Maximum number of creatives to analyze (default: 50)
+
+**Returns:** Comprehensive analysis including:
+- Creative type distribution and usage patterns
+- Content analysis (headline/message lengths, CTA usage)
+- Optimization opportunities and recommendations
+- Performance improvement suggestions
+
+### `upload_creative_asset`
+Get guidance on uploading creative assets (images/videos) to Meta. Provides step-by-step instructions and technical requirements for asset uploads.
+
+**Parameters:**
+- `account_id` (required): Meta Ad Account ID
+- `name` (required): Asset name
+
+**Returns:** Upload guidance including steps, format requirements, and API endpoints.
+
+### `setup_ab_test`
+Get comprehensive guidance on setting up A/B tests for ad creatives. Provides best practices, testing strategies, and metrics to track for creative optimization.
+
+**Parameters:**
+- `account_id` (required): Meta Ad Account ID
+- `name` (required): Test name
+
+**Returns:** A/B testing setup guide including:
+- Test setup steps and variables to test
+- Best practices and metrics to track
+- Testing recommendations for creative optimization
+
+### `get_creative_performance`
+Get guidance on analyzing creative performance metrics. Provides recommended approaches for tracking creative effectiveness and optimization strategies.
+
+**Parameters:**
+- `creative_id` (required): Creative ID to analyze
+
+**Returns:** Performance analysis guidance and optimization tips.
 
 ## Utility Tools
 
@@ -670,3 +670,20 @@ Create enhanced ad set with campaign_id 120228246450490163
 1. Use `list_campaign_ad_sets` to see existing structure
 2. Use `verify_account_setup` to check permissions
 3. Use `check_campaign_readiness` to verify campaign status
+
+### Creative Workflow Recommendations
+
+1. **Before Creating Creatives:**
+   - Use `get_creative_best_practices` to understand requirements
+   - Use `validate_creative_enhanced` to check parameters
+   - Use `analyze_account_creatives` to understand existing patterns
+
+2. **Creative Creation:**
+   - Use `create_ad_creative` with validated parameters
+   - Use `preview_ad` to test appearance
+   - Use `troubleshoot_creative_issues` if errors occur
+
+3. **Performance Optimization:**
+   - Use `setup_ab_test` for systematic testing
+   - Use `get_creative_performance` for analysis guidance
+   - Use `analyze_account_creatives` for bulk insights
