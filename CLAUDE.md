@@ -13,7 +13,7 @@ This is a Model Context Protocol (MCP) server that provides comprehensive integr
 - `npm run dev:vercel` - Start local Vercel development server
 - `npm run build` - Compile TypeScript to JavaScript (output in `build/`)
 - `npm test` - Run the Jest test suite (Note: No tests currently exist)
-- `npm run lint` - Run ESLint to check code quality
+- `npm run lint` - Run ESLint to check code quality and enforce standards
 - `npm run prepare` - Automatically runs build on npm install
 - `npm run vercel-build` - Build command used by Vercel deployment
 
@@ -146,6 +146,8 @@ META_BUSINESS_ID=your_business_id
 - Declaration files generated for type exports
 - No implicit any or unused variables
 - Modern ES modules (type: "module" in package.json)
+- ESLint configured with TypeScript rules (@typescript-eslint/recommended)
+- Unused variables must be prefixed with underscore (_) to avoid errors
 
 ### Tool Registration Pattern
 
@@ -243,6 +245,8 @@ This project supports both CLI and web deployment:
 - Targeting parameters require specific formatting per Meta's requirements
 - The project currently lacks test coverage - consider adding tests for critical paths
 - For Vercel deployment, ensure all environment variables are properly configured
+- When working with the codebase, always run `npm run lint` after making changes to ensure code quality
+- The project is configured as a CLI tool (`meta-ads-mcp`) available after build
 
 # important-instruction-reminders
 Do what has been asked; nothing more, nothing less.
