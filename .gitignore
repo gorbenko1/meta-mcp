@@ -5,3 +5,7 @@ npm-debug.log
 .DS_Store
 .claude
 .vercel
+.env*.local
+.kiro
+.claude
+CLAUDE.md
