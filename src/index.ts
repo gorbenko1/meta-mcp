@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import { config } from "dotenv";
+config(); // Load environment variables from .env file
+
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { MetaApiClient } from "./meta-client.js";

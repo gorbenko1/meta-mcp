@@ -1,0 +1,101 @@
+{
+  "data": [
+    {
+      "id": "120330000000020",
+      "name": "Summer Sale - Single Image",
+      "status": "ACTIVE",
+      "body": "Don't miss our biggest summer sale! Get up to 50% off on all products. Limited time offer!",
+      "title": "Summer Sale - Up to 50% Off",
+      "link_url": "https://example.com/summer-sale",
+      "image_url": "https://example.com/images/summer-sale.jpg",
+      "call_to_action_type": "SHOP_NOW",
+      "object_story_spec": {
+        "page_id": "120330000000100",
+        "link_data": {
+          "link": "https://example.com/summer-sale",
+          "message": "Don't miss our biggest summer sale! Get up to 50% off on all products. Limited time offer!",
+          "name": "Summer Sale - Up to 50% Off",
+          "description": "Shop now and save big on your favorite items",
+          "image_hash": "abc123def456",
+          "call_to_action": {
+            "type": "SHOP_NOW",
+            "value": {
+              "link": "https://example.com/summer-sale"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "120330000000021",
+      "name": "Product Demo Video",
+      "status": "ACTIVE",
+      "body": "See our product in action! Watch this quick demo to learn how it can help you.",
+      "title": "Product Demo - See How It Works",
+      "link_url": "https://example.com/demo",
+      "call_to_action_type": "LEARN_MORE",
+      "object_story_spec": {
+        "page_id": "120330000000100",
+        "video_data": {
+          "video_id": "120330000000200",
+          "message": "See our product in action! Watch this quick demo to learn how it can help you.",
+          "title": "Product Demo - See How It Works",
+          "call_to_action": {
+            "type": "LEARN_MORE",
+            "value": {
+              "link": "https://example.com/demo"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "120330000000022",
+      "name": "Product Carousel",
+      "status": "ACTIVE",
+      "body": "Discover our featured products collection",
+      "title": "Featured Products",
+      "link_url": "https://example.com/products",
+      "call_to_action_type": "SHOP_NOW",
+      "object_story_spec": {
+        "page_id": "120330000000100",
+        "link_data": {
+          "link": "https://example.com/products",
+          "message": "Discover our featured products collection",
+          "child_attachments": [
+            {
+              "link": "https://example.com/product1",
+              "name": "Premium Headphones",
+              "description": "High-quality wireless headphones",
+              "image_hash": "prod1hash123",
+              "call_to_action": {
+                "type": "SHOP_NOW",
+                "value": {
+                  "link": "https://example.com/product1"
+                }
+              }
+            },
+            {
+              "link": "https://example.com/product2",
+              "name": "Smart Watch",
+              "description": "Feature-rich smartwatch",
+              "image_hash": "prod2hash456",
+              "call_to_action": {
+                "type": "SHOP_NOW",
+                "value": {
+                  "link": "https://example.com/product2"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "paging": {
+    "cursors": {
+      "before": "MTIwMzMwMDAwMDAwMDIy",
+      "after": "MTIwMzMwMDAwMDAwMDIw"
+    }
+  }
+}

@@ -8,7 +8,14 @@ import {
   AnalyzeCreativesSchema,
   CreativeValidationEnhancedSchema,
   UploadImageFromUrlSchema,
-} from "../types/mcp-tools.js";
+} from "../types/mcp-tools";
+
+export function setupCreativeTools(
+  server: McpServer,
+  metaClient: MetaApiClient
+) {
+  registerCreativeTools(server, metaClient);
+}
 
 export function registerCreativeTools(
   server: McpServer,

@@ -1,0 +1,58 @@
+{
+  "data": [
+    {
+      "impressions": "1250000",
+      "clicks": "35000",
+      "spend": "2750.50",
+      "reach": "850000",
+      "frequency": "1.47",
+      "ctr": "2.80",
+      "cpc": "0.0786",
+      "cpm": "2.20",
+      "actions": [
+        {
+          "action_type": "link_click",
+          "value": "35000"
+        },
+        {
+          "action_type": "post_engagement",
+          "value": "48000"
+        },
+        {
+          "action_type": "page_engagement",
+          "value": "52000"
+        },
+        {
+          "action_type": "video_view",
+          "value": "125000"
+        }
+      ],
+      "video_p25_watched_actions": [
+        {
+          "action_type": "video_view",
+          "value": "125000"
+        }
+      ],
+      "video_p50_watched_actions": [
+        {
+          "action_type": "video_view",
+          "value": "87500"
+        }
+      ],
+      "video_p75_watched_actions": [
+        {
+          "action_type": "video_view",
+          "value": "62500"
+        }
+      ],
+      "video_p100_watched_actions": [
+        {
+          "action_type": "video_view",
+          "value": "45000"
+        }
+      ],
+      "date_start": "2024-07-01",
+      "date_stop": "2024-07-31"
+    }
+  ]
+}

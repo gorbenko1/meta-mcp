@@ -117,22 +117,22 @@ export interface AdInsights {
   cpc?: string;
   cpm?: string;
   cpp?: string;
-  cost_per_action_type?: Array<{
-    action_type: string;
-    value: string;
-  }>;
-  actions?: Array<{
-    action_type: string;
-    value: string;
-  }>;
-  video_views?: string;
-  video_view_time?: string;
   date_start?: string;
   date_stop?: string;
   account_id?: string;
   campaign_id?: string;
   adset_id?: string;
   ad_id?: string;
+  video_views?: string;
+  video_view_time?: string;
+  actions?: Array<{
+    action_type: string;
+    value: string;
+  }>;
+  cost_per_action_type?: Array<{
+    action_type: string;
+    value: string;
+  }>;
 }
 
 export interface CustomAudience {
@@ -251,3 +251,28 @@ export type BillingEvent =
   | "THRUPLAY"
   | "PURCHASE"
   | "LISTING_INTERACTION";
+
+// Additional types for test compatibility
+export type InsightsData = AdInsights;
+
+export interface AdImage {
+  id: string;
+  hash: string;
+  url: string;
+  width: number;
+  height: number;
+  name?: string;
+  url_128?: string;
+  [key: string]: any; // Allow additional properties for test compatibility
+}
+
+export interface AdVideo {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  duration?: number;
+  status?: string;
+  embed_html?: string;
+  [key: string]: any; // Allow additional properties for test compatibility
+}

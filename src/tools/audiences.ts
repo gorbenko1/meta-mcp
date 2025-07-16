@@ -5,7 +5,14 @@ import {
   CreateCustomAudienceSchema,
   CreateLookalikeAudienceSchema,
   EstimateAudienceSizeSchema,
-} from "../types/mcp-tools.js";
+} from "../types/mcp-tools";
+
+export function setupAudienceTools(
+  server: McpServer,
+  metaClient: MetaApiClient
+) {
+  registerAudienceTools(server, metaClient);
+}
 
 export function registerAudienceTools(
   server: McpServer,

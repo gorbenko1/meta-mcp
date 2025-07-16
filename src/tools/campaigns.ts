@@ -7,7 +7,14 @@ import {
   DeleteCampaignSchema,
   ListAdSetsSchema,
   CreateAdSetSchema,
-} from "../types/mcp-tools.js";
+} from "../types/mcp-tools";
+
+export function setupCampaignTools(
+  server: McpServer,
+  metaClient: MetaApiClient
+) {
+  registerCampaignTools(server, metaClient);
+}
 
 export function registerCampaignTools(
   server: McpServer,

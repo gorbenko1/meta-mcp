@@ -1,0 +1,64 @@
+{
+  "data": [
+    {
+      "id": "120330000000010",
+      "name": "Website Visitors - Last 30 Days",
+      "subtype": "WEBSITE",
+      "description": "People who visited our website in the last 30 days",
+      "approximate_count_lower_bound": 45000,
+      "approximate_count_upper_bound": 55000,
+      "time_created": "2024-06-01T10:30:00-0700",
+      "time_updated": "2024-07-15T14:22:00-0700",
+      "delivery_status": {
+        "code": 200,
+        "description": "Normal"
+      },
+      "operation_status": {
+        "code": 200,
+        "description": "Normal"
+      }
+    },
+    {
+      "id": "120330000000011",
+      "name": "Email Subscribers",
+      "subtype": "CUSTOM",
+      "description": "Customer email list uploaded monthly",
+      "approximate_count_lower_bound": 125000,
+      "approximate_count_upper_bound": 135000,
+      "time_created": "2024-05-15T09:15:00-0700",
+      "time_updated": "2024-07-01T11:45:00-0700",
+      "delivery_status": {
+        "code": 200,
+        "description": "Normal"
+      },
+      "operation_status": {
+        "code": 200,
+        "description": "Normal"
+      }
+    },
+    {
+      "id": "120330000000012",
+      "name": "Lookalike - High Value Customers",
+      "subtype": "LOOKALIKE",
+      "description": "Lookalike audience based on top 1% of customers",
+      "approximate_count_lower_bound": 2000000,
+      "approximate_count_upper_bound": 2500000,
+      "time_created": "2024-06-20T16:00:00-0700",
+      "time_updated": "2024-07-10T09:30:00-0700",
+      "delivery_status": {
+        "code": 200,
+        "description": "Normal"
+      },
+      "operation_status": {
+        "code": 200,
+        "description": "Normal"
+      }
+    }
+  ],
+  "paging": {
+    "cursors": {
+      "before": "MTIwMzMwMDAwMDAwMDEy",
+      "after": "MTIwMzMwMDAwMDAwMDEw"
+    }
+  }
+}
