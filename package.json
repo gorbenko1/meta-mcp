@@ -14,6 +14,7 @@
     "test": "jest",
     "test:tools": "tsx test-tools.js",
     "list:tools": "tsx list-tools.js",
+    "test:api": "tsx test-api.js",
     "lint": "eslint src/**/*.ts",
     "prepare": "npm run build",
     "vercel-build": "npm run build",
