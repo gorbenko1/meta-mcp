@@ -1,23 +1,18 @@
 /** @type {import('jest').Config} */
 export default {
-  preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/__tests__'],
   testMatch: [
-    '**/__tests__/**/*.+(ts|tsx|js)',
-    '**/?(*.)+(spec|test).+(ts|tsx|js)'
+    '**/__tests__/**/*.+(js)',
+    '**/?(*.)+(spec|test).+(js)'
   ],
-  transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: {
-        esModuleInterop: true,
-        allowSyntheticDefaultImports: true
-      }
-    }]
-  },
+  transform: {},
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@modelcontextprotocol)/)'
+  ],
   collectCoverageFrom: [
     'src/**/*.{js,ts}',
     '!src/**/*.d.ts',
@@ -33,7 +28,7 @@ export default {
       statements: 80
     }
   },
-  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+  setupFilesAfterEnv: ['<rootDir>/__tests__/setup.js'],
   testTimeout: 10000,
   verbose: true
 };
