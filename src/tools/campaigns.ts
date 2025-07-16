@@ -23,7 +23,7 @@ export function registerCampaignTools(
   // List Campaigns Tool
   server.tool(
     "list_campaigns",
-    "List and filter advertising campaigns for a Meta ad account. Use this to see all campaigns, check their status, budgets, and performance. Supports filtering by status (ACTIVE, PAUSED, etc.) and pagination.",
+    "Retrieve a paginated list of all campaigns for a Meta ad account. Filter by status (e.g., ACTIVE, PAUSED) and view key campaign details including budget, objective, and timing. Use this to audit or select campaigns for further actions.",
     ListCampaignsSchema.shape,
     async ({ account_id, status, limit, after }) => {
       try {
@@ -86,7 +86,7 @@ export function registerCampaignTools(
   // Create Campaign Tool
   server.tool(
     "create_campaign",
-    "Create a new advertising campaign with specified objective, budget, and targeting options. Choose between daily or lifetime budget, set start/stop times, and configure optimization settings. Campaign starts in PAUSED status by default.",
+    "Create a new Meta ad campaign. Specify the objective, name, and either a daily or lifetime budget (not both). Optionally set start/stop times, special ad categories, and bid strategy. The campaign will be created in PAUSED status unless otherwise specified. Returns the new campaign ID and summary.",
     CreateCampaignSchema.shape,
     async ({
       account_id,
@@ -177,7 +177,7 @@ export function registerCampaignTools(
   // Update Campaign Tool
   server.tool(
     "update_campaign",
-    "Modify an existing campaign's settings including name, status, budget amounts, or schedule. Useful for optimizing campaigns based on performance data or changing business requirements.",
+    "Update an existing campaign’s settings. Change the name, status, budget, or schedule. Only the provided fields will be updated. Use this to optimize or pause/resume campaigns as needed.",
     UpdateCampaignSchema.shape,
     async ({
       campaign_id,
@@ -246,7 +246,7 @@ export function registerCampaignTools(
   // Pause Campaign Tool
   server.tool(
     "pause_campaign",
-    "Immediately pause a running campaign to stop ad delivery and spending. Use this for emergency stops, budget protection, or when campaigns need temporary suspension for optimization.",
+    "Instantly pause a campaign to stop ad delivery and spending. Use for emergency stops, budget control, or temporary suspensions. Requires the campaign ID.",
     DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
@@ -286,7 +286,7 @@ export function registerCampaignTools(
   // Resume Campaign Tool
   server.tool(
     "resume_campaign",
-    "Reactivate a paused campaign to resume ad delivery and spending. Use this after campaign optimization, budget adjustments, or when ready to restart advertising efforts.",
+    "Reactivate a previously paused campaign to resume ad delivery and spending. Requires the campaign ID.",
     DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
@@ -326,6 +326,7 @@ export function registerCampaignTools(
   // Delete Campaign Tool
   server.tool(
     "delete_campaign",
+    "Permanently delete a campaign and all its associated ad sets and ads. This action cannot be undone. Requires the campaign ID.",
     DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
@@ -364,6 +365,7 @@ export function registerCampaignTools(
   // List Ad Sets Tool
   server.tool(
     "list_ad_sets",
+    "List all ad sets for a given campaign or ad account. Filter by status and paginate results. Returns ad set details including budget, targeting, and optimization settings.",
     ListAdSetsSchema.shape,
     async ({ campaign_id, account_id, status, limit, after }) => {
       try {
@@ -442,7 +444,7 @@ export function registerCampaignTools(
   // Campaign Readiness Check Tool
   server.tool(
     "check_campaign_readiness",
-    "Check if a campaign is ready for ad set creation and provide specific setup requirements. Use this before creating ad sets to avoid common errors.",
+    "Check if a campaign is ready for ad set creation. Returns a readiness report with issues, requirements, and recommendations based on campaign status, objective, and budget. Use before creating ad sets to avoid common errors.",
     DeleteCampaignSchema.shape, // Reusing for campaign_id param
     async ({ campaign_id }) => {
       try {
@@ -567,7 +569,7 @@ export function registerCampaignTools(
   // Enhanced Create Ad Set Tool with better validation
   server.tool(
     "create_ad_set_enhanced",
-    "Create an ad set with enhanced validation and helpful error messages. This improved version checks requirements before attempting creation and provides specific guidance for common issues.",
+    "Create a new ad set with advanced validation and helpful error messages. Specify campaign, name, budget (daily or lifetime), optimization goal, billing event, targeting, and promoted object if required by the campaign objective. Returns the new ad set ID and summary, or detailed error guidance if creation fails.",
     CreateAdSetSchema.shape,
     async ({
       campaign_id,
@@ -979,6 +981,7 @@ export function registerCampaignTools(
   // List Ads Tool
   server.tool(
     "list_ads",
+    "List all ads for a given campaign, ad set, or ad account. Filter by status and paginate results. Returns ad details including creative, status, and timing.",
     ListAdSetsSchema.shape,
     async ({ campaign_id, account_id, status, limit, after }) => {
       try {
@@ -1052,6 +1055,7 @@ export function registerCampaignTools(
   // Get Campaign Details Tool
   server.tool(
     "get_campaign",
+    "Retrieve full details for a specific campaign by ID. Returns all campaign fields including status, objective, budget, and timing.",
     DeleteCampaignSchema.shape,
     async ({ campaign_id }) => {
       try {
@@ -1102,7 +1106,7 @@ export function registerCampaignTools(
   // List Ad Sets for Campaign Tool
   server.tool(
     "list_campaign_ad_sets",
-    "List all ad sets within a specific campaign. Helps you see existing ad sets before creating new ones and understand the campaign structure.",
+    "List all ad sets within a specific campaign. Returns ad set details and a summary of active/paused counts and total daily budget.",
     DeleteCampaignSchema.shape, // Reusing for campaign_id param
     async ({ campaign_id }) => {
       try {
@@ -1169,7 +1173,7 @@ export function registerCampaignTools(
   // Meta API Parameter Reference Tool
   server.tool(
     "get_meta_api_reference",
-    "Get reference information for Meta Marketing API parameters including valid optimization goals, billing events, and their combinations. Essential for troubleshooting parameter errors.",
+    "Get a reference guide for valid Meta Marketing API parameters, including allowed optimization goals, billing events, and their valid combinations. Use this to troubleshoot parameter errors or to construct valid requests.",
     {},
     async () => {
       const reference = {
@@ -1323,7 +1327,7 @@ export function registerCampaignTools(
   // Quick Fix Suggestions Tool
   server.tool(
     "get_quick_fixes",
-    "Get specific fix suggestions for common Meta Ads API errors. Provide an error message to get targeted solutions.",
+    "Get targeted troubleshooting tips for common Meta Ads API errors. Provide an error message to receive likely causes, suggestions, and next steps for resolution.",
     {
       error_message: {
         type: "string",
@@ -1455,7 +1459,7 @@ export function registerCampaignTools(
   // Account Setup Verification Tool
   server.tool(
     "verify_account_setup",
-    "Verify that an ad account has all necessary components for ad creation including pages, pixels, and payment methods. Run this before starting major campaigns.",
+    "Verify that a Meta ad account is ready for ad creation. Checks for account access, payment method, Facebook pages, and active campaigns. Returns a setup status, recommendations, and warnings.",
     {
       account_id: {
         type: "string",
