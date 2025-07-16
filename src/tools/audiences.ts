@@ -360,44 +360,40 @@ export function registerAudienceTools(
   );
 
   // Delete Audience Tool
-  server.tool(
-    "delete_audience",
-    ListAudiencesSchema.shape,
-    async () => {
-      try {
-        // Note: This would require an audience_id parameter in a real implementation
-        const response = {
-          message: "Audience deletion requires audience_id parameter",
-          required_parameters: ["audience_id"],
-          warning: "Deleting an audience is permanent and cannot be undone",
-          affected_campaigns:
-            "Any campaigns using this audience will need to be updated",
-          confirmation_required: true,
-        };
+  server.tool("delete_audience", ListAudiencesSchema.shape, async () => {
+    try {
+      // Note: This would require an audience_id parameter in a real implementation
+      const response = {
+        message: "Audience deletion requires audience_id parameter",
+        required_parameters: ["audience_id"],
+        warning: "Deleting an audience is permanent and cannot be undone",
+        affected_campaigns:
+          "Any campaigns using this audience will need to be updated",
+        confirmation_required: true,
+      };
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(response, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred";
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error deleting audience: ${errorMessage}`,
-            },
-          ],
-          isError: true,
-        };
-      }
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error deleting audience: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
     }
-  );
+  });
 
   // Get Audience Insights Tool
   server.tool(

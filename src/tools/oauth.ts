@@ -7,10 +7,7 @@ import {
   GenerateSystemTokenSchema,
 } from "../types/mcp-tools";
 
-export function setupOAuthTools(
-  server: McpServer,
-  authManager: AuthManager
-) {
+export function setupOAuthTools(server: McpServer, authManager: AuthManager) {
   registerOAuthTools(server, authManager);
 }
 
@@ -146,7 +143,8 @@ export function registerOAuthTools(
           },
           token_management: {
             auto_refresh_enabled: authManager["config"].autoRefresh || false,
-            current_expiration: authManager["config"].tokenExpiration?.toISOString(),
+            current_expiration:
+              authManager["config"].tokenExpiration?.toISOString(),
             refresh_recommendation:
               "Set up automatic refresh or manually refresh before expiration",
           },
@@ -245,104 +243,97 @@ export function registerOAuthTools(
   );
 
   // Get Token Info Tool
-  server.tool(
-    "get_token_info",
-    {},
-    async () => {
-      try {
-        const tokenInfo = await authManager.getTokenInfo();
+  server.tool("get_token_info", {}, async () => {
+    try {
+      const tokenInfo = await authManager.getTokenInfo();
 
-        const response = {
-          token_info: tokenInfo,
-          current_config: {
-            has_app_credentials: !!(
-              authManager["config"].appId && authManager["config"].appSecret
-            ),
-            has_redirect_uri: !!authManager["config"].redirectUri,
-            auto_refresh_enabled: !!authManager["config"].autoRefresh,
-            token_expiration: authManager["config"].tokenExpiration?.toISOString(),
-          },
-          token_status: {
-            is_valid: tokenInfo.isValid,
-            is_expiring_soon: authManager.isTokenExpiring(60), // 1 hour buffer
-            requires_refresh: authManager.isTokenExpiring(5), // 5 minute buffer
-          },
-          recommendations: generateTokenRecommendations(tokenInfo, authManager),
-        };
+      const response = {
+        token_info: tokenInfo,
+        current_config: {
+          has_app_credentials: !!(
+            authManager["config"].appId && authManager["config"].appSecret
+          ),
+          has_redirect_uri: !!authManager["config"].redirectUri,
+          auto_refresh_enabled: !!authManager["config"].autoRefresh,
+          token_expiration:
+            authManager["config"].tokenExpiration?.toISOString(),
+        },
+        token_status: {
+          is_valid: tokenInfo.isValid,
+          is_expiring_soon: authManager.isTokenExpiring(60), // 1 hour buffer
+          requires_refresh: authManager.isTokenExpiring(5), // 5 minute buffer
+        },
+        recommendations: generateTokenRecommendations(tokenInfo, authManager),
+      };
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(response, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred";
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error getting token info: ${errorMessage}`,
-            },
-          ],
-          isError: true,
-        };
-      }
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error getting token info: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
     }
-  );
+  });
 
   // Validate Current Token Tool
-  server.tool(
-    "validate_token",
-    {},
-    async () => {
-      try {
-        const isValid = await authManager.validateToken();
-        const tokenInfo = await authManager.getTokenInfo();
+  server.tool("validate_token", {}, async () => {
+    try {
+      const isValid = await authManager.validateToken();
+      const tokenInfo = await authManager.getTokenInfo();
 
-        const response = {
-          is_valid: isValid,
-          validation_timestamp: new Date().toISOString(),
-          token_details: tokenInfo,
-          health_check: {
-            api_connectivity: isValid,
-            token_format: !!authManager.getAccessToken(),
-            permissions: tokenInfo.scopes || [],
-          },
-          diagnostics: {
-            token_length: authManager.getAccessToken().length,
-            expires_at: tokenInfo.expiresAt?.toISOString(),
-            user_id: tokenInfo.userId,
-            app_id: tokenInfo.appId,
-          },
-        };
+      const response = {
+        is_valid: isValid,
+        validation_timestamp: new Date().toISOString(),
+        token_details: tokenInfo,
+        health_check: {
+          api_connectivity: isValid,
+          token_format: !!authManager.getAccessToken(),
+          permissions: tokenInfo.scopes || [],
+        },
+        diagnostics: {
+          token_length: authManager.getAccessToken().length,
+          expires_at: tokenInfo.expiresAt?.toISOString(),
+          user_id: tokenInfo.userId,
+          app_id: tokenInfo.appId,
+        },
+      };
 
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify(response, null, 2),
-            },
-          ],
-        };
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred";
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Error validating token: ${errorMessage}`,
-            },
-          ],
-          isError: true,
-        };
-      }
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(response, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error validating token: ${errorMessage}`,
+          },
+        ],
+        isError: true,
+      };
     }
-  );
+  });
 }
 
 // Helper function to generate token recommendations
@@ -367,8 +358,12 @@ function generateTokenRecommendations(
   }
 
   if (!authManager["config"].appId || !authManager["config"].appSecret) {
-    recommendations.push("Configure app credentials for token refresh capabilities");
-    recommendations.push("Set META_APP_ID and META_APP_SECRET environment variables");
+    recommendations.push(
+      "Configure app credentials for token refresh capabilities"
+    );
+    recommendations.push(
+      "Set META_APP_ID and META_APP_SECRET environment variables"
+    );
   }
 
   if (!tokenInfo.scopes || tokenInfo.scopes.length === 0) {
@@ -376,15 +371,20 @@ function generateTokenRecommendations(
   }
 
   if (tokenInfo.scopes && !tokenInfo.scopes.includes("ads_management")) {
-    recommendations.push("ads_management scope missing - required for Marketing API");
+    recommendations.push(
+      "ads_management scope missing - required for Marketing API"
+    );
   }
 
   if (tokenInfo.expiresAt) {
     const daysUntilExpiration = Math.ceil(
-      (new Date(tokenInfo.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      (new Date(tokenInfo.expiresAt).getTime() - Date.now()) /
+        (1000 * 60 * 60 * 24)
     );
     if (daysUntilExpiration < 7) {
-      recommendations.push(`Token expires in ${daysUntilExpiration} days - plan renewal`);
+      recommendations.push(
+        `Token expires in ${daysUntilExpiration} days - plan renewal`
+      );
     }
   }
 

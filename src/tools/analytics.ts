@@ -312,123 +312,131 @@ export function registerAnalyticsTools(
   );
 
   // Get Campaign Performance Tool (simplified version of get_insights)
-  server.tool("get_campaign_performance", GetInsightsSchema.shape, async (params) => {
-    try {
-      // Set level to campaign and add campaign-specific fields
-      const campaignParams = {
-        ...params,
-        level: "campaign" as const,
-        fields: params.fields || [
-          "impressions",
-          "clicks",
-          "spend",
-          "ctr",
-          "cpc",
-          "cpm",
-          "reach",
-          "frequency",
-        ],
-      };
-
-      const result = await metaClient.getInsights(
-        params.object_id,
-        campaignParams
-      );
-      const summary = calculateSummaryMetrics(result.data);
-
-      // Get campaign details
-      let campaignDetails;
+  server.tool(
+    "get_campaign_performance",
+    GetInsightsSchema.shape,
+    async (params) => {
       try {
-        campaignDetails = await metaClient.getCampaign(params.object_id);
-      } catch {
-        campaignDetails = { id: params.object_id, name: "Unknown Campaign" };
+        // Set level to campaign and add campaign-specific fields
+        const campaignParams = {
+          ...params,
+          level: "campaign" as const,
+          fields: params.fields || [
+            "impressions",
+            "clicks",
+            "spend",
+            "ctr",
+            "cpc",
+            "cpm",
+            "reach",
+            "frequency",
+          ],
+        };
+
+        const result = await metaClient.getInsights(
+          params.object_id,
+          campaignParams
+        );
+        const summary = calculateSummaryMetrics(result.data);
+
+        // Get campaign details
+        let campaignDetails;
+        try {
+          campaignDetails = await metaClient.getCampaign(params.object_id);
+        } catch {
+          campaignDetails = { id: params.object_id, name: "Unknown Campaign" };
+        }
+
+        const response = {
+          campaign: {
+            id: campaignDetails.id,
+            name: campaignDetails.name,
+            objective: campaignDetails.objective,
+            status: campaignDetails.status,
+          },
+          performance: summary,
+          daily_breakdown: result.data,
+          query_parameters: campaignParams,
+        };
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error getting campaign performance: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
       }
-
-      const response = {
-        campaign: {
-          id: campaignDetails.id,
-          name: campaignDetails.name,
-          objective: campaignDetails.objective,
-          status: campaignDetails.status,
-        },
-        performance: summary,
-        daily_breakdown: result.data,
-        query_parameters: campaignParams,
-      };
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error getting campaign performance: ${errorMessage}`,
-          },
-        ],
-        isError: true,
-      };
     }
-  });
+  );
 
   // Get Attribution Data Tool
-  server.tool("get_attribution_data", GetInsightsSchema.shape, async (params) => {
-    try {
-      // Add attribution-specific breakdowns and fields
-      const attributionParams = {
-        ...params,
-        fields: params.fields || [
-          "impressions",
-          "clicks",
-          "spend",
-          "actions",
-          "cost_per_action_type",
-        ],
-        breakdowns: params.breakdowns || ["action_attribution_windows"],
-      };
+  server.tool(
+    "get_attribution_data",
+    GetInsightsSchema.shape,
+    async (params) => {
+      try {
+        // Add attribution-specific breakdowns and fields
+        const attributionParams = {
+          ...params,
+          fields: params.fields || [
+            "impressions",
+            "clicks",
+            "spend",
+            "actions",
+            "cost_per_action_type",
+          ],
+          breakdowns: params.breakdowns || ["action_attribution_windows"],
+        };
 
-      const result = await metaClient.getInsights(
-        params.object_id,
-        attributionParams
-      );
+        const result = await metaClient.getInsights(
+          params.object_id,
+          attributionParams
+        );
 
-      const response = {
-        attribution_data: result.data,
-        summary: calculateAttributionMetrics(result.data),
-        query_parameters: attributionParams,
-        total_records: result.data.length,
-      };
+        const response = {
+          attribution_data: result.data,
+          summary: calculateAttributionMetrics(result.data),
+          query_parameters: attributionParams,
+          total_records: result.data.length,
+        };
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(response, null, 2),
-          },
-        ],
-      };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error occurred";
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Error getting attribution data: ${errorMessage}`,
-          },
-        ],
-        isError: true,
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(response, null, 2),
+            },
+          ],
+        };
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error occurred";
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error getting attribution data: ${errorMessage}`,
+            },
+          ],
+          isError: true,
+        };
+      }
     }
-  });
+  );
 }
 
 // Helper Functions
@@ -506,7 +514,9 @@ function calculatePerformanceRankings(
           metric.includes("cpc") ||
           metric.includes("cpm") ||
           metric.includes("spend");
-        return isCostMetric ? (a.value || 0) - (b.value || 0) : (b.value || 0) - (a.value || 0);
+        return isCostMetric
+          ? (a.value || 0) - (b.value || 0)
+          : (b.value || 0) - (a.value || 0);
       });
 
     rankings[metric] = sorted.map((item, index) => ({
