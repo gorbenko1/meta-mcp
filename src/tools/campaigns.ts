@@ -28,7 +28,7 @@ export function registerCampaignTools(
     async ({ account_id, status, limit, after }) => {
       try {
         const result = await metaClient.getCampaigns(account_id, {
-          status,
+          status: status ? [status] : undefined,
           limit,
           after,
         });

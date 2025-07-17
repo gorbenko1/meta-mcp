@@ -100,7 +100,7 @@ export class MetaApiClient {
   // Campaign Methods
   async getCampaigns(
     accountId: string,
-    params: PaginationParams & { status?: string; fields?: string[] } = {}
+    params: PaginationParams & { status?: string[]; fields?: string[] } = {}
   ): Promise<PaginatedResult<Campaign>> {
     const formattedAccountId = this.auth.getAccountId(accountId);
     const { status, fields, ...paginationParams } = params;
