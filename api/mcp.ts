@@ -868,13 +868,22 @@ const handler = async (req: Request) => {
                       success: false,
                       error: error.message,
                       troubleshooting: {
+                        error_details: error.message,
                         common_fixes: [
                           "Ensure campaign is fully initialized (wait 1-2 minutes after creation)",
-                          "Verify account has payment method configured",
-                          "Check if Facebook Pixel is required for conversion campaigns",
-                          "Try simpler targeting first (just countries and age)",
-                          "Ensure minimum budget requirements are met ($1+ daily)",
+                          "If payment method error: Go to Meta Ads Manager → Billing → Add payment method",
+                          "If account permissions error: You may need admin access to the ad account",
+                          "If targeting error: Try simpler targeting first (just countries and age)",
+                          "If budget error: Ensure minimum budget requirements are met ($1+ daily)",
+                          "If pixel error: Check if Facebook Pixel is required for conversion campaigns",
                         ],
+                        specific_guidance: error.message.includes("payment") || error.message.includes("billing") || error.message.includes("funding") 
+                          ? "This appears to be a payment method issue. Please add a valid payment method in Meta Ads Manager."
+                          : error.message.includes("permission") || error.message.includes("access")
+                          ? "This appears to be a permissions issue. You may need admin access to the ad account."
+                          : error.message.includes("budget") || error.message.includes("minimum")
+                          ? "This appears to be a budget issue. Try increasing the daily budget to at least $5 (500 cents)."
+                          : "Check the error message above for specific guidance."
                       },
                     },
                     null,
@@ -1809,13 +1818,38 @@ const handler = async (req: Request) => {
               success_likelihood: "unknown",
             };
 
-            // Check payment methods
+            // Check payment methods (multiple approaches)
             try {
               const fundingSources = await metaClient.getFundingSources(
                 account_id
               );
               setupCheck.has_payment_method =
                 fundingSources && fundingSources.length > 0;
+              
+              // If funding sources check fails, try alternative approach
+              if (!setupCheck.has_payment_method) {
+                // Check if account has spend activity (indicates payment method exists)
+                try {
+                  const spend = await metaClient.getInsights(account_id, {
+                    level: "account",
+                    date_preset: "last_30d",
+                    fields: ["spend"],
+                    limit: 1
+                  });
+                  
+                  if (spend && spend.data && spend.data.length > 0) {
+                    const spendAmount = parseFloat(spend.data[0].spend || "0");
+                    if (spendAmount > 0) {
+                      setupCheck.has_payment_method = true;
+                      setupCheck.required_fixes.push(
+                        "Payment method detected via spend history (funding_source_details API may have limited access)"
+                      );
+                    }
+                  }
+                } catch (spendError) {
+                  // Ignore spend check errors
+                }
+              }
             } catch (error) {
               setupCheck.required_fixes.push(
                 "Unable to check payment methods - may need account admin access"
@@ -1843,7 +1877,7 @@ const handler = async (req: Request) => {
 
             if (!setupCheck.has_payment_method) {
               setupCheck.required_fixes.push(
-                "Add a valid payment method to the ad account"
+                "Payment method not detected via API - if you have one set up, try creating the ad set anyway (API detection can be unreliable)"
               );
             }
 
