@@ -871,19 +871,23 @@ const handler = async (req: Request) => {
                         error_details: error.message,
                         common_fixes: [
                           "Ensure campaign is fully initialized (wait 1-2 minutes after creation)",
-                          "If payment method error: Go to Meta Ads Manager → Billing → Add payment method",
-                          "If account permissions error: You may need admin access to the ad account",
-                          "If targeting error: Try simpler targeting first (just countries and age)",
-                          "If budget error: Ensure minimum budget requirements are met ($1+ daily)",
-                          "If pixel error: Check if Facebook Pixel is required for conversion campaigns",
+                          "Verify account has payment method configured",
+                          "Check if Facebook Pixel is required for conversion campaigns",
+                          "Try simpler targeting first (just countries and age)",
+                          "Ensure minimum budget requirements are met ($1+ daily)",
                         ],
-                        specific_guidance: error.message.includes("payment") || error.message.includes("billing") || error.message.includes("funding") 
-                          ? "This appears to be a payment method issue. Please add a valid payment method in Meta Ads Manager."
-                          : error.message.includes("permission") || error.message.includes("access")
-                          ? "This appears to be a permissions issue. You may need admin access to the ad account."
-                          : error.message.includes("budget") || error.message.includes("minimum")
-                          ? "This appears to be a budget issue. Try increasing the daily budget to at least $5 (500 cents)."
-                          : "Check the error message above for specific guidance."
+                        specific_guidance:
+                          error.message.includes("payment") ||
+                          error.message.includes("billing") ||
+                          error.message.includes("funding")
+                            ? "This appears to be a payment method issue. Please add a valid payment method in Meta Ads Manager."
+                            : error.message.includes("permission") ||
+                              error.message.includes("access")
+                            ? "This appears to be a permissions issue. You may need admin access to the ad account."
+                            : error.message.includes("budget") ||
+                              error.message.includes("minimum")
+                            ? "This appears to be a budget issue. Try increasing the daily budget to at least $5 (500 cents)."
+                            : "Check the error message above for specific guidance.",
                       },
                     },
                     null,
@@ -922,7 +926,10 @@ const handler = async (req: Request) => {
             const params: any = { limit: limit || 25 };
             if (status) params.status = status;
 
-            const adSets = await metaClient.getAdSets(campaign_id, params);
+            const adSets = await metaClient.getAdSets({
+              campaignId: campaign_id,
+              ...params,
+            });
 
             return {
               content: [
@@ -1042,7 +1049,10 @@ const handler = async (req: Request) => {
 
             let ads;
             if (ad_set_id) {
-              ads = await metaClient.getAds(ad_set_id, params);
+              ads = await metaClient.getAds({
+                adsetId: ad_set_id,
+                ...params,
+              });
             } else if (campaign_id) {
               ads = await metaClient.getAdsByCampaign(campaign_id, params);
             } else if (account_id) {
@@ -1814,18 +1824,18 @@ const handler = async (req: Request) => {
               timezone_name: account.timezone_name,
               has_payment_method: false,
               business_info: {},
-              required_fixes: [],
+              required_fixes: [] as string[],
               success_likelihood: "unknown",
             };
 
-            // Check payment methods (multiple approaches)
+            // Check payment methods
             try {
               const fundingSources = await metaClient.getFundingSources(
                 account_id
               );
               setupCheck.has_payment_method =
                 fundingSources && fundingSources.length > 0;
-              
+
               // If funding sources check fails, try alternative approach
               if (!setupCheck.has_payment_method) {
                 // Check if account has spend activity (indicates payment method exists)
@@ -1834,9 +1844,9 @@ const handler = async (req: Request) => {
                     level: "account",
                     date_preset: "last_30d",
                     fields: ["spend"],
-                    limit: 1
+                    limit: 1,
                   });
-                  
+
                   if (spend && spend.data && spend.data.length > 0) {
                     const spendAmount = parseFloat(spend.data[0].spend || "0");
                     if (spendAmount > 0) {
@@ -1869,7 +1879,7 @@ const handler = async (req: Request) => {
             }
 
             // Analyze issues
-            if (account.account_status !== "ACTIVE") {
+            if (account.account_status !== 1) {
               setupCheck.required_fixes.push(
                 `Account status is ${account.account_status}, must be ACTIVE`
               );
@@ -1890,7 +1900,7 @@ const handler = async (req: Request) => {
               default: `Minimum 100 ${account.currency} cents, recommended 1000+ ${account.currency} cents`,
             };
 
-            setupCheck.budget_guidance =
+            setupCheck.currency =
               budgetRecommendations[account.currency] ||
               budgetRecommendations.default;
 
@@ -1980,7 +1990,7 @@ const handler = async (req: Request) => {
               account_currency: account.currency,
               has_payment_method: account.funding_source_details?.length > 0,
               pixel_setup: "Unknown - check manually in Ads Manager",
-              recommendations: [],
+              recommendations: [] as string[],
             };
 
             // Add recommendations based on findings
@@ -2002,7 +2012,7 @@ const handler = async (req: Request) => {
               );
             }
 
-            if (account.account_status !== "ACTIVE") {
+            if (account.account_status !== 1) {
               diagnostics.recommendations.push(
                 "Account must be in ACTIVE status for ad creation"
               );
