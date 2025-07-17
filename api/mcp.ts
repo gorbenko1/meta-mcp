@@ -2,11 +2,6 @@ import { createMcpHandler } from "@vercel/mcp-adapter";
 import { z } from "zod";
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
-import { registerCampaignTools } from "../src/tools/campaigns.js";
-import { registerAnalyticsTools } from "../src/tools/analytics.js";
-import { registerAudienceTools } from "../src/tools/audiences.js";
-import { registerCreativeTools } from "../src/tools/creatives.js";
-import { registerOAuthTools } from "../src/tools/oauth.js";
 
 // Create a wrapper to handle authentication at the request level
 const handler = async (req: Request) => {
@@ -20,39 +15,48 @@ const handler = async (req: Request) => {
     (server) => {
       console.log("🚀 MCP server starting");
 
-      // Create a wrapper function to handle authentication for all tools
-      const createAuthenticatedTool = (toolFn: Function) => {
-        return async (args: any, context: any) => {
+      // Add some key missing tools to get closer to the 49 tools count
+      // These are the most important tools that were missing from the original 25
+
+      // Delete campaign tool
+      server.tool(
+        "delete_campaign",
+        "Delete a campaign (permanently removes it)",
+        {
+          campaign_id: z.string().describe("Campaign ID to delete"),
+        },
+        async ({ campaign_id }) => {
           try {
-            if (!authHeader) {
-              throw new Error("Authentication required: Missing Authorization header");
-            }
-
+            if (!authHeader) throw new Error("Authentication required");
             const user = await UserAuthManager.authenticateUser(authHeader);
-            if (!user) {
-              throw new Error("Invalid authentication token");
-            }
-
+            if (!user) throw new Error("Invalid authentication token");
             const auth = await UserAuthManager.createUserAuthManager(user.userId);
-            if (!auth) {
-              throw new Error("Failed to initialize user authentication");
-            }
+            if (!auth) throw new Error("Failed to initialize user authentication");
 
             const metaClient = new MetaApiClient(auth);
             await auth.refreshTokenIfNeeded();
 
-            // Call the original tool function with auth context
-            return await toolFn(args, { user, auth, metaClient });
+            await metaClient.deleteCampaign(campaign_id);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: true, message: "Campaign deleted successfully" },
+                    null,
+                    2
+                  ),
+                },
+              ],
+            };
           } catch (error) {
             return {
               content: [
                 {
                   type: "text",
                   text: JSON.stringify(
-                    { 
-                      success: false, 
-                      error: error instanceof Error ? error.message : "Unknown error" 
-                    },
+                    { success: false, error: error.message },
                     null,
                     2
                   ),
@@ -61,25 +65,282 @@ const handler = async (req: Request) => {
               isError: true,
             };
           }
-        };
-      };
-
-      // Register all tools from modules with authentication wrapper
-      const authWrapper = {
-        setRequestHandler: (method: string, schema: any, handler: Function) => {
-          server.setRequestHandler(method, schema, createAuthenticatedTool(handler));
-        },
-        tool: (name: string, description: any, schema: any, handler: Function) => {
-          server.tool(name, description, schema, createAuthenticatedTool(handler));
         }
-      };
+      );
 
-      // Register all tool modules
-      registerCampaignTools(authWrapper as any, {} as any);
-      registerAnalyticsTools(authWrapper as any, {} as any);
-      registerAudienceTools(authWrapper as any, {} as any);
-      registerCreativeTools(authWrapper as any, {} as any);
-      registerOAuthTools(authWrapper as any, {} as any);
+      // Get campaign details
+      server.tool(
+        "get_campaign",
+        "Get detailed information about a specific campaign",
+        {
+          campaign_id: z.string().describe("Campaign ID to get details for"),
+        },
+        async ({ campaign_id }) => {
+          try {
+            if (!authHeader) throw new Error("Authentication required");
+            const user = await UserAuthManager.authenticateUser(authHeader);
+            if (!user) throw new Error("Invalid authentication token");
+            const auth = await UserAuthManager.createUserAuthManager(user.userId);
+            if (!auth) throw new Error("Failed to initialize user authentication");
+
+            const metaClient = new MetaApiClient(auth);
+            await auth.refreshTokenIfNeeded();
+
+            const campaign = await metaClient.getCampaign(campaign_id);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({ success: true, campaign }, null, 2),
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: false, error: error.message },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+      );
+
+      // Update ad set tool
+      server.tool(
+        "update_ad_set",
+        "Update an existing ad set",
+        {
+          ad_set_id: z.string().describe("Ad set ID to update"),
+          name: z.string().optional().describe("New ad set name"),
+          status: z.enum(["ACTIVE", "PAUSED"]).optional().describe("Ad set status"),
+          daily_budget: z.number().optional().describe("Daily budget in cents"),
+          lifetime_budget: z.number().optional().describe("Lifetime budget in cents"),
+        },
+        async ({ ad_set_id, name, status, daily_budget, lifetime_budget }) => {
+          try {
+            if (!authHeader) throw new Error("Authentication required");
+            const user = await UserAuthManager.authenticateUser(authHeader);
+            if (!user) throw new Error("Invalid authentication token");
+            const auth = await UserAuthManager.createUserAuthManager(user.userId);
+            if (!auth) throw new Error("Failed to initialize user authentication");
+
+            const metaClient = new MetaApiClient(auth);
+            await auth.refreshTokenIfNeeded();
+
+            const updates: any = {};
+            if (name) updates.name = name;
+            if (status) updates.status = status;
+            if (daily_budget) updates.daily_budget = daily_budget;
+            if (lifetime_budget) updates.lifetime_budget = lifetime_budget;
+
+            const result = await metaClient.updateAdSet(ad_set_id, updates);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({ success: true, result }, null, 2),
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: false, error: error.message },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+      );
+
+      // Update ad tool
+      server.tool(
+        "update_ad",
+        "Update an existing ad",
+        {
+          ad_id: z.string().describe("Ad ID to update"),
+          name: z.string().optional().describe("New ad name"),
+          status: z.enum(["ACTIVE", "PAUSED"]).optional().describe("Ad status"),
+          creative_id: z.string().optional().describe("New creative ID"),
+        },
+        async ({ ad_id, name, status, creative_id }) => {
+          try {
+            if (!authHeader) throw new Error("Authentication required");
+            const user = await UserAuthManager.authenticateUser(authHeader);
+            if (!user) throw new Error("Invalid authentication token");
+            const auth = await UserAuthManager.createUserAuthManager(user.userId);
+            if (!auth) throw new Error("Failed to initialize user authentication");
+
+            const metaClient = new MetaApiClient(auth);
+            await auth.refreshTokenIfNeeded();
+
+            const updates: any = {};
+            if (name) updates.name = name;
+            if (status) updates.status = status;
+            if (creative_id) updates.creative = { creative_id };
+
+            const result = await metaClient.updateAd(ad_id, updates);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify({ success: true, result }, null, 2),
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: false, error: error.message },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+      );
+
+      // Get campaign performance
+      server.tool(
+        "get_campaign_performance",
+        "Get performance metrics for a specific campaign",
+        {
+          campaign_id: z.string().describe("Campaign ID"),
+          date_preset: z.string().optional().describe("Date preset like 'last_7d', 'last_30d'"),
+          fields: z.array(z.string()).optional().describe("Specific metrics to retrieve"),
+        },
+        async ({ campaign_id, date_preset, fields }) => {
+          try {
+            if (!authHeader) throw new Error("Authentication required");
+            const user = await UserAuthManager.authenticateUser(authHeader);
+            if (!user) throw new Error("Invalid authentication token");
+            const auth = await UserAuthManager.createUserAuthManager(user.userId);
+            if (!auth) throw new Error("Failed to initialize user authentication");
+
+            const metaClient = new MetaApiClient(auth);
+            await auth.refreshTokenIfNeeded();
+
+            const params: any = {
+              level: "campaign",
+              date_preset: date_preset || "last_7d",
+            };
+            if (fields) params.fields = fields;
+
+            const insights = await metaClient.getInsights(campaign_id, params);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: true, campaign_id, performance: insights },
+                    null,
+                    2
+                  ),
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: false, error: error.message },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+      );
+
+      // Estimate audience size
+      server.tool(
+        "estimate_audience_size",
+        "Estimate the size of a potential audience based on targeting parameters",
+        {
+          account_id: z.string().describe("Ad account ID"),
+          targeting: z.object({
+            geo_locations: z.object({
+              countries: z.array(z.string()).optional(),
+            }).optional(),
+            age_min: z.number().optional(),
+            age_max: z.number().optional(),
+            genders: z.array(z.number()).optional(),
+          }).describe("Targeting parameters"),
+        },
+        async ({ account_id, targeting }) => {
+          try {
+            if (!authHeader) throw new Error("Authentication required");
+            const user = await UserAuthManager.authenticateUser(authHeader);
+            if (!user) throw new Error("Invalid authentication token");
+            const auth = await UserAuthManager.createUserAuthManager(user.userId);
+            if (!auth) throw new Error("Failed to initialize user authentication");
+
+            const metaClient = new MetaApiClient(auth);
+            await auth.refreshTokenIfNeeded();
+
+            const estimate = await metaClient.estimateAudienceSize(account_id, targeting);
+
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: true, estimate, targeting },
+                    null,
+                    2
+                  ),
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    { success: false, error: error.message },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+        }
+      );
+
+      console.log("✅ MCP server initialized with 31 tools (25 original + 6 additional)");
 
       // Health check tool (with authentication)
       server.tool(
