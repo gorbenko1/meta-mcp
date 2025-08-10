@@ -19,6 +19,7 @@ export interface AdAccount {
   balance: string;
   currency: string;
   timezone_name: string;
+  funding_source_details: string;
   business?: {
     id: string;
     name: string;

@@ -1,5 +1,6 @@
 import { createMcpHandler } from "@vercel/mcp-adapter";
 import { z } from "zod";
+import { URL } from "url";
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
 
@@ -7,8 +8,10 @@ import { UserAuthManager } from "../src/utils/user-auth.js";
 const handler = async (req: Request) => {
   console.log("🌐 Incoming request to MCP handler", req);
 
+  const url = new URL(req.url);
+
   // Extract auth header from the actual request
-  const authHeader = req.headers.get("authorization");
+  const authHeader = url.searchParams.token;
   console.log("🔑 Auth header present:", !!authHeader);
 
   return createMcpHandler(
