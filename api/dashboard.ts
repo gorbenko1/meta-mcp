@@ -402,6 +402,15 @@ export default async function handler(
   }
 }</div>
             </div>
+
+            <div class="card">
+                <h2>⚙️ Claude WEB URL</h2>
+                <p>Add this to your Claude Desktop MCP configuration:</p>
+                <div class="config-example" style="position: relative;">
+                    <button class="copy-btn" style="top: 0.5rem; right: 0.5rem;" onclick="copyConfig()">Copy</button>{
+                      ${mcpEndpoint}?token=${sessionToken}
+                }</div>
+            </div>
         </div>
 
         <div class="instructions">

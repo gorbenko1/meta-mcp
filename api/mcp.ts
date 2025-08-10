@@ -11,7 +11,7 @@ const handler = async (req: Request) => {
   const url = new URL(req.url);
 
   // Extract auth header from the actual request
-  const authHeader = url.searchParams.token;
+  const authHeader = url.searchParams.get("token");
   console.log("🔑 Auth header present:", !!authHeader);
 
   return createMcpHandler(
