@@ -5,7 +5,7 @@ import { UserAuthManager } from "../src/utils/user-auth.js";
 
 // Create a wrapper to handle authentication at the request level
 const handler = async (req: Request) => {
-  console.log("🌐 Incoming request to MCP handler");
+  console.log("🌐 Incoming request to MCP handler", req);
 
   // Extract auth header from the actual request
   const authHeader = req.headers.get("authorization");
