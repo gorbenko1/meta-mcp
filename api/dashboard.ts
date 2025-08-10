@@ -407,9 +407,9 @@ export default async function handler(
                 <h2>⚙️ Claude WEB URL</h2>
                 <p>Add this to your Claude Desktop MCP configuration:</p>
                 <div class="config-example" style="position: relative;">
-                    <button class="copy-btn" style="top: 0.5rem; right: 0.5rem;" onclick="copyConfig()">Copy</button>{
+                    <button class="copy-btn" style="top: 0.5rem; right: 0.5rem;" onclick="copyConfig2()">Copy</button>
                       ${mcpEndpoint}?token=${sessionToken}
-                }</div>
+                </div>
             </div>
         </div>
 
@@ -469,6 +469,8 @@ export default async function handler(
     }
   }
 }\`;
+        function copyConfig2() {
+            const config = \`${mcpEndpoint}?token=${sessionToken}\`;
             navigator.clipboard.writeText(config).then(() => {
                 const btn = event.target;
                 const original = btn.textContent;

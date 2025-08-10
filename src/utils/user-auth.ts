@@ -170,7 +170,7 @@ export class UserAuthManager {
    */
   static async createSessionToken(userId: string): Promise<string> {
     const secret = new TextEncoder().encode(this.JWT_SECRET);
-    
+
     const jwt = await new SignJWT({ userId })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
@@ -187,7 +187,7 @@ export class UserAuthManager {
     try {
       const secret = new TextEncoder().encode(this.JWT_SECRET);
       const { payload } = await jwtVerify(token, secret);
-      
+
       if (typeof payload.userId === 'string') {
         return { userId: payload.userId };
       }
@@ -214,13 +214,13 @@ export class UserAuthManager {
     const storage = this.getStorage();
     const key = `${this.SESSION_PREFIX}${userId}`;
     const session = await storage.get<UserSession>(key);
-    
+
     if (session) {
       // Update last used timestamp
       session.lastUsed = new Date();
       await this.storeUserSession(session);
     }
-    
+
     return session;
   }
 
@@ -276,7 +276,7 @@ export class UserAuthManager {
     const storage = this.getStorage();
     const sessionKey = `${this.SESSION_PREFIX}${userId}`;
     const tokenKey = `${this.TOKEN_PREFIX}${userId}`;
-    
+
     await Promise.all([
       storage.del(sessionKey),
       storage.del(tokenKey)
@@ -297,7 +297,7 @@ export class UserAuthManager {
    * Authenticate user from request headers
    */
   static async authenticateUser(authHeader: string | null): Promise<UserSession | null> {
-    const token = this.extractBearerToken(authHeader);
+    const token = this.extractBearerToken(authHeader) || authHeader;
     if (!token) {
       return null;
     }
@@ -381,7 +381,7 @@ export class UserAuthManager {
     }
 
     const data = await response.json();
-    
+
     return {
       accessToken: data.access_token,
       tokenType: data.token_type || 'bearer',
@@ -421,14 +421,14 @@ export class UserAuthManager {
 
     try {
       const newToken = await authManager.refreshTokenIfNeeded();
-      
+
       // Update stored tokens
       const tokens = await this.getUserTokens(userId);
       if (tokens) {
         tokens.accessToken = newToken;
         await this.storeUserTokens(userId, tokens);
       }
-      
+
       return true;
     } catch (error) {
       console.error('Token refresh failed for user:', userId, error);
