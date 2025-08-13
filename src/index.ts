@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { config } from "dotenv";
-config({ path: '.env.local' }); // Load environment variables from .env.local file
+config({ path: ".env.local" }); // Load environment variables from .env.local file
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -24,10 +24,10 @@ async function main() {
     console.error(
       `   META_ACCESS_TOKEN: ${
         process.env.META_ACCESS_TOKEN ? "Present" : "Missing"
-      }`
+      }`,
     );
     console.error(
-      `   MCP_SERVER_NAME: ${process.env.MCP_SERVER_NAME || "Not set"}`
+      `   MCP_SERVER_NAME: ${process.env.MCP_SERVER_NAME || "Not set"}`,
     );
 
     // Initialize authentication
@@ -49,17 +49,17 @@ async function main() {
       console.error(
         `🔧 OAuth configuration: ${
           hasOAuthConfig ? "Available" : "Not configured"
-        }`
+        }`,
       );
       console.error(
         `🔄 Auto-refresh: ${
           process.env.META_AUTO_REFRESH === "true" ? "Enabled" : "Disabled"
-        }`
+        }`,
       );
     } catch (error) {
       console.error("❌ Token validation failed:", error);
       console.error(
-        "💡 Use OAuth tools to obtain a new token or check configuration"
+        "💡 Use OAuth tools to obtain a new token or check configuration",
       );
       process.exit(1);
     }
@@ -675,14 +675,14 @@ async function main() {
             },
           ],
         };
-      }
+      },
     );
 
     console.error("🔗 Connecting to MCP transport...");
     console.error(
       `📊 Server: ${
         process.env.MCP_SERVER_NAME || "Meta Marketing API Server"
-      } v${process.env.MCP_SERVER_VERSION || "1.0.0"}`
+      } v${process.env.MCP_SERVER_VERSION || "1.0.0"}`,
     );
     console.error(`🔧 Meta API Version: ${auth.getApiVersion()}`);
 

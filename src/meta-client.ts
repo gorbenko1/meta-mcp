@@ -91,10 +91,28 @@ export class MetaApiClient {
 
   // Account Methods
   async getAdAccounts(): Promise<AdAccount[]> {
-    const response = await this.makeRequest<MetaApiResponse<AdAccount>>(
-      "me/adaccounts?fields=id,name,account_status,balance,currency,timezone_name,business"
-    );
-    return response.data;
+    const allAccounts: AdAccount[] = [];
+    let nextUrl: string | undefined = "me/adaccounts?fields=id,name,account_status,balance,currency,timezone_name,business&limit=100";
+    
+    // Fetch all pages of accounts
+    while (nextUrl) {
+      const response = await this.makeRequest<MetaApiResponse<AdAccount>>(
+        nextUrl
+      );
+      
+      allAccounts.push(...response.data);
+      
+      // Check if there's a next page
+      if (response.paging?.next) {
+        // Extract the relative path from the full URL
+        const url = new URL(response.paging.next);
+        nextUrl = url.pathname.substring(1) + url.search; // Remove leading '/'
+      } else {
+        nextUrl = undefined;
+      }
+    }
+    
+    return allAccounts;
   }
 
   // Campaign Methods
