@@ -96,7 +96,7 @@ export class MetaApiClient {
     
     // Fetch all pages of accounts
     while (nextUrl) {
-      const response = await this.makeRequest<MetaApiResponse<AdAccount>>(
+      const response: MetaApiResponse<AdAccount> = await this.makeRequest<MetaApiResponse<AdAccount>>(
         nextUrl
       );
       
@@ -105,8 +105,8 @@ export class MetaApiClient {
       // Check if there's a next page
       if (response.paging?.next) {
         // Extract the relative path from the full URL
-        const url = new URL(response.paging.next);
-        nextUrl = url.pathname.substring(1) + url.search; // Remove leading '/'
+        const nextPageUrl = new URL(response.paging.next);
+        nextUrl = nextPageUrl.pathname.substring(1) + nextPageUrl.search; // Remove leading '/'
       } else {
         nextUrl = undefined;
       }
