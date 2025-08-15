@@ -128,7 +128,7 @@ const handler = async (req: Request) => {
 
       // Get ad accounts tool
       server.tool(
-        "get_ad_accounts",
+        `get_ad_accounts_${process.env.META_APP_ID}`,
         "Get list of accessible Meta ad accounts",
         {},
         async (args, context) => {
@@ -198,7 +198,7 @@ const handler = async (req: Request) => {
 
       // Get campaigns tool
       server.tool(
-        "get_campaigns",
+        `get_campaigns_${process.env.META_APP_ID}`,
         "Get campaigns for an ad account",
         {
           account_id: z.string().describe("The ad account ID"),
@@ -285,7 +285,7 @@ const handler = async (req: Request) => {
 
       // Get insights tool for performance analytics
       server.tool(
-        "get_insights",
+        `get_insights_${process.env.META_APP_ID}`,
         "Get performance insights for campaigns, ad sets, or ads",
         {
           object_id: z
@@ -387,7 +387,7 @@ const handler = async (req: Request) => {
 
       // Campaign Management Tools
       server.tool(
-        "create_campaign",
+        `create_campaign_${process.env.META_APP_ID}`,
         "Create a new advertising campaign",
         {
           account_id: z.string().describe("The ad account ID"),
@@ -477,7 +477,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "update_campaign",
+        `update_campaign_${process.env.META_APP_ID}`,
         "Update an existing campaign",
         {
           campaign_id: z.string().describe("Campaign ID to update"),
@@ -550,7 +550,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "pause_campaign",
+        `pause_campaign_${process.env.META_APP_ID}`,
         "Pause a campaign",
         {
           campaign_id: z.string().describe("Campaign ID to pause"),
@@ -602,7 +602,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "resume_campaign",
+        `resume_campaign_${process.env.META_APP_ID}`,
         "Resume/activate a paused campaign",
         {
           campaign_id: z.string().describe("Campaign ID to resume"),
@@ -655,7 +655,7 @@ const handler = async (req: Request) => {
 
       // Ad Set Management Tools
       server.tool(
-        "create_ad_set",
+        `create_ad_set_${process.env.META_APP_ID}`,
         "Create a new ad set within a campaign",
         {
           campaign_id: z
@@ -907,7 +907,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "list_ad_sets",
+        `list_ad_sets_${process.env.META_APP_ID}`,
         "List ad sets for a campaign",
         {
           campaign_id: z.string().describe("The campaign ID"),
@@ -968,7 +968,7 @@ const handler = async (req: Request) => {
 
       // Ad Management Tools
       server.tool(
-        "create_ad",
+        `create_ad_${process.env.META_APP_ID}`,
         "Create a new ad within an ad set",
         {
           ad_set_id: z.string().describe("The ad set ID to create the ad in"),
@@ -1026,7 +1026,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "list_ads",
+        `list_ads_${process.env.META_APP_ID}`,
         "List ads for an ad set or campaign",
         {
           ad_set_id: z.string().optional().describe("The ad set ID"),
@@ -1096,7 +1096,7 @@ const handler = async (req: Request) => {
 
       // Additional Analytics Tools
       server.tool(
-        "compare_performance",
+        `compare_performance_${process.env.META_APP_ID}`,
         "Compare performance between multiple campaigns, ad sets, or ads",
         {
           object_ids: z
@@ -1173,7 +1173,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "export_insights",
+        `export_insights_${process.env.META_APP_ID}`,
         "Export performance insights in various formats",
         {
           object_id: z.string().describe("Campaign/ad set/ad ID"),
@@ -1264,7 +1264,7 @@ const handler = async (req: Request) => {
 
       // Audience Management Tools
       server.tool(
-        "list_audiences",
+        `list_audiences_${process.env.META_APP_ID}`,
         "List custom audiences for an ad account",
         {
           account_id: z.string().describe("The ad account ID"),
@@ -1318,7 +1318,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "create_custom_audience",
+        `create_custom_audience_${process.env.META_APP_ID}`,
         "Create a custom audience",
         {
           account_id: z.string().describe("The ad account ID"),
@@ -1390,7 +1390,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "create_lookalike_audience",
+        `create_lookalike_audience_${process.env.META_APP_ID}`,
         "Create a lookalike audience based on a source audience",
         {
           account_id: z.string().describe("The ad account ID"),
@@ -1461,7 +1461,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "get_audience_info",
+        `get_audience_info_${process.env.META_APP_ID}`,
         "Get information about a custom audience",
         {
           audience_id: z.string().describe("The custom audience ID"),
@@ -1510,7 +1510,7 @@ const handler = async (req: Request) => {
 
       // Creative Management Tools
       server.tool(
-        "list_ad_creatives",
+        `list_ad_creatives_${process.env.META_APP_ID}`,
         "List ad creatives for an account",
         {
           account_id: z.string().describe("The ad account ID"),
@@ -1564,7 +1564,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "create_ad_creative",
+        `create_ad_creative_${process.env.META_APP_ID}`,
         "Create a new ad creative with v23.0 support for both external image URLs and uploaded image hashes. Supports enhanced CTA types and proper object_story_spec structure for Meta API compliance.",
         {
           account_id: z.string().describe("The ad account ID"),
@@ -1800,7 +1800,7 @@ const handler = async (req: Request) => {
       );
 
       server.tool(
-        "check_account_setup",
+        `check_account_setup_${process.env.META_APP_ID}`,
         "Check if ad account has all required setup for ad set creation",
         {
           account_id: z.string().describe("The ad account ID to check"),
@@ -1961,7 +1961,7 @@ const handler = async (req: Request) => {
 
       // Diagnostic Tools
       server.tool(
-        "diagnose_campaign_readiness",
+        `diagnose_campaign_readiness_${process.env.META_APP_ID}`,
         "Check if a campaign is ready for ad set creation and identify potential issues",
         {
           campaign_id: z.string().describe("The campaign ID to diagnose"),
@@ -2089,7 +2089,7 @@ const handler = async (req: Request) => {
 
       // v23.0 Image Upload from URL Tool
       server.tool(
-        "upload_image_from_url",
+        `upload_image_from_url_${process.env.META_APP_ID}`,
         "Upload an image from a URL to Meta and get the image_hash for v23.0 API compliance. Downloads the image from the provided URL and uploads it to Meta's servers, returning the hash required for ad creatives.",
         {
           account_id: z
@@ -2195,7 +2195,7 @@ const handler = async (req: Request) => {
 
       // v23.0 API Compliance Checker
       server.tool(
-        "check_api_v23_compliance",
+        `check_api_v23_compliance_${process.env.META_APP_ID}`,
         "Check if your creative parameters are compliant with Meta Marketing API v23.0 requirements. Identifies deprecated features and recommends v23.0 best practices.",
         {
           account_id: z.string().describe("Meta Ad Account ID"),
@@ -2327,7 +2327,7 @@ const handler = async (req: Request) => {
 
       // OAuth Tools
       server.tool(
-        "get_token_info",
+        `get_token_info_${process.env.META_APP_ID}`,
         "Get information about the current access token",
         {},
         async () => {
