@@ -1,6 +1,8 @@
 import { createMcpHandler } from "@vercel/mcp-adapter";
 import { z } from "zod";
 import { URL } from "url";
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
 
@@ -15,12 +17,12 @@ const handler = async (req: Request) => {
   console.log("🔑 Auth header present:", !!authHeader);
 
   return createMcpHandler(
-    (server) => {
+    (server: McpServer) => {
       console.log("🚀 MCP server starting");
 
       // Health check tool (with authentication)
       server.tool(
-        "health_check",
+        `health_check_${process.env.META_APP_ID}`,
         "Check server health and authentication status",
         {},
         async (args, context) => {
