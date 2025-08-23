@@ -7,20 +7,11 @@ import {
 } from "./utils/error-handler.js";
 import {
   PaginationHelper,
-  type PaginationParams,
   type PaginatedResult,
 } from "./utils/pagination.js";
 import type {
-  Campaign,
-  AdSet,
-  Ad,
-  AdCreative,
   AdInsights,
-  CustomAudience,
-  AdAccount,
   MetaApiResponse,
-  BatchRequest,
-  BatchResponse,
 } from "./types/meta-api.js";
 
 export class AnalyticsClient {
