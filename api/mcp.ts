@@ -5,6 +5,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
+import { AnalyticsClient } from '../src/analytics-client';
 
 // Create a wrapper to handle authentication at the request level
 const handler = async (req: Request) => {
@@ -324,7 +325,7 @@ const handler = async (req: Request) => {
               throw new Error("Failed to initialize user authentication");
             }
 
-            const metaClient = new MetaApiClient(auth);
+            const analyticsClient = new AnalyticsClient(auth);
             await auth.refreshTokenIfNeeded();
 
             const params: Record<string, any> = {
@@ -337,7 +338,7 @@ const handler = async (req: Request) => {
               params.fields = fields;
             }
 
-            const insights = await metaClient.getInsights(object_id, params);
+            const insights = await analyticsClient.getStats(object_id, params as any);
 
             return {
               content: [
@@ -1125,7 +1126,7 @@ const handler = async (req: Request) => {
             if (!auth)
               throw new Error("Failed to initialize user authentication");
 
-            const metaClient = new MetaApiClient(auth);
+            const analyticsClient = new AnalyticsClient(auth);
             await auth.refreshTokenIfNeeded();
 
             const results: any[] = [];
@@ -1138,7 +1139,7 @@ const handler = async (req: Request) => {
                 params.fields = fields;
               }
 
-              const insights = await metaClient.getInsights(object_id, params);
+              const insights = await analyticsClient.getStats(object_id, params as any);
               results.push({ object_id, insights });
             }
 
@@ -1198,7 +1199,7 @@ const handler = async (req: Request) => {
             if (!auth)
               throw new Error("Failed to initialize user authentication");
 
-            const metaClient = new MetaApiClient(auth);
+            const analyticsClient = new AnalyticsClient(auth);
             await auth.refreshTokenIfNeeded();
 
             const params: Record<string, any> = {
@@ -1209,7 +1210,7 @@ const handler = async (req: Request) => {
               params.fields = fields;
             }
 
-            const insights = await metaClient.getInsights(object_id, params);
+            const insights = await analyticsClient.getStats(object_id, params as any);
 
             let exportData: string;
             if (format === "csv" && insights.data && insights.data.length > 0) {

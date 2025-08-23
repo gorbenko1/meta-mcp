@@ -1,355 +1,411 @@
-import type { MetaApiConfig } from "../types/meta-api.js";
+import type { MetaApiConfig } from '../types/meta-api.js';
 
 export class AuthManager {
-  private config: MetaApiConfig;
+	private config: MetaApiConfig;
 
-  constructor(config: MetaApiConfig) {
-    this.config = config;
-    this.validateConfig();
-  }
+	constructor(config: MetaApiConfig) {
+		this.config = config;
+		this.validateConfig();
+	}
 
-  private validateConfig(): void {
-    if (!this.config.accessToken) {
-      throw new Error(
-        "Meta access token is required. Set META_ACCESS_TOKEN environment variable."
-      );
-    }
+	private validateConfig(): void {
+		if (!this.config.accessToken) {
+			throw new Error(
+				'Meta access token is required. Set META_ACCESS_TOKEN environment variable.',
+			);
+		}
 
-    if (this.config.accessToken.length < 10) {
-      throw new Error("Invalid Meta access token format.");
-    }
-  }
+		if (this.config.accessToken.length < 10) {
+			throw new Error('Invalid Meta access token format.');
+		}
 
-  getAccessToken(): string {
-    return this.config.accessToken;
-  }
+		if (!this.config.analytics.login.length) {
+			throw new Error('Analytics login is required. Set ANALYTICS_LOGIN environment variable.');
+		}
+	}
 
-  getApiVersion(): string {
-    return this.config.apiVersion || "v23.0";
-  }
+	getAccessToken(): string {
+		return this.config.accessToken;
+	}
 
-  getBaseUrl(): string {
-    return this.config.baseUrl || "https://graph.facebook.com";
-  }
+	getApiVersion(): string {
+		return this.config.apiVersion || 'v23.0';
+	}
 
-  getAuthHeaders(): Record<string, string> {
-    return {
-      Authorization: `Bearer ${this.getAccessToken()}`,
-      "Content-Type": "application/json",
-      "User-Agent": "meta-ads-mcp/1.0.0",
-    };
-  }
+	getBaseUrl(): string {
+		return this.config.baseUrl || 'https://graph.facebook.com';
+	}
 
-  async validateToken(): Promise<boolean> {
-    try {
-      const response = await fetch(
-        `${this.getBaseUrl()}/${this.getApiVersion()}/me?access_token=${this.getAccessToken()}`
-      );
-      return response.ok;
-    } catch (error) {
-      console.error("Token validation failed:", error);
-      return false;
-    }
-  }
+	getAnalyticsUrl(): string {
+		return this.config.analytics.url || 'https://api.myflow-analytics.com/v1';
+	}
 
-  static fromEnvironment(): AuthManager {
-    const config: MetaApiConfig = {
-      accessToken: process.env.META_ACCESS_TOKEN || "",
-      appId: process.env.META_APP_ID,
-      appSecret: process.env.META_APP_SECRET,
-      businessId: process.env.META_BUSINESS_ID,
-      apiVersion: process.env.META_API_VERSION,
-      baseUrl: process.env.META_BASE_URL,
-      // OAuth configuration
-      redirectUri: process.env.META_REDIRECT_URI,
-      refreshToken: process.env.META_REFRESH_TOKEN,
-      autoRefresh: process.env.META_AUTO_REFRESH === "true",
-    };
+	getAnalyticsCookie() {
+		return this.config.analytics.cookie;
+	}
 
-    return new AuthManager(config);
-  }
+	getAuthHeaders(): Record<string, string> {
+		return {
+			Authorization: `Bearer ${this.getAccessToken()}`,
+			'Content-Type': 'application/json',
+			'User-Agent': 'meta-ads-mcp/1.0.0',
+		};
+	}
 
-  async refreshTokenIfNeeded(): Promise<string> {
-    // Try auto-refresh first if enabled
-    if (this.config.autoRefresh) {
-      try {
-        return await this.autoRefreshToken();
-      } catch (error) {
-        console.warn("Auto-refresh failed, falling back to validation:", error);
-      }
-    }
+	async validateToken(): Promise<boolean> {
+		try {
+			const response = await fetch(
+				`${this.getBaseUrl()}/${this.getApiVersion()}/me?access_token=${this.getAccessToken()}`,
+			);
+			return response.ok;
+		} catch (error) {
+			console.error('Token validation failed:', error);
+			return false;
+		}
+	}
 
-    // Fallback to original validation logic
-    const isValid = await this.validateToken();
-    if (!isValid) {
-      throw new Error(
-        "Access token is invalid or expired. Please generate a new token or enable auto-refresh."
-      );
-    }
-    return this.config.accessToken;
-  }
+	static fromEnvironment(): AuthManager {
+		const config: MetaApiConfig = {
+			accessToken: process.env.META_ACCESS_TOKEN || '',
+			appId: process.env.META_APP_ID,
+			appSecret: process.env.META_APP_SECRET,
+			businessId: process.env.META_BUSINESS_ID,
+			apiVersion: process.env.META_API_VERSION,
+			baseUrl: process.env.META_BASE_URL,
+			// OAuth configuration
+			redirectUri: process.env.META_REDIRECT_URI,
+			refreshToken: process.env.META_REFRESH_TOKEN,
+			autoRefresh: process.env.META_AUTO_REFRESH === 'true',
+			// Analytics
+			analytics: {
+				url: process.env.ANALYTICS_URL || 'https://api.myflow-analytics.com/v1',
+				login: process.env.ANALYTICS_LOGIN,
+				password: process.env.ANALYTICS_PASS,
+			},
+		};
 
-  getAccountId(accountIdOrNumber: string): string {
-    if (accountIdOrNumber.startsWith("act_")) {
-      return accountIdOrNumber;
-    }
-    return `act_${accountIdOrNumber}`;
-  }
+		return new AuthManager(config);
+	}
 
-  extractAccountNumber(accountId: string): string {
-    if (accountId.startsWith("act_")) {
-      return accountId.substring(4);
-    }
-    return accountId;
-  }
+	async refreshTokenIfNeeded(): Promise<string> {
+		// Try auto-refresh first if enabled
+		if (this.config.autoRefresh) {
+			try {
+				return await this.autoRefreshToken();
+			} catch (error) {
+				console.warn('Auto-refresh failed, falling back to validation:', error);
+			}
+		}
 
-  // OAuth Methods
+		// Fallback to original validation logic
+		const isValid = await this.validateToken();
+		if (!isValid) {
+			throw new Error(
+				'Access token is invalid or expired. Please generate a new token or enable auto-refresh.',
+			);
+		}
+		return this.config.accessToken;
+	}
 
-  /**
-   * Generate OAuth authorization URL for user consent
-   */
-  generateAuthUrl(scopes: string[] = ["ads_management"], state?: string): string {
-    if (!this.config.appId || !this.config.redirectUri) {
-      throw new Error("App ID and redirect URI are required for OAuth flow");
-    }
+	getAccountId(accountIdOrNumber: string): string {
+		if (accountIdOrNumber.startsWith('act_')) {
+			return accountIdOrNumber;
+		}
+		return `act_${accountIdOrNumber}`;
+	}
 
-    const params = new URLSearchParams({
-      client_id: this.config.appId,
-      redirect_uri: this.config.redirectUri,
-      scope: scopes.join(","),
-      response_type: "code",
-      ...(state && { state }),
-    });
+	extractAccountNumber(accountId: string): string {
+		if (accountId.startsWith('act_')) {
+			return accountId.substring(4);
+		}
+		return accountId;
+	}
 
-    return `https://www.facebook.com/v${this.getApiVersion()}/dialog/oauth?${params.toString()}`;
-  }
+	// OAuth Methods
 
-  /**
-   * Exchange authorization code for access token
-   */
-  async exchangeCodeForToken(code: string): Promise<{
-    accessToken: string;
-    tokenType: string;
-    expiresIn?: number;
-  }> {
-    if (!this.config.appId || !this.config.appSecret || !this.config.redirectUri) {
-      throw new Error("App ID, app secret, and redirect URI are required for token exchange");
-    }
+	/**
+	 * Generate OAuth authorization URL for user consent
+	 */
+	generateAuthUrl(scopes: string[] = ['ads_management'], state?: string): string {
+		if (!this.config.appId || !this.config.redirectUri) {
+			throw new Error('App ID and redirect URI are required for OAuth flow');
+		}
 
-    const params = new URLSearchParams({
-      client_id: this.config.appId,
-      client_secret: this.config.appSecret,
-      redirect_uri: this.config.redirectUri,
-      code,
-    });
+		const params = new URLSearchParams({
+			client_id: this.config.appId,
+			redirect_uri: this.config.redirectUri,
+			scope: scopes.join(','),
+			response_type: 'code',
+			...(state && { state }),
+		});
 
-    const response = await fetch(
-      `${this.getBaseUrl()}/${this.getApiVersion()}/oauth/access_token`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
-      }
-    );
+		return `https://www.facebook.com/v${this.getApiVersion()}/dialog/oauth?${params.toString()}`;
+	}
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Token exchange failed: ${error}`);
-    }
+	/**
+	 * Exchange authorization code for access token
+	 */
+	async exchangeCodeForToken(code: string): Promise<{
+		accessToken: string;
+		tokenType: string;
+		expiresIn?: number;
+	}> {
+		if (!this.config.appId || !this.config.appSecret || !this.config.redirectUri) {
+			throw new Error('App ID, app secret, and redirect URI are required for token exchange');
+		}
 
-    const data = await response.json();
+		const params = new URLSearchParams({
+			client_id: this.config.appId,
+			client_secret: this.config.appSecret,
+			redirect_uri: this.config.redirectUri,
+			code,
+		});
 
-    // Update config with new token
-    this.config.accessToken = data.access_token;
-    if (data.expires_in) {
-      this.config.tokenExpiration = new Date(Date.now() + data.expires_in * 1000);
-    }
+		const response = await fetch(
+			`${this.getBaseUrl()}/${this.getApiVersion()}/oauth/access_token`,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: params.toString(),
+			},
+		);
 
-    return {
-      accessToken: data.access_token,
-      tokenType: data.token_type || "bearer",
-      expiresIn: data.expires_in,
-    };
-  }
+		if (!response.ok) {
+			const error = await response.text();
+			throw new Error(`Token exchange failed: ${error}`);
+		}
 
-  /**
-   * Exchange short-lived token for long-lived token
-   */
-  async exchangeForLongLivedToken(shortLivedToken?: string): Promise<{
-    accessToken: string;
-    tokenType: string;
-    expiresIn: number;
-  }> {
-    if (!this.config.appId || !this.config.appSecret) {
-      throw new Error("App ID and app secret are required for long-lived token exchange");
-    }
+		const data = await response.json();
 
-    const tokenToExchange = shortLivedToken || this.config.accessToken;
-    if (!tokenToExchange) {
-      throw new Error("No access token available for exchange");
-    }
+		// Update config with new token
+		this.config.accessToken = data.access_token;
+		if (data.expires_in) {
+			this.config.tokenExpiration = new Date(Date.now() + data.expires_in * 1000);
+		}
 
-    const params = new URLSearchParams({
-      grant_type: "fb_exchange_token",
-      client_id: this.config.appId,
-      client_secret: this.config.appSecret,
-      fb_exchange_token: tokenToExchange,
-    });
+		return {
+			accessToken: data.access_token,
+			tokenType: data.token_type || 'bearer',
+			expiresIn: data.expires_in,
+		};
+	}
 
-    const response = await fetch(
-      `${this.getBaseUrl()}/${this.getApiVersion()}/oauth/access_token?${params.toString()}`
-    );
+	/**
+	 * Exchange short-lived token for long-lived token
+	 */
+	async exchangeForLongLivedToken(shortLivedToken?: string): Promise<{
+		accessToken: string;
+		tokenType: string;
+		expiresIn: number;
+	}> {
+		if (!this.config.appId || !this.config.appSecret) {
+			throw new Error('App ID and app secret are required for long-lived token exchange');
+		}
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`Long-lived token exchange failed: ${error}`);
-    }
+		const tokenToExchange = shortLivedToken || this.config.accessToken;
+		if (!tokenToExchange) {
+			throw new Error('No access token available for exchange');
+		}
 
-    const data = await response.json();
+		const params = new URLSearchParams({
+			grant_type: 'fb_exchange_token',
+			client_id: this.config.appId,
+			client_secret: this.config.appSecret,
+			fb_exchange_token: tokenToExchange,
+		});
 
-    // Update config with new long-lived token
-    this.config.accessToken = data.access_token;
-    this.config.tokenExpiration = new Date(Date.now() + data.expires_in * 1000);
+		const response = await fetch(
+			`${this.getBaseUrl()}/${this.getApiVersion()}/oauth/access_token?${params.toString()}`,
+		);
 
-    return {
-      accessToken: data.access_token,
-      tokenType: data.token_type || "bearer",
-      expiresIn: data.expires_in,
-    };
-  }
+		if (!response.ok) {
+			const error = await response.text();
+			throw new Error(`Long-lived token exchange failed: ${error}`);
+		}
 
-  /**
-   * Check if token is expired or will expire soon
-   */
-  isTokenExpiring(bufferMinutes: number = 5): boolean {
-    if (!this.config.tokenExpiration) {
-      return false; // No expiration set, assume it's valid
-    }
+		const data = await response.json();
 
-    const bufferTime = bufferMinutes * 60 * 1000; // Convert to milliseconds
-    const expirationWithBuffer = new Date(this.config.tokenExpiration.getTime() - bufferTime);
+		// Update config with new long-lived token
+		this.config.accessToken = data.access_token;
+		this.config.tokenExpiration = new Date(Date.now() + data.expires_in * 1000);
 
-    return new Date() >= expirationWithBuffer;
-  }
+		return {
+			accessToken: data.access_token,
+			tokenType: data.token_type || 'bearer',
+			expiresIn: data.expires_in,
+		};
+	}
 
-  /**
-   * Automatically refresh token if needed
-   */
-  async autoRefreshToken(): Promise<string> {
-    if (!this.config.autoRefresh) {
-      return this.config.accessToken;
-    }
+	/**
+	 * Check if token is expired or will expire soon
+	 */
+	isTokenExpiring(bufferMinutes: number = 5): boolean {
+		if (!this.config.tokenExpiration) {
+			return false; // No expiration set, assume it's valid
+		}
 
-    // Check if token is expired or expiring soon
-    if (this.isTokenExpiring()) {
-      try {
-        console.log("Token is expiring, attempting refresh...");
-        const result = await this.exchangeForLongLivedToken();
-        console.log("Token refreshed successfully");
-        return result.accessToken;
-      } catch (error) {
-        console.error("Auto-refresh failed:", error);
-        throw new Error("Token expired and auto-refresh failed. Please re-authenticate.");
-      }
-    }
+		const bufferTime = bufferMinutes * 60 * 1000; // Convert to milliseconds
+		const expirationWithBuffer = new Date(this.config.tokenExpiration.getTime() - bufferTime);
 
-    return this.config.accessToken;
-  }
+		return new Date() >= expirationWithBuffer;
+	}
 
-  /**
-   * Generate system user access token (for server-to-server apps)
-   */
-  async generateSystemUserToken(
-    systemUserId: string,
-    scopes: string[] = ["ads_management"],
-    expiringToken: boolean = true
-  ): Promise<{
-    accessToken: string;
-    tokenType: string;
-    expiresIn?: number;
-  }> {
-    if (!this.config.appId || !this.config.appSecret) {
-      throw new Error("App ID and app secret are required for system user token");
-    }
+	/**
+	 * Automatically refresh token if needed
+	 */
+	async autoRefreshToken(): Promise<string> {
+		if (!this.config.autoRefresh) {
+			return this.config.accessToken;
+		}
 
-    // Generate app secret proof
-    const crypto = await import("crypto");
-    const appSecretProof = crypto
-      .createHmac("sha256", this.config.appSecret)
-      .update(this.config.accessToken)
-      .digest("hex");
+		// Check if token is expired or expiring soon
+		if (this.isTokenExpiring()) {
+			try {
+				console.log('Token is expiring, attempting refresh...');
+				const result = await this.exchangeForLongLivedToken();
+				console.log('Token refreshed successfully');
+				return result.accessToken;
+			} catch (error) {
+				console.error('Auto-refresh failed:', error);
+				throw new Error('Token expired and auto-refresh failed. Please re-authenticate.');
+			}
+		}
 
-    const params = new URLSearchParams({
-      business_app: this.config.appId,
-      scope: scopes.join(","),
-      appsecret_proof: appSecretProof,
-      access_token: this.config.accessToken,
-      ...(expiringToken && { set_token_expires_in_60_days: "true" }),
-    });
+		return this.config.accessToken;
+	}
 
-    const response = await fetch(
-      `${this.getBaseUrl()}/${this.getApiVersion()}/${systemUserId}/access_tokens`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
-      }
-    );
+	/**
+	 * Generate system user access token (for server-to-server apps)
+	 */
+	async generateSystemUserToken(
+		systemUserId: string,
+		scopes: string[] = ['ads_management'],
+		expiringToken: boolean = true,
+	): Promise<{
+		accessToken: string;
+		tokenType: string;
+		expiresIn?: number;
+	}> {
+		if (!this.config.appId || !this.config.appSecret) {
+			throw new Error('App ID and app secret are required for system user token');
+		}
 
-    if (!response.ok) {
-      const error = await response.text();
-      throw new Error(`System user token generation failed: ${error}`);
-    }
+		// Generate app secret proof
+		const crypto = await import('crypto');
+		const appSecretProof = crypto
+			.createHmac('sha256', this.config.appSecret)
+			.update(this.config.accessToken)
+			.digest('hex');
 
-    const data = await response.json();
+		const params = new URLSearchParams({
+			business_app: this.config.appId,
+			scope: scopes.join(','),
+			appsecret_proof: appSecretProof,
+			access_token: this.config.accessToken,
+			...(expiringToken && { set_token_expires_in_60_days: 'true' }),
+		});
 
-    return {
-      accessToken: data.access_token,
-      tokenType: "bearer",
-      expiresIn: data.expires_in,
-    };
-  }
+		const response = await fetch(
+			`${this.getBaseUrl()}/${this.getApiVersion()}/${systemUserId}/access_tokens`,
+			{
+				method: 'POST',
+				headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+				body: params.toString(),
+			},
+		);
 
-  /**
-   * Get token info and validation details
-   */
-  async getTokenInfo(): Promise<{
-    appId: string;
-    userId?: string;
-    scopes: string[];
-    expiresAt?: Date;
-    isValid: boolean;
-  }> {
-    try {
-      const response = await fetch(
-        `${this.getBaseUrl()}/${this.getApiVersion()}/debug_token?input_token=${this.getAccessToken()}&access_token=${this.getAccessToken()}`
-      );
+		if (!response.ok) {
+			const error = await response.text();
+			throw new Error(`System user token generation failed: ${error}`);
+		}
 
-      if (!response.ok) {
-        throw new Error("Failed to get token info");
-      }
+		const data = await response.json();
 
-      const result = await response.json();
-      const data = result.data;
+		return {
+			accessToken: data.access_token,
+			tokenType: 'bearer',
+			expiresIn: data.expires_in,
+		};
+	}
 
-      return {
-        appId: data.app_id,
-        userId: data.user_id,
-        scopes: data.scopes || [],
-        expiresAt: data.expires_at ? new Date(data.expires_at * 1000) : undefined,
-        isValid: data.is_valid || false,
-      };
-    } catch (error) {
-      console.error("Token info retrieval failed:", error);
-      return {
-        appId: "",
-        scopes: [],
-        isValid: false,
-      };
-    }
-  }
+	/**
+	 * Get token info and validation details
+	 */
+	async getTokenInfo(): Promise<{
+		appId: string;
+		userId?: string;
+		scopes: string[];
+		expiresAt?: Date;
+		isValid: boolean;
+	}> {
+		try {
+			const response = await fetch(
+				`${this.getBaseUrl()}/${this.getApiVersion()}/debug_token?input_token=${this.getAccessToken()}&access_token=${this.getAccessToken()}`,
+			);
 
-  async authorizeAnalytics() {
+			if (!response.ok) {
+				throw new Error('Failed to get token info');
+			}
 
-  }
+			const result = await response.json();
+			const data = result.data;
+
+			return {
+				appId: data.app_id,
+				userId: data.user_id,
+				scopes: data.scopes || [],
+				expiresAt: data.expires_at ? new Date(data.expires_at * 1000) : undefined,
+				isValid: data.is_valid || false,
+			};
+		} catch (error) {
+			console.error('Token info retrieval failed:', error);
+			return {
+				appId: '',
+				scopes: [],
+				isValid: false,
+			};
+		}
+	}
+
+	async autorizeAnalytics() {
+		try {
+			const response = await fetch(
+				`${this.getAnalyticsUrl()}/refresh`,
+				{
+					method: 'HEAD',
+				},
+			);
+
+			if (response.ok) {
+				return {
+					isValid: true,
+				};
+			}
+
+			const loginResponse = await fetch(
+				`${this.getAnalyticsUrl()}/login`,
+				{
+					method: 'POST',
+					body: new URLSearchParams({
+						login: this.config.analytics.login,
+						password: this.config.analytics.password,
+					}),
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+					},
+				},
+			);
+
+			if (!loginResponse.ok) {
+				throw new Error("Invalid analytics login credentials");
+			}
+
+			this.config.analytics.cookie = loginResponse.headers.getSetCookie().join('; ');
+		} catch (error) {
+			console.error('Analytics login failed:', error);
+			return {
+				isValid: false,
+			};
+		}
+	}
 }

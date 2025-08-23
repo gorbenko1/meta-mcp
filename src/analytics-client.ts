@@ -1,118 +1,299 @@
-import fetch from "node-fetch";
-import { AuthManager } from "./utils/auth.js";
-import { globalRateLimiter } from "./utils/rate-limiter.js";
+import fetch from 'node-fetch';
+import moment from 'moment';
+import { AuthManager } from './utils/auth.js';
+import { globalRateLimiter } from './utils/rate-limiter.js';
 import {
-  MetaApiErrorHandler,
-  retryWithBackoff,
-} from "./utils/error-handler.js";
-import {
-  PaginationHelper,
-  type PaginatedResult,
-} from "./utils/pagination.js";
-import type {
-  AdInsights,
-  MetaApiResponse,
-} from "./types/meta-api.js";
+	MetaApiErrorHandler,
+	retryWithBackoff,
+} from './utils/error-handler.js';
+
+interface Response {
+	data: Array<{
+		day: string;
+		team: {
+			id: string;
+			name: string;
+			displayName: string;
+		},
+		user: {
+			id: string;
+			name: string;
+			email: string;
+		},
+		adset: {
+			id: string;
+			name: string;
+			status: string;
+			startTime: string;
+			budgetType: string;
+			budget: number;
+		},
+		partner: {
+			id: string;
+			name: string;
+			displayName: string;
+			status: string;
+		},
+		account: {
+			id: string;
+			name: string;
+			commission: number;
+		},
+		campaign: {
+			id: string;
+			name: string;
+			status: string;
+			startTime: string;
+			budget_optimization: string;
+			budgetType: string;
+			budget: number;
+		},
+		ad: {
+			id: string;
+			name: string;
+			status: string;
+		},
+		budget: {
+			type: string;
+			value: number;
+		},
+		meta: {
+			impressions: string;
+			clicks: string;
+			reach: string;
+			videoViews3s: string;
+			ctr: number;
+			spendUsd: number;
+			spendUsdWithCommission: number;
+		},
+		event: {
+			uniqueVisitClicks: number;
+			visit: number;
+			remarketingVisit: number;
+			visitNext: number;
+			click: number;
+			remarketingClick: number;
+			conversions: number;
+			additional: number;
+			sales: number;
+			registrations: number;
+			rsales: number;
+			revenue: number;
+			dsales: number;
+		},
+		metrics: {
+			videoViews3sPerImpression: number;
+			cpm: number;
+			cpc: number;
+			epc: number;
+			clickLose: number;
+			ctrLP1: number;
+			ctrLP2: number;
+			ctrLinkLP1: number;
+			ctrRe: number;
+			cr: number;
+			crDSaleReg: number;
+			crDSaleFBClick: number;
+			crDSaleVisits: number;
+			crt: number;
+			profit: number;
+			roi: number;
+			cpr: number;
+			cps: number;
+			rps: number;
+			revenuePerRegistration: number;
+		},
+		rn: string;
+	}>
+	summary: {
+		meta: {
+			impressions: string;
+			clicks: string;
+			reach: string;
+			videoViews3s: string;
+			ctr: number;
+			spendUsd: number;
+			spendUsdWithCommission: number;
+		},
+		event: {
+			uniqueVisitClicks: number;
+			visit: number;
+			remarketingVisit: number;
+			visitNext: number;
+			click: number;
+			remarketingClick: number;
+			conversions: number;
+			additional: number;
+			sales: number;
+			registrations: number;
+			rsales: number;
+			revenue: number;
+			dsales: number;
+		},
+		metrics: {
+			videoViews3sPerImpression: number;
+			cpm: number;
+			cpc: number;
+			epc: number;
+			clickLose: number;
+			ctrLP1: number;
+			ctrLP2: number;
+			ctrLinkLP1: number;
+			ctrRe: number;
+			cr: number;
+			crDSaleReg: number;
+			crDSaleFBClick: number;
+			crDSaleVisits: number;
+			crt: number;
+			profit: number;
+			roi: number;
+			cpr: number;
+			cps: number;
+			rps: number;
+			revenuePerRegistration: number;
+		},
+	},
+	total: number;
+}
 
 export class AnalyticsClient {
-  private auth: AuthManager;
+	private auth: AuthManager;
 
-  constructor(auth?: AuthManager) {
-    this.auth = auth || AuthManager.fromEnvironment();
-  }
+	constructor(auth?: AuthManager) {
+		this.auth = auth || AuthManager.fromEnvironment();
+	}
 
-  get authManager(): AuthManager {
-    return this.auth;
-  }
+	get authManager(): AuthManager {
+		return this.auth;
+	}
 
-  private async makeRequest<T>(
-    endpoint: string,
-    method: "GET" | "POST" | "DELETE" | "HEAD" = "GET",
-    body?: any,
-    accountId?: string,
-    isWriteCall: boolean = false
-  ): Promise<T> {
-    const url = `${this.auth.getBaseUrl()}/${this.auth.getApiVersion()}/${endpoint}`;
+	private async makeRequest<T>(
+		endpoint: string,
+		method: 'GET' | 'POST' | 'DELETE' | 'HEAD' = 'GET',
+		body?: any,
+		accountId?: string,
+		isWriteCall: boolean = false,
+	): Promise<T> {
+		const url = `${this.auth.getAnalyticsUrl()}/${endpoint}`;
 
-    // Check rate limit if we have an account ID
-    if (accountId) {
-      await globalRateLimiter.checkRateLimit(accountId, isWriteCall);
-    }
+		// Check rate limit if we have an account ID
+		if (accountId) {
+			await globalRateLimiter.checkRateLimit(accountId, isWriteCall);
+		}
 
-    return retryWithBackoff(async () => {
-      const headers = this.auth.getAuthHeaders();
+		let cookie = this.auth.getAnalyticsCookie();
+		if (!cookie) {
+			await this.auth.autorizeAnalytics();
+			cookie = this.auth.getAnalyticsCookie();
+		}
 
-      const requestOptions: any = {
-        method,
-        headers,
-      };
+		return retryWithBackoff(async () => {
+			const headers = {
+				'Content-Type': 'application/json',
+				'Cookie': cookie,
+			};
 
-      if (body && method !== "GET") {
-        if (typeof body === "string") {
-          requestOptions.body = body;
-          headers["Content-Type"] = "application/x-www-form-urlencoded";
-        } else {
-          requestOptions.body = JSON.stringify(body);
-          headers["Content-Type"] = "application/json";
-        }
-      }
+			const requestOptions: any = {
+				method,
+				headers,
+			};
 
-      const response = await fetch(url, requestOptions);
-      return MetaApiErrorHandler.handleResponse(response as any);
-    }, `${method} ${endpoint}`);
-  }
+			if (body && method !== 'GET') {
+				if (typeof body === 'string') {
+					requestOptions.body = body;
+					headers['Content-Type'] = 'application/x-www-form-urlencoded';
+				} else {
+					requestOptions.body = JSON.stringify(body);
+					headers['Content-Type'] = 'application/json';
+				}
+			}
 
-  private buildQueryString(params: Record<string, any>): string {
-    const urlParams = new URLSearchParams();
+			const response = await fetch(url, requestOptions);
+			return MetaApiErrorHandler.handleResponse(response as any);
+		}, `${method} ${endpoint}`);
+	}
 
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          urlParams.set(key, JSON.stringify(value));
-        } else if (typeof value === "object") {
-          urlParams.set(key, JSON.stringify(value));
-        } else {
-          urlParams.set(key, String(value));
-        }
-      }
-    }
+	private buildQueryString(params: Record<string, any>): string {
+		const urlParams = new URLSearchParams();
 
-    return urlParams.toString();
-  }
+		for (const [key, value] of Object.entries(params)) {
+			if (value !== undefined && value !== null) {
+				if (Array.isArray(value)) {
+					urlParams.set(key, JSON.stringify(value));
+				} else if (typeof value === 'object') {
+					urlParams.set(key, JSON.stringify(value));
+				} else {
+					urlParams.set(key, String(value));
+				}
+			}
+		}
 
-  async getAnalytics() {
+		return urlParams.toString();
+	}
 
-  }
+	// Insights Methods
+	async getStats(
+		objectId: string,
+		params: {
+			level: 'account' | 'campaign' | 'adset' | 'ad';
+			time_range?: { since: string; until: string };
+			fields?: string[];
+			breakdowns?: string[];
+			limit?: number;
+			after?: string;
+		} = {},
+	): Promise<Response['data']> {
+		const queryParams: Record<string, any> = {
+			groupBy: ['Time', 'Team', 'User', 'Adset', 'Account', 'Campaign', 'Ad'],
+			timezone_value: 0,
+			time: [
+				{
+					matchMode: 'equals',
+					value: [moment().startOf('day'), moment().endOf('day')],
+				},
+			],
+		};
 
-  // Insights Methods
-  async getInsights(
-    objectId: string,
-    params: {
-      level?: "account" | "campaign" | "adset" | "ad";
-      date_preset?: string;
-      time_range?: { since: string; until: string };
-      fields?: string[];
-      breakdowns?: string[];
-      limit?: number;
-      after?: string;
-    } = {}
-  ): Promise<PaginatedResult<AdInsights>> {
-    const queryParams: Record<string, any> = {
-      fields:
-        params.fields?.join(",") ||
-        "impressions,clicks,spend,reach,frequency,ctr,cpc,cpm,actions,cost_per_action_type",
-      ...params,
-    };
+		if (params.level == 'account') {
+			queryParams.account_id = [{
+				matchMode: 'equals',
+				operator: 'and',
+				value: objectId.replace(/[a-z]|\s/g, ''),
+			}];
+		} else if (params.level == 'campaign') {
+			queryParams.campaign_id = [{
+				matchMode: 'equals',
+				operator: 'and',
+				value: objectId.replace(/[a-z]|\s/g, ''),
+			}];
+		} else if (params.level == 'adset') {
+			queryParams.adset_id = [{
+				matchMode: 'equals',
+				operator: 'and',
+				value: objectId.replace(/[a-z]|\s/g, ''),
+			}];
+		} else if (params.level == 'ad') {
+			queryParams.ad_id = [{
+				matchMode: 'equals',
+				operator: 'and',
+				value: objectId.replace(/[a-z]|\s/g, ''),
+			}];
+		}
 
-    if (params.time_range) {
-      queryParams.time_range = params.time_range;
-    }
+		if (params.time_range) {
+			queryParams.time = [
+				{
+					matchMode: 'eq',
+					value: [params.time_range.since, params.time_range.until],
+				},
+			];
+		}
 
-    const query = this.buildQueryString(queryParams);
-    const response = await this.makeRequest<MetaApiResponse<AdInsights>>(
-      `${objectId}/insights?${query}`
-    );
+		const query = this.buildQueryString(queryParams);
+		const response = await this.makeRequest<Response>(
+			`/stats?${query}`,
+		);
 
-    return PaginationHelper.parsePaginatedResponse(response);
-  }
+		return response.data;
+	}
 }

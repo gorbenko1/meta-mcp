@@ -363,7 +363,7 @@ export class MetaApiClient {
   async getInsights(
     objectId: string,
     params: {
-      level?: "account" | "campaign" | "adset" | "ad";
+      level: "account" | "campaign" | "adset" | "ad";
       date_preset?: string;
       time_range?: { since: string; until: string };
       fields?: string[];

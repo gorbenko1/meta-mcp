@@ -1,3 +1,10 @@
+export interface AnalyticsConfig {
+  url: string;
+  login: string;
+  password: string;
+  cookie?: unknown;
+}
+
 export interface MetaApiConfig {
   accessToken: string;
   appId?: string;
@@ -10,6 +17,7 @@ export interface MetaApiConfig {
   refreshToken?: string;
   tokenExpiration?: Date;
   autoRefresh?: boolean;
+  analytics: AnalyticsConfig;
 }
 
 export interface AdAccount {

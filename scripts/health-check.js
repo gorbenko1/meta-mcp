@@ -91,7 +91,7 @@ function checkConfiguration() {
     console.log("✅ Meta Ads MCP server configuration found");
 
     // Check environment variables
-    if (!serverConfig.env || !serverConfig.env.META_ACCESS_TOKEN) {
+    if (!serverConfig.env || !serverConfig.env.META_ACCESS_TOKEN || !serverConfig.env.ANALYTICS_LOGIN) {
       console.log("❌ META_ACCESS_TOKEN not configured");
       return false;
     }
