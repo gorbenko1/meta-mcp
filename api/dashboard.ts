@@ -469,6 +469,15 @@ export default async function handler(
     }
   }
 }\`;
+            navigator.clipboard.writeText(config).then(() => {
+                const btn = event.target;
+                const original = btn.textContent;
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = original;
+                }, 2000);
+            });
+        }
         function copyConfig2() {
             const config = \`${mcpEndpoint}?token=${sessionToken}\`;
             navigator.clipboard.writeText(config).then(() => {

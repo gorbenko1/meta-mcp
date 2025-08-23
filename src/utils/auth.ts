@@ -158,7 +158,7 @@ export class AuthManager {
     }
 
     const data = await response.json();
-    
+
     // Update config with new token
     this.config.accessToken = data.access_token;
     if (data.expires_in) {
@@ -206,7 +206,7 @@ export class AuthManager {
     }
 
     const data = await response.json();
-    
+
     // Update config with new long-lived token
     this.config.accessToken = data.access_token;
     this.config.tokenExpiration = new Date(Date.now() + data.expires_in * 1000);
@@ -228,7 +228,7 @@ export class AuthManager {
 
     const bufferTime = bufferMinutes * 60 * 1000; // Convert to milliseconds
     const expirationWithBuffer = new Date(this.config.tokenExpiration.getTime() - bufferTime);
-    
+
     return new Date() >= expirationWithBuffer;
   }
 
@@ -302,7 +302,7 @@ export class AuthManager {
     }
 
     const data = await response.json();
-    
+
     return {
       accessToken: data.access_token,
       tokenType: "bearer",
@@ -347,5 +347,9 @@ export class AuthManager {
         isValid: false,
       };
     }
+  }
+
+  async authorizeAnalytics() {
+
   }
 }

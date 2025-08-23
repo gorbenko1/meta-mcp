@@ -219,7 +219,10 @@ export class UserAuthManager {
       // Update last used timestamp
       session.lastUsed = new Date();
       await this.storeUserSession(session);
+      return session;
     }
+
+    console.log('getUserSession null ', key);
 
     return session;
   }
@@ -299,11 +302,13 @@ export class UserAuthManager {
   static async authenticateUser(authHeader: string | null): Promise<UserSession | null> {
     const token = this.extractBearerToken(authHeader) || authHeader;
     if (!token) {
+      console.log('extractBearerToken null', authHeader);
       return null;
     }
 
     const decoded = await this.verifySessionToken(token);
     if (!decoded) {
+      console.log('verifySessionToken null', authHeader);
       return null;
     }
 
