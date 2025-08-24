@@ -389,7 +389,7 @@ export class AuthManager {
 				`${this.getAnalyticsUrl()}/login`,
 				{
 					method: 'POST',
-					body: queryString.stringify({
+					body: new URLSearchParams({
 						email: this.config.analytics.email,
 						password: this.config.analytics.password,
 					}),
