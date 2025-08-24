@@ -183,16 +183,13 @@ export class AnalyticsClient {
 			await globalRateLimiter.checkRateLimit(accountId, isWriteCall);
 		}
 
-		let cookie = this.auth.getAnalyticsCookie();
-		if (!cookie) {
-			await this.auth.autorizeAnalytics();
-			cookie = this.auth.getAnalyticsCookie();
-		}
+		await this.auth.autorizeAnalytics();
+		const cookie = this.auth.getAnalyticsCookie();
 
 		return retryWithBackoff(async () => {
 			const headers = {
 				'Content-Type': 'application/json',
-				'Cookie': cookie,
+				'Cookie': cookie.join('; '),
 			};
 
 			const requestOptions: any = {
