@@ -5,7 +5,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 
 import { MetaApiClient } from "../src/meta-client.js";
 import { UserAuthManager } from "../src/utils/user-auth.js";
-import { AnalyticsClient } from '../src/analytics-client';
+import { AnalyticsClient } from '../src/analytics-client.js';
 
 // Create a wrapper to handle authentication at the request level
 const handler = async (req: Request) => {
