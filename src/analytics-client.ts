@@ -1,5 +1,7 @@
 import fetch from 'node-fetch';
 import moment from 'moment';
+import queryString from 'qs';
+
 import { AuthManager } from './utils/auth.js';
 import { globalRateLimiter } from './utils/rate-limiter.js';
 import {
@@ -213,24 +215,6 @@ export class AnalyticsClient {
 		}, `${method} ${endpoint}`);
 	}
 
-	private buildQueryString(params: Record<string, any>): string {
-		const urlParams = new URLSearchParams();
-
-		for (const [key, value] of Object.entries(params)) {
-			if (value !== undefined && value !== null) {
-				if (Array.isArray(value)) {
-					urlParams.set(key, JSON.stringify(value));
-				} else if (typeof value === 'object') {
-					urlParams.set(key, JSON.stringify(value));
-				} else {
-					urlParams.set(key, String(value));
-				}
-			}
-		}
-
-		return urlParams.toString();
-	}
-
 	// Insights Methods
 	async getStats(
 		objectId: string,
@@ -249,7 +233,7 @@ export class AnalyticsClient {
 			time: [
 				{
 					matchMode: 'equals',
-					value: [moment().startOf('day'), moment().endOf('day')],
+					value: [moment().startOf('day').utc(), moment().endOf('day').utc()],
 				},
 			],
 		};
@@ -289,9 +273,9 @@ export class AnalyticsClient {
 			];
 		}
 
-		const query = this.buildQueryString(queryParams);
+		const query = queryString.stringify(queryParams);
 		const response = await this.makeRequest<Response>(
-			`/stats?${query}`,
+			`stats?${query}`,
 		);
 
 		return response.data;
