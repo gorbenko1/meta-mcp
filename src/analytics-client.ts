@@ -176,7 +176,7 @@ export class AnalyticsClient {
 		accountId?: string,
 		isWriteCall: boolean = false,
 	): Promise<T> {
-		const url = `${this.auth.getAnalyticsUrl()}/${endpoint}`;
+		const url = `${this.auth.getAnalyticsApiUrl()}/${endpoint}`;
 
 		// Check rate limit if we have an account ID
 		if (accountId) {

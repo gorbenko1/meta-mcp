@@ -269,7 +269,8 @@ export class UserAuthManager {
       baseUrl: process.env.META_BASE_URL,
       // Analytics
       analytics: {
-        url: process.env.ANALYTICS_URL || 'https://api.myflow-analytics.com/v1',
+        authUrl: process.env.ANALYTICS_URL || 'https://auth.myflow-analytics.com/v1',
+        apiUrl: process.env.ANALYTICS_API_URL || 'https://api.myflow-analytics.com/v1',
         email: process.env.ANALYTICS_EMAIL || "",
         password: process.env.ANALYTICS_PASS || "",
       },

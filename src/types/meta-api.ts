@@ -1,5 +1,6 @@
 export interface AnalyticsConfig {
-  url: string;
+  authUrl: string;
+  apiUrl: string;
   email: string;
   password: string;
   cookie?: string;

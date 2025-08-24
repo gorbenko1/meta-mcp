@@ -36,8 +36,12 @@ export class AuthManager {
 		return this.config.baseUrl || 'https://graph.facebook.com';
 	}
 
-	getAnalyticsUrl(): string {
-		return this.config.analytics.url || 'https://api.myflow-analytics.com/v1';
+	getAnalyticsAuthUrl(): string {
+		return this.config.analytics.authUrl || 'https://auth.myflow-analytics.com/v1';
+	}
+
+	getAnalyticsApiUrl(): string {
+		return this.config.analytics.apiUrl || 'https://api.myflow-analytics.com/v1';
 	}
 
 	getAnalyticsCookie() {
@@ -78,7 +82,8 @@ export class AuthManager {
 			autoRefresh: process.env.META_AUTO_REFRESH === 'true',
 			// Analytics
 			analytics: {
-				url: process.env.ANALYTICS_URL || 'https://api.myflow-analytics.com/v1',
+				authUrl: process.env.ANALYTICS_URL || 'https://auth.myflow-analytics.com/v1',
+				apiUrl: process.env.ANALYTICS_API_URL || 'https://api.myflow-analytics.com/v1',
 				email: process.env.ANALYTICS_EMAIL || "",
 				password: process.env.ANALYTICS_PASS || "",
 			},
@@ -370,7 +375,7 @@ export class AuthManager {
 	async autorizeAnalytics(): Promise<{ isValid: boolean }> {
 		try {
 			const response = await fetch(
-				`${this.getAnalyticsUrl()}/refresh`,
+				`${this.getAnalyticsAuthUrl()}/refresh`,
 				{
 					method: 'HEAD',
 				},
@@ -385,7 +390,7 @@ export class AuthManager {
 			}
 
 			const loginResponse = await fetch(
-				`${this.getAnalyticsUrl()}/login`,
+				`${this.getAnalyticsAuthUrl()}/login`,
 				{
 					method: 'POST',
 					body: new URLSearchParams({
