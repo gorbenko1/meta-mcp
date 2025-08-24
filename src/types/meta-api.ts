@@ -2,7 +2,7 @@ export interface AnalyticsConfig {
   url: string;
   login: string;
   password: string;
-  cookie?: unknown;
+  cookie?: string;
 }
 
 export interface MetaApiConfig {

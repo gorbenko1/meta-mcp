@@ -189,7 +189,7 @@ export class AnalyticsClient {
 		return retryWithBackoff(async () => {
 			const headers = {
 				'Content-Type': 'application/json',
-				'Cookie': cookie.join('; '),
+				'Cookie': cookie,
 			};
 
 			const requestOptions: any = {
