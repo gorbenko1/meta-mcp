@@ -79,8 +79,8 @@ export class AuthManager {
 			// Analytics
 			analytics: {
 				url: process.env.ANALYTICS_URL || 'https://api.myflow-analytics.com/v1',
-				login: process.env.ANALYTICS_LOGIN,
-				password: process.env.ANALYTICS_PASS,
+				login: process.env.ANALYTICS_LOGIN || "",
+				password: process.env.ANALYTICS_PASS || "",
 			},
 		};
 
@@ -367,7 +367,7 @@ export class AuthManager {
 		}
 	}
 
-	async autorizeAnalytics() {
+	async autorizeAnalytics(): Promise<{ isValid: boolean }> {
 		try {
 			const response = await fetch(
 				`${this.getAnalyticsUrl()}/refresh`,
@@ -401,6 +401,7 @@ export class AuthManager {
 			}
 
 			this.config.analytics.cookie = loginResponse.headers.getSetCookie().join('; ');
+			return { isValid: true };
 		} catch (error) {
 			console.error('Analytics login failed:', error);
 			return {

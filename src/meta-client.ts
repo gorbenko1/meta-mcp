@@ -370,7 +370,7 @@ export class MetaApiClient {
       breakdowns?: string[];
       limit?: number;
       after?: string;
-    } = {}
+    } = {} as any
   ): Promise<PaginatedResult<AdInsights>> {
     const queryParams: Record<string, any> = {
       fields:

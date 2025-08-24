@@ -53,7 +53,7 @@ export function registerAnalyticsTools(
           params.breakdowns = breakdowns;
         }
 
-        const result = await metaClient.getInsights(object_id, params);
+        const result = await metaClient.getInsights(object_id, params as any);
 
         const insights = result.data.map((insight) => ({
           date_start: insight.date_start,
@@ -148,7 +148,7 @@ export function registerAnalyticsTools(
 
         for (const objectId of object_ids) {
           try {
-            const result = await metaClient.getInsights(objectId, params);
+            const result = await metaClient.getInsights(objectId, params as any);
             const summary = calculateSummaryMetrics(result.data);
 
             // Get object details (name, etc.)
@@ -256,7 +256,7 @@ export function registerAnalyticsTools(
           params.breakdowns = breakdowns;
         }
 
-        const result = await metaClient.getInsights(object_id, params);
+        const result = await metaClient.getInsights(object_id, params as any);
 
         let exportData: string;
         let mimeType: string;

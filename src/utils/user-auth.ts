@@ -267,6 +267,12 @@ export class UserAuthManager {
       autoRefresh: true,
       apiVersion: process.env.META_API_VERSION,
       baseUrl: process.env.META_BASE_URL,
+      // Analytics
+      analytics: {
+        url: process.env.ANALYTICS_URL || 'https://api.myflow-analytics.com/v1',
+        login: process.env.ANALYTICS_LOGIN || "",
+        password: process.env.ANALYTICS_PASS || "",
+      },
     };
 
     return new AuthManager(config);
