@@ -210,6 +210,9 @@ export class AnalyticsClient {
 				}
 			}
 
+			console.log("Url: ", url);
+			console.log("RequestOptions: ", requestOptions);
+
 			const response = await fetch(url, requestOptions);
 			return MetaApiErrorHandler.handleResponse(response as any);
 		}, `${method} ${endpoint}`);
@@ -232,8 +235,8 @@ export class AnalyticsClient {
 			timezone_value: 0,
 			time: [
 				{
-					matchMode: 'equals',
-					value: [moment().startOf('day').utc(), moment().endOf('day').utc()],
+					matchMode: 'in_range',
+					value: [moment().startOf('day').format(), moment().endOf('day').format()],
 				},
 			],
 		};
