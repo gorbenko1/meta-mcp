@@ -295,17 +295,19 @@ const handler = async (req: Request) => {
           level: z
             .enum(["account", "campaign", "adset", "ad"])
             .describe("The level of insights to retrieve"),
-          date_preset: z
-            .string()
-            .optional()
-            .describe("Date preset like 'last_7d', 'last_30d'"),
+          time_range: z
+            .object({
+              since: z.date().describe("From date in ISO format"),
+              until: z.date().describe("To date in ISO format"),
+            })
+            .describe("Search range since means from in ISO format, until means to in ISO format"),
           fields: z
             .array(z.string())
             .optional()
             .describe("Specific metrics to retrieve"),
           limit: z.number().optional().describe("Number of results to return"),
         },
-        async ({ object_id, level, date_preset, fields, limit }, context) => {
+        async ({ object_id, level, fields, limit, time_range }, context) => {
           try {
             console.log("📊 Getting insights for:", object_id);
 
@@ -331,7 +333,7 @@ const handler = async (req: Request) => {
             const params: Record<string, any> = {
               level,
               limit: limit || 25,
-              date_preset: date_preset || "last_7d",
+              time_range
             };
 
             if (fields && fields.length > 0) {
@@ -1106,16 +1108,18 @@ const handler = async (req: Request) => {
           level: z
             .enum(["campaign", "adset", "ad"])
             .describe("The level of comparison"),
-          date_preset: z
-            .string()
-            .optional()
-            .describe("Date preset like 'last_7d', 'last_30d'"),
+          time_range: z
+            .object({
+              since: z.date().describe("From date in ISO format"),
+              until: z.date().describe("To date in ISO format"),
+            })
+            .describe("Search range since means from in ISO format, until means to in ISO format"),
           fields: z
             .array(z.string())
             .optional()
             .describe("Specific metrics to compare"),
         },
-        async ({ object_ids, level, date_preset, fields }) => {
+        async ({ object_ids, level, fields, time_range }) => {
           try {
             if (!authHeader) throw new Error("Authentication required");
             const user = await UserAuthManager.authenticateUser(authHeader);
@@ -1133,7 +1137,7 @@ const handler = async (req: Request) => {
             for (const object_id of object_ids) {
               const params: Record<string, any> = {
                 level,
-                date_preset: date_preset || "last_7d",
+                time_range,
               };
               if (fields && fields.length > 0) {
                 params.fields = fields;
@@ -1181,14 +1185,19 @@ const handler = async (req: Request) => {
           level: z
             .enum(["campaign", "adset", "ad"])
             .describe("The level of insights"),
-          date_preset: z.string().optional().describe("Date preset"),
+          time_range: z
+            .object({
+              since: z.date().describe("From date in ISO format"),
+              until: z.date().describe("To date in ISO format"),
+            })
+            .describe("Search range since means from in ISO format, until means to in ISO format"),
           format: z.enum(["json", "csv"]).optional().describe("Export format"),
           fields: z
             .array(z.string())
             .optional()
             .describe("Specific metrics to export"),
         },
-        async ({ object_id, level, date_preset, format, fields }) => {
+        async ({ object_id, level, format, fields, time_range }) => {
           try {
             if (!authHeader) throw new Error("Authentication required");
             const user = await UserAuthManager.authenticateUser(authHeader);
@@ -1204,7 +1213,7 @@ const handler = async (req: Request) => {
 
             const params: Record<string, any> = {
               level,
-              date_preset: date_preset || "last_7d",
+              time_range,
             };
             if (fields && fields.length > 0) {
               params.fields = fields;

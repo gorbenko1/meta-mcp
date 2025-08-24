@@ -267,7 +267,7 @@ export class AnalyticsClient {
 		if (params.time_range) {
 			queryParams.time = [
 				{
-					matchMode: 'eq',
+					matchMode: 'in_range',
 					value: [params.time_range.since, params.time_range.until],
 				},
 			];
