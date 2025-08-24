@@ -377,6 +377,8 @@ export class AuthManager {
 			);
 
 			if (response.ok) {
+				this.config.analytics.cookie = response.headers.getSetCookie().join('; ');
+				console.log('cookie fetched successfully: ', this.config.analytics.cookie);
 				return {
 					isValid: true,
 				};
