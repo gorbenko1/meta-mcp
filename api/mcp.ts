@@ -297,8 +297,8 @@ const handler = async (req: Request) => {
             .describe("The level of insights to retrieve"),
           time_range: z
             .object({
-              since: z.date().describe("From date in ISO format"),
-              until: z.date().describe("To date in ISO format"),
+              since: z.string().describe("From date in ISO format"),
+              until: z.string().describe("To date in ISO format"),
             })
             .describe("Search range since means from in ISO format, until means to in ISO format"),
           fields: z
@@ -1110,8 +1110,8 @@ const handler = async (req: Request) => {
             .describe("The level of comparison"),
           time_range: z
             .object({
-              since: z.date().describe("From date in ISO format"),
-              until: z.date().describe("To date in ISO format"),
+              since: z.string().describe("From date in ISO format"),
+              until: z.string().describe("To date in ISO format"),
             })
             .describe("Search range since means from in ISO format, until means to in ISO format"),
           fields: z
@@ -1187,8 +1187,8 @@ const handler = async (req: Request) => {
             .describe("The level of insights"),
           time_range: z
             .object({
-              since: z.date().describe("From date in ISO format"),
-              until: z.date().describe("To date in ISO format"),
+              since: z.string().describe("From date in ISO format"),
+              until: z.string().describe("To date in ISO format"),
             })
             .describe("Search range since means from in ISO format, until means to in ISO format"),
           format: z.enum(["json", "csv"]).optional().describe("Export format"),
