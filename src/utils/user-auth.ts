@@ -270,7 +270,7 @@ export class UserAuthManager {
       // Analytics
       analytics: {
         url: process.env.ANALYTICS_URL || 'https://api.myflow-analytics.com/v1',
-        login: process.env.ANALYTICS_LOGIN || "",
+        email: process.env.ANALYTICS_EMAIL || "",
         password: process.env.ANALYTICS_PASS || "",
       },
     };

@@ -1,3 +1,5 @@
+import queryString from 'qs';
+import fetch from 'node-fetch';
 import type { MetaApiConfig } from '../types/meta-api.js';
 
 export class AuthManager {
@@ -19,8 +21,8 @@ export class AuthManager {
 			throw new Error('Invalid Meta access token format.');
 		}
 
-		if (!this.config.analytics.login.length) {
-			throw new Error('Analytics login is required. Set ANALYTICS_LOGIN environment variable.');
+		if (!this.config.analytics.email.length) {
+			throw new Error('Analytics login is required. Set ANALYTICS_EMAIL environment variable.');
 		}
 	}
 
@@ -79,7 +81,7 @@ export class AuthManager {
 			// Analytics
 			analytics: {
 				url: process.env.ANALYTICS_URL || 'https://api.myflow-analytics.com/v1',
-				login: process.env.ANALYTICS_LOGIN || "",
+				email: process.env.ANALYTICS_EMAIL || "",
 				password: process.env.ANALYTICS_PASS || "",
 			},
 		};
@@ -388,8 +390,8 @@ export class AuthManager {
 				`${this.getAnalyticsUrl()}/login`,
 				{
 					method: 'POST',
-					body: new URLSearchParams({
-						login: this.config.analytics.login,
+					body: queryString.stringify({
+						email: this.config.analytics.email,
 						password: this.config.analytics.password,
 					}),
 					headers: {
