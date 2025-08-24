@@ -1,4 +1,3 @@
-import queryString from 'qs';
 import type { MetaApiConfig } from '../types/meta-api.js';
 
 export class AuthManager {
