@@ -241,7 +241,7 @@ export class AnalyticsClient {
 			breakdowns?: string[];
 			limit?: number;
 			after?: string;
-		} = {},
+		} = {} as any,
 	): Promise<Response['data']> {
 		const queryParams: Record<string, any> = {
 			groupBy: ['Time', 'Team', 'User', 'Adset', 'Account', 'Campaign', 'Ad'],
