@@ -1,5 +1,4 @@
 import queryString from 'qs';
-import fetch from 'node-fetch';
 import type { MetaApiConfig } from '../types/meta-api.js';
 
 export class AuthManager {
